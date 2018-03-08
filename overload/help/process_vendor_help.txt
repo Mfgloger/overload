@@ -1,0 +1,44 @@
+Process Vendor File (PVF) is a tool for preprocessing MARC records received from
+vendors.
+--------------------------------------------------------------------------------
+PVF jobs:
+- preprocess NYPL & BPL MARC files
+- validate MARC records to adhere to MARC21 rules
+- validate vendor records against specification set for each vendor
+- display & record errors for statistical purposes
+- join multiple MARC files into as few files as possible (in most cases PVF will
+    create two files: new and duplicate records)
+- add constant data to certain vendor files
+- add bib numbers to vendor records that already are present in the database
+- split records into two separate files: NEW (new records) and DUP (duplicate 
+    records) so they can be loaded into Sierra using the most appropriate load
+    table
+- move processed vendor records into archive folder
+- display statistical information for the user of processed records during the
+    session
+
+PVF procedure:
+1. Select target database and it's accesing method
+2. Select MARC file(s) for processing (click, drag, use ctrl/shift to select
+    multiple files)
+3. Select validation to be performed (optional)
+4. Click Process
+    a) PVF will first attempt to validate records in MARCEdit if selected
+        unsucessful validation will result in termination of processing ;
+        please fix the records or unselect validation to continue ; PVF will
+        display the result of the validation in the pop-up window
+    b) PVF will determine vendor and type of records
+    c) PVF will attempt to validate records agains local rules specified
+        results of the validation will be displayed in a pop-up window
+    d) next, PVE will query database if needed to determine if the library
+        already has record for the material (conditional)
+    e) PVE will add bib numbers to duplicate records if applicable
+    f) PVE will add constant data if applicable
+    g) PVE will save records into NEW or DUP files based on results of the
+        above database query
+5. Confirm error report
+    a) see details of validation reports;
+    b) commit results of validation to a save file for statistical purposes
+6. Archive records (optional)
+    move vendor files to Archive folder on the shared drive
+7. Display session statistics
