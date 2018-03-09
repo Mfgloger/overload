@@ -36,6 +36,12 @@ class APITokenError(Error):
     """
 
 
+class APITokenExpired(Error):
+    """Exception raised when API access token appears to be expired
+    """
+    pass
+
+
 class UnhandledException(Error):
     """Unhandled exception encounted. Raise to catch for
     fixing"""
