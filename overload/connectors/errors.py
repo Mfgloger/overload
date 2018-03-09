@@ -1,4 +1,10 @@
-# exceptions specific to overload
+# -*- coding: utf-8 -*-
+
+"""
+connectors.errors
+~~~~~~~~~~~~~~~~~~~
+This module contains the set of Overload's exceptions.
+"""
 
 
 class Error(Exception):
@@ -25,14 +31,12 @@ class APICriticalError(Error):
 
 
 class APITimeoutError(Error):
-    """Exception wrapper for requests.exceptions.Timeout,
-    raised when aloted time passed without API response"""
+    """Exception raised when aloted time passed without API response"""
     pass
 
 
 class APITokenError(Error):
-    """Exception wrapper for oauthlib.oauth2.MissingTokenError
-    raised when Sierra API token is not obtained
+    """Exception raised when Sierra API token is not obtained
     """
 
 
