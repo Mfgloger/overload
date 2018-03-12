@@ -1,6 +1,6 @@
 # general tools to read, parse, and write MARC files
 
-from pymarc import MARCReader, JSONReader
+from pymarc import MARCReader, JSONReader, MARCWriter
 import re
 from datetime import datetime
 
@@ -44,10 +44,19 @@ def read_marc21(file):
     return reader
 
 
+def write_marc21(outfile, bib):
+    try:
+        writer = MARCWriter(open(outfile, 'a'))
+        writer.write(bib)
+    except WindowsError:
+        raise WindowsError
+    finally:
+        writer.close()
+
+
 def read_marc_in_json(data):
     reader = JSONReader(data)
     return reader
-
 
 
 class BibMeta:
@@ -129,12 +138,14 @@ class BibMeta:
 
 
 if __name__ == "__main__":
-    reader = read_from_marc_file(
+    reader = read_marc21(
         'C:/Users/tomaszkalata/scripts/test_files/NYPL_CATS-SERIES.mrc')
     from pvf.pvf_bibs import InhouseBibMeta
+    # for bib in reader:
+    #     meta = BibMeta(bib)
+    #     print meta
+    bid = 0
     for bib in reader:
-        # bm = BibMeta(bib)
-        # print(bm.t001, bm.t005, bm.t020, bm.t022, bm.t024, bm.title, bm.bCallNumber, bm.rCallNumber)
-    
-        vm = InhouseBibMeta(bib)
-        print vm
+        bid += 1
+        meta = InhouseBibMeta(bib, sierraID=bid)
+        print meta
