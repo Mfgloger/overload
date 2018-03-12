@@ -114,65 +114,34 @@ class TestBibsUtilities(unittest.TestCase):
         except OSError:
             pass
 
+    def test_write_marc21(self):
+        bibs.write_marc21(self.fh_out, self.marc_bib)
+        contents = open(self.fh_out).read()
+        self.assertEqual(
+            contents,
+            u'00089nam a2200049u  45000010024000002450015000240001-test-control_field00aTest title')
 
-    # def test_writing_marc_bibs_with_pymarc(self):
-    #     bibs.write_bib(self.fh_out, self.marc_bib)
-    #     contents = open(self.fh_out).read()
-    #     self.assertEqual(
-    #         contents,
-    #         u'00089nam a2200049u  45000010024000002450015000240001-test-control_field00aTest title')
+    def test_read_marc21_returns_pymarc_reader(self):
+        # should return an instance of pymarc reader
+        reader = bibs.read_marc21('test.mrc')
+        self.assertIs(type(reader), MARCReader)
 
-    # def test_read_from_marc_file_returns_pymarc_reader(self):
-    #     # should return an instance of pymarc reader
-    #     bibs.write_bib(self.fh_out, self.marc_bib)
-    #     reader = bibs.read_from_marc_file(self.fh_out)
-    #     self.assertIs(type(reader), MARCReader)
+    def test_read_from_json_retuns_pymarc_reader(self):
+        reader = JSONReader('test.json')
+        self.assertIs(type(reader), JSONReader)
 
-    # def test_read_from_json_retuns_pymarc_reader(self):
-    #     reader = JSONReader('test.json')
-    #     self.assertIs(type(reader), JSONReader)
-
-    # def test_read_from_marc_IO_returns_pymarc_reader(self):
-    #     bibs.write_bib(self.fh_out, self.marc_bib)
-    #     reader = MARCReader(self.fh_out)
-    #     self.assertIs(type(reader), MARCReader)
-
-    # def test_meta_from_marc(self):
-    #     # WIP
-    #     pass
-
-    # def test_meta_from_json(self):
-    #     # WIP
-    #     pass
-
-    # def test_api_results_parser(self):
-    #     # WIP
-    #     self.assertIs(type(bibs.api_results_parser(None)), list)
-
-    # def test_create_target_id_field(self):
-    #     id = '11648181'
-    #     for lib in ['BPL', 'NYPL']:
-    #         field = bibs.create_target_id_field(lib, id)
-    #         self.assertIs(type(field), Field)
-
-    #         if lib == 'BPL':
-    #             self.assertEqual(field.tag, '907')
-    #         else:
-    #             self.assertEqual(field.tag, '945')
-
-    #         self.assertEqual(field.indicators, [' ', ' '])
-    #         self.assertEqual(field['a'], '.b{}a'.format(id))
-
-    # def test_create_sierra_format_field(self):
-    #     field = bibs.create_sierra_format_field('a')
-    #     self.assertIs(type(field), Field)
-    #     self.assertEqual(field.tag, '949')
-    #     self.assertEqual(field.indicators, [' ', ' '])
-    #     self.assertEqual(field['a'], '*b2=a;')
-
-    # def test_count_bibs(self):
-        # self.assertEqual(bibs.count_bibs('test.mrc'), 5)
-
+    def test_bibmeta_object(self):
+        meta = bibs.BibMeta(self.marc_bib, sierraID='12345678')
+        self.assertIsInstance(meta, bibs.BibMeta)
+        self.assertEqual(meta.t001, '0001-test-control_field')
+        self.assertIsNone(meta.t005)
+        self.assertEqual(meta.t020, [])
+        self.assertEqual(meta.t022, [])
+        self.assertEqual(meta.t024, [])
+        self.assertEqual(meta.t028, [])
+        self.assertEqual(meta.sierraID, '12345678')
+        self.assertIsNone(meta.bCallNumber)
+        self.assertEqual(meta.rCallNumber, [])
 
 if __name__ == '__main__':
     unittest.main()
