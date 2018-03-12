@@ -1,9 +1,8 @@
 # general tools to read, parse, and write MARC files
 
-from pymarc import MARCReader
+from pymarc import MARCReader, JSONReader
 import re
 from datetime import datetime
-import logging
 
 
 def parse_isbn(field):
@@ -40,12 +39,15 @@ def parse_sierra_id(field):
         return None
 
 
-def read_from_marc_file(file):
-    module_logger = logging.getLogger('main.bibs')
-    module_logger.debug('creating pymarc MARCReader for file ({})'.format(
-        file))
+def read_marc21(file):
     reader = MARCReader(open(file, 'r'), hide_utf8_warnings=True)
     return reader
+
+
+def read_marc_in_json(data):
+    reader = JSONReader(data)
+    return reader
+
 
 
 class BibMeta:
@@ -96,7 +98,7 @@ class BibMeta:
             if '907' in bib:
                 self.sierraID = parse_sierra_id(
                     bib.get_fields('907')[0].value())
-            elif '947' in bib:
+            elif '945' in bib:
                 self.sierraID = parse_sierra_id(
                     bib.get_field('945')[0].value())
 
