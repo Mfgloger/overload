@@ -143,5 +143,23 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertIsNone(meta.bCallNumber)
         self.assertEqual(meta.rCallNumber, [])
 
+    def test_vendor_bibmeta_object(self):
+        meta = bibs.VendorBibMeta(
+            self.marc_bib, vendor='Amalivre', dstLibrary='rl')
+        self.assertIsInstance(meta, bibs.VendorBibMeta)
+        self.assertEqual(meta.t001, '0001-test-control_field')
+        self.assertIsNone(meta.t005)
+        self.assertEqual(meta.t020, [])
+        self.assertEqual(meta.t022, [])
+        self.assertEqual(meta.t024, [])
+        self.assertEqual(meta.t028, [])
+        self.assertIsNone(meta.bCallNumber)
+        self.assertEqual(meta.rCallNumber, [])
+        self.assertEqual(meta.vendor, 'Amalivre')
+        self.assertEqual(meta.action, 'attach')
+        self.assertEqual(meta.dstLibrary, 'rl')
+
+
+
 if __name__ == '__main__':
     unittest.main()
