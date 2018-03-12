@@ -65,6 +65,12 @@ class PlatformSession:
         self._validate_token()
         self._open_session()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.session.close()
+
     def _validate_token(self):
         if self.token.get('expires_on') < datetime.now():
             raise APITokenExpired(
@@ -204,6 +210,3 @@ class PlatformSession:
             raise APITimeoutError(
                 'Platform request timed out')
         return response.json()
-
-    def close(self):
-        self.session.close()
