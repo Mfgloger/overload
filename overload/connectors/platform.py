@@ -79,7 +79,7 @@ class PlatformSession:
     def _open_session(self):
         self.session = requests.Session()
         self.session.headers = {
-            'user-agent': 'overload/0.0.2',
+            'user-agent': 'overload/0.1.0',
             'Authorization': 'Bearer ' + self.token.get('id')}
 
     def query_standardNo(self, keywords=[], source='sierra-nypl', limit=20):
@@ -100,18 +100,14 @@ class PlatformSession:
             nyplSource=source,
             limit=limit,
             standardNumber=','.join(keywords))
-
-        req = requests.Request('get', endpoint, params=payload)
-        prepped = self.session.prepare_request(req)
         try:
-            response = self.session.send(
-                prepped,
-                timeout=self.timeout)
+            response = self.session.get(
+                endpoint, params=payload, timeout=self.timeout)
+            return response.json()
         except requests.exceptions.Timeout:
             self.close()
             raise APITimeoutError(
                 'Platform request timed out')
-        return response.json()
 
     def query_bibId(self, keywords=[], source='sierra-nypl', limit=20):
         """
@@ -132,11 +128,11 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
+            return response.json()
         except requests.exceptions.Timeout:
             self.session.close()
             raise APITimeoutError(
                 'Platform request timed out')
-        return response.json()
 
     def query_createdDate(
             self, start_date, end_date, limit, source='sierra-nypl'):
@@ -158,11 +154,11 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
+            return response.json()
         except requests.exceptions.Timeout:
             self.session.close()
             raise APITimeoutError(
                 'Platform request timed out')
-        return response.json()
 
     def query_updatedDate(
             self, start_date, end_date, limit, source='sierra-nypl'):
@@ -184,11 +180,11 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
+            return response.json()
         except requests.exceptions.Timeout:
             self.session.close()
             raise APITimeoutError(
                 'Platform request timed out')
-        return response.json()
 
     def get_bibItems(self, keyword, source='sierra-nypl'):
         """
@@ -205,8 +201,8 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, timeout=self.timeout)
+            return response.json()
         except requests.exceptions.Timeout:
             self.session.close()
             raise APITimeoutError(
                 'Platform request timed out')
-        return response.json()
