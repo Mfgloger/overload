@@ -1,0 +1,47 @@
+<?xml version = "1.0" encoding = "UTF-8" standalone = "yes"?>
+<!--BPL & NYPL vendor data-->
+<!--Use to encode identification of vendors and type of queries used to search Sierra for bibs of particular vendor-->
+<!--Watch out for xml reserved characters!-->
+<!--########################################-->
+<!--pick the system ("nypl" or "bpl")-->
+<!--then enter vendor name-->
+<!--enter id_marc_tag attributes: type ("standard" or "control_field" (001-009)), tag (tagsubfield, ex: 901a), and operator ("main" - multiple "main" match if all of them match, or "alternative" - multiple "alternative conditions match if all of them match")-->
+<!-- enter tag_value to be match for identificaiton-->
+<!--provide query_tag attribute type ("primary", "secondary") and marc tag number to be used for the query--> 
+<data>
+	<system name = "nypl">
+		<vendor name = "BT SERIES">
+			<id_marc_tag type = "standard" tag = "901a" operator = "main">
+				<tag_value>BTSERIES</tag_value>
+			</id_marc_tag>
+			<query_tag type = "primary">020</query_tag>
+		</vendor>
+		<vendor name = "BT ROMANCE">
+			<id_marc_tag type = "standard" tag = "901a" operator = "main">
+				<tag_value>ROMANCE</tag_value>
+			</id_marc_tag>
+			<query_tag type = "primary">020</query_tag>
+		</vendor>
+	</system>
+	<system name = "bpl">
+		<vendor name = "BT SERIES">
+			<id_marc_tag type = "standard" tag = "037a" operator = "main">
+				<tag_value>B&amp;T SERIES</tag_value>
+			</id_marc_tag>
+			<id_marc_tag type = "standard" tag = "947a" operator = "alternative">
+				<tag_value>B&amp;T SERIES</tag_value>
+			</id_marc_tag>
+			<query_tag type = "primary">020</query_tag>
+		</vendor>
+		<vendor name = "BT ROMANCE">
+			<id_marc_tag type = "standard" tag = "037a" operator = "main">
+				<tag_value>B&amp;T ROMANCE</tag_value>
+			</id_marc_tag>
+			<id_marc_tag type = "standard" tag = "947a" operator = "alternative">
+				<tag_value>B&amp;T ROMANCE</tag_value>
+			</id_marc_tag>
+			<query_tag type = "primary">020</query_tag>
+			<query_tag type = "secondary">001</query_tag>
+		</vendor>
+	</system>
+</data>
