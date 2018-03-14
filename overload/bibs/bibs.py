@@ -60,14 +60,22 @@ def read_marc_in_json(data):
 
 
 class BibMeta:
-    """creates record meta objects"""
+    """
+    creates a general record meta object
+    args:
+        bib obj (pymarc)
+        sierraID str
+    """
     def __init__(self, bib, sierraID=None):
         self.t001 = None
+        self.t003 = None
         self.t005 = None
         self.t020 = []
         self.t022 = []
         self.t024 = []
         self.t028 = []
+        self.t901 = []
+        self.t947 = []
         self.sierraID = sierraID
         self.bCallNumber = None
         self.rCallNumber = []
@@ -75,6 +83,11 @@ class BibMeta:
         # parse 001 field (control field)
         if '001' in bib:
             self.t001 = bib['001'].data
+
+        # parse 003 field (control number identifier)
+        if '003' in bib:
+            self.t003 = bib['003'].data
+
         # parse 005 field (version date)
         if '005' in bib:
             try:
@@ -83,24 +96,30 @@ class BibMeta:
                     '%Y%m%d%H%M%S.%f')
             except ValueError:
                 pass
-        if '020' in bib:
-            for field in bib.get_fields('020'):
-                for subfield in field.get_subfields('a'):
-                    self.t020.append(parse_isbn(subfield))
-        if '022' in bib:
-            for field in bib.get_fields('022'):
-                for subfield in field.get_subfields('a'):
-                    self.t022.append(parse_issn(subfield))
-        if '024' in bib:
-            for field in bib.get_fields('024'):
-                for subfield in field.get_subfields('a'):
-                    self.t024.append(
-                        parse_upc(subfield))
-        if '028' in bib:
-            for field in bib.get_fields('028'):
-                for subfield in field.get_subfields('a'):
-                    self.t028.append(
-                        parse_upc(subfield))
+
+        for field in bib.get_fields('020'):
+            for subfield in field.get_subfields('a'):
+                self.t020.append(parse_isbn(subfield))
+
+        for field in bib.get_fields('022'):
+            for subfield in field.get_subfields('a'):
+                self.t022.append(parse_issn(subfield))
+
+        for field in bib.get_fields('024'):
+            for subfield in field.get_subfields('a'):
+                self.t024.append(
+                    parse_upc(subfield))
+
+        for field in bib.get_fields('028'):
+            for subfield in field.get_subfields('a'):
+                self.t028.append(
+                    parse_upc(subfield))
+
+        for field in bib.get_fields('901'):
+            self.t901.append(field.value())
+
+        for field in bib.get_fields('947'):
+            self.t947.append(field.value())
 
         # parse Sierra number
         if self.sierraID is None:
@@ -125,13 +144,18 @@ class BibMeta:
                         field.value())
 
     def __repr__(self):
-        return "<BibMeta(001:{}, 005:{}, 020:{}, 022:{}, 024:{}, 028:{}, " \
-            "sierraID:{}, bCallNumber:{}, rCallNumber:{})>".format(
-                self.t001, self.t005,
+        return "<BibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, 024:{}, " \
+            "028:{}, 901:{}, 947:{}, sierraID:{}, " \
+            "bCallNumber:{}, rCallNumber:{})>".format(
+                self.t001,
+                self.t003,
+                self.t005,
                 self.t020,
                 self.t022,
                 self.t024,
                 self.t028,
+                self.t901,
+                self.t947,
                 self.sierraID,
                 self.bCallNumber,
                 self.rCallNumber)
@@ -140,6 +164,10 @@ class BibMeta:
 class VendorBibMeta(BibMeta):
     """
     Implements vendor specific bib metatada
+    args:
+        bib (pymarc obj)
+        vendor str
+        dstLibrary str ('research' or 'branches')
     """
     def __init__(self, bib, vendor=None, dstLibrary=None):
         BibMeta.__init__(self, bib)
@@ -148,16 +176,19 @@ class VendorBibMeta(BibMeta):
         self.action = 'attach'
 
     def __repr__(self):
-        return "<VendorBibMeta(001:{}, 005:{}, 020:{}, 022:{}, " \
-            "024:{}, 028:{}, " \
+        return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
+            "024:{}, 028:{}, 901:{}, 947:{}, " \
             "sierraID:{}, bCallNumber:{}, rCallNumber:{}, " \
             "vendor:{}, dstLibrary:{}, action:{})>".format(
                 self.t001,
+                self.t003,
                 self.t005,
                 self.t020,
                 self.t022,
                 self.t024,
                 self.t028,
+                self.t901,
+                self.t947,
                 self.sierraID,
                 self.bCallNumber,
                 self.rCallNumber,
@@ -169,16 +200,34 @@ class VendorBibMeta(BibMeta):
 class InhouseBibMeta(BibMeta):
     """
     Implements inhouse specific bib metadata
+    args:
+        bib obj (pymarc)
+        sierraID str
+        location list
     """
 
     def __init__(self, bib, sierraID=None, locations=[]):
         BibMeta.__init__(self, bib)
         self.sierraID = sierraID
-        self.catSource = None
+        self.catSource = 'vendor'
         self.ownLibrary = None
 
         # source of cataloging
-
+        # check 049 code to determine library
+        if '049' in bib:
+            field = bib.get_fields('049')[0]['a']
+            if 'BKLA' in field:  # BPL
+                if self.t001 is not None:
+                    if self.t001[0] == 'o' and self.t003 == 'OCoLC':
+                        self.catSource = 'inhouse'
+            elif 'NYPP' in field:  # NYPL
+                if '901' in bib:
+                    fields = bib.get_fields('901')
+                    for field in fields:
+                        subfield = field['b'][0]
+                        if 'CAT' in subfield:
+                            self.catSource = 'inhouse'
+                            break
 
         # owning library
         # for nypl check also locations
@@ -205,18 +254,21 @@ class InhouseBibMeta(BibMeta):
             self.ownLibrary = 'research'
 
     def __repr__(self):
-        return "<VendorBibMeta(001:{}, 005:{}, 020:{}, 022:{}, " \
-            "024:{}, 028:{}, " \
+        return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
+            "024:{}, 028:{}, 901:{}, 947:{}, " \
             "sierraID:{}, bCallNumber:{}, rCallNumber:{}, " \
             "catSource:{}, ownLibrary:{})>".format(
-                self.t001, self.t005,
+                self.t001,
+                self.t003,
+                self.t005,
                 self.t020,
                 self.t022,
                 self.t024,
                 self.t028,
+                self.t901,
+                self.t947,
                 self.sierraID,
                 self.bCallNumber,
                 self.rCallNumber,
                 self.catSource,
                 self.ownLibrary)
-
