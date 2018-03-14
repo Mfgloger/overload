@@ -1003,8 +1003,7 @@ class PlatformAPIs(tk.Frame):
         # widget variables
         self.conn_name = tk.StringVar()
         self.conn_name.trace('w', self.populate_form)
-        self.oauth_endpoint = tk.StringVar()
-        self.token_endpoint = tk.StringVar()
+        self.oauth_server = tk.StringVar()
         self.host = tk.StringVar()
         self.client_id = tk.StringVar()
         self.client_secret = tk.StringVar()
@@ -1036,19 +1035,12 @@ class PlatformAPIs(tk.Frame):
         self.conn_nameCbx.grid(
             row=1, column=0, sticky='new')
 
-        self.oauth_endpointEnt = ttk.Entry(
+        self.oauth_serverEnt = ttk.Entry(
             self.baseFrm,
-            textvariable=self.oauth_endpoint,
+            textvariable=self.oauth_server,
             width=50)
-        self.oauth_endpointEnt.grid(
+        self.oauth_serverEnt.grid(
             row=3, column=0, sticky='new')
-
-        self.token_endpointEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.token_endpoint,
-            width=50)
-        self.token_endpointEnt.grid(
-            row=5, column=0, sticky='new')
 
         self.hostEnt = ttk.Entry(
             self.baseFrm,
@@ -1082,19 +1074,12 @@ class PlatformAPIs(tk.Frame):
         self.conn_nameLbl.grid(
             row=1, column=2, sticky='new')
 
-        self.oauth_endpointLbl = ttk.Label(
+        self.oauth_serverLbl = ttk.Label(
             self.baseFrm,
-            text='authorization endpoint',
+            text='authorization server',
             width=20)
-        self.oauth_endpointLbl.grid(
+        self.oauth_serverLbl.grid(
             row=3, column=2, sticky='new')
-
-        self.token_endpointLbl = ttk.Label(
-            self.baseFrm,
-            text='token endpoint',
-            width=20)
-        self.token_endpointLbl.grid(
-            row=5, column=2, sticky='new')
 
         self.hostLbl = ttk.Label(
             self.baseFrm,
@@ -1155,16 +1140,11 @@ class PlatformAPIs(tk.Frame):
         new_conn_name = self.conn_name.get()
 
         if correct:
-            if self.oauth_endpoint.get() == '' or \
-                    self.oauth_endpoint.get() == 'None':
-                oauth_endpoint = None
+            if self.oauth_server.get() == '' or \
+                    self.oauth_server.get() == 'None':
+                oauth_server = None
             else:
-                oauth_endpoint = self.oauth_endpoint.get().strip()
-            if self.token_endpoint.get() == '' or \
-                    self.token_endpoint.get() == 'None':
-                token_endpoint = None
-            else:
-                token_endpoint = self.token_endpoint.get().strip()
+                oauth_server = self.oauth_server.get().strip()
             if self.client_id.get() == '' or \
                     self.client_id.get() == 'None':
                 client_id = None
@@ -1179,16 +1159,15 @@ class PlatformAPIs(tk.Frame):
             client_secret = base64.b64encode(client_secret)
 
             new_conn = dict(
-                oauth_endpoint=oauth_endpoint,
-                token_endpoint=token_endpoint,
+                oauth_server=oauth_server,
                 host=self.host.get(),
                 client_id=client_id,
                 client_secret=client_secret,
-                method='PlatformAPI')
+                last_token=None)
 
             user_data = shelve.open(USER_DATA, writeback=True)
             if 'PlatformAPIs' in user_data:
-                APIs = user_data['PlatformsAPIs']
+                APIs = user_data['PlatformAPIs']
             else:
                 user_data['PlatformAPIs'] = {}
                 APIs = user_data['PlatformAPIs']
@@ -1224,14 +1203,9 @@ class PlatformAPIs(tk.Frame):
             m += 'connection name cannot be longer than 50 characters\n'
             correct = False
 
-        self.oauth_endpoint.set(self.oauth_endpoint.get().strip())
-        if self.oauth_endpoint.get() == '':
+        self.oauth_server.set(self.oauth_server.get().strip())
+        if self.oauth_server.get() == '':
             m += 'authorization server info is required\n'
-            correct = False
-
-        self.token_endpoint.set(self.token_endpoint.get().strip())
-        if self.token_endpoint.get() == '':
-            m += 'token endpoint info is required\n'
             correct = False
 
         self.host.set(self.host.get().strip())
@@ -1271,8 +1245,7 @@ class PlatformAPIs(tk.Frame):
 
     def reset_form(self):
         self.conn_name.set('')
-        self.oauth_endpoint.set('')
-        self.token_endpoint.set('')
+        self.oauth_server.set('')
         self.host.set('')
         self.client_id.set('')
         self.client_secret.set('')
@@ -1284,8 +1257,7 @@ class PlatformAPIs(tk.Frame):
             user_data = shelve.open(USER_DATA)
             try:
                 conn = user_data['PlatformAPIs'][self.conn_name.get()]
-                self.oauth_endpoint.set(conn['oauth_endpoint'])
-                self.token_endpoint.set(conn['token_endpoint'])
+                self.oauth_server.set(conn['oauth_server'])
                 self.host.set(conn['host'])
                 self.client_id.set(base64.b64decode(conn['client_id']))
                 self.client_secret.set(base64.b64decode(conn['client_secret']))
