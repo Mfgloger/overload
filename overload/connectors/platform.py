@@ -103,7 +103,7 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
-            return response.json()
+            return response
         except requests.exceptions.Timeout:
             self.close()
             raise APITimeoutError(
@@ -206,3 +206,6 @@ class PlatformSession:
             self.session.close()
             raise APITimeoutError(
                 'Platform request timed out')
+
+    def close(self):
+        self.session.close()
