@@ -12,11 +12,6 @@ class Error(Exception):
     pass
 
 
-class APISettingsError(Error):
-    """Exception raised when API connection is incomplete"""
-    pass
-
-
 class ExceededLimitsError(Error):
     """Exception raised when Sierra API endpoint requests
     exceeded its limits"""
@@ -40,7 +35,7 @@ class APITokenError(Error):
     """
 
 
-class APITokenExpired(Error):
+class APITokenExpiredError(Error):
     """Exception raised when API access token appears to be expired
     """
     pass
