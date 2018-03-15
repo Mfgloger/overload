@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime, timedelta
 
-from errors import APISettingsError, APITokenError, APITokenExpired, \
+from errors import APITokenError, APITokenExpiredError, \
     APITimeoutError
 
 
@@ -22,7 +22,7 @@ class AuthorizeAccess:
 
         for value in self.__dict__.values():
             if value is None:
-                raise APISettingsError(
+                raise ValueError(
                     'Required Platform settings parameter is missing')
 
     def get_token(self):
@@ -45,7 +45,7 @@ class AuthorizeAccess:
                 timedelta(seconds=req['expires_in'] - 1))
         else:
             raise APITokenError(
-                'Not able to obtain access token from auth server')
+                'Not able to obtain access token from Platform auth server')
 
 
 class PlatformSession:
@@ -59,7 +59,7 @@ class PlatformSession:
 
         for value in self.__dict__.values():
             if value is None:
-                raise APISettingsError(
+                raise ValueError(
                     'Required Platform setting parameter is missing')
 
         self._validate_token()
@@ -73,7 +73,7 @@ class PlatformSession:
 
     def _validate_token(self):
         if self.token.get('expires_on') < datetime.now():
-            raise APITokenExpired(
+            raise APITokenExpiredError(
                 'Platform access token expired')
 
     def _open_session(self):
