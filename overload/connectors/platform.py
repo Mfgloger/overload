@@ -73,10 +73,9 @@ class PlatformSession:
         self.token = token
         self.timeout = (5, 5)
 
-        for value in self.__dict__.values():
-            if value is None:
-                raise ValueError(
-                    'Required Platform setting parameter is missing')
+        if base_url is None or token is None:
+            raise ValueError(
+                'Required Platform setting parameter is missing')
 
         self._validate_token()
         self._open_session()
@@ -93,6 +92,7 @@ class PlatformSession:
                 'Platform access token expired')
 
     def _open_session(self):
+        print 'attempting to open session'
         self.session = requests.Session()
         self.session.headers = {
             'user-agent': 'overload/0.1.0',
