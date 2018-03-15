@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 from datetime import datetime, timedelta
 
 from errors import APITokenError, APITokenExpiredError, \
@@ -19,6 +20,7 @@ class AuthorizeAccess:
         self.client_id = client_id
         self.client_secret = client_secret
         self.oauth_server = oauth_server
+        self.timeout = (5, 5)
 
         for value in self.__dict__.values():
             if value is None:
@@ -35,17 +37,31 @@ class AuthorizeAccess:
         headers = {'user-agent': 'overload/0.0.2'}
         auth = (self.client_id, self.client_secret)
         data = {'grant_type': 'client_credentials'}
-        req = requests.post(
-            token_url, auth=auth, headers=headers, data=data)
-        if req.status_code == requests.codes.ok:
-            req = req.json()
-            return dict(
-                id=req['id_token'],
-                expires_on=datetime.now() +
-                timedelta(seconds=req['expires_in'] - 1))
-        else:
-            raise APITokenError(
-                'Not able to obtain access token from Platform auth server')
+        try:
+            req = requests.post(
+                token_url, auth=auth, headers=headers,
+                data=data, timeout=self.timeout)
+            if req.status_code == requests.codes.ok:
+                req = req.json()
+                return dict(
+                    id=req['id_token'],
+                    expires_on=datetime.now() +
+                    timedelta(seconds=req['expires_in'] - 1))
+            else:
+                raise APITokenError(
+                    'Not able to obtain access token '
+                    'from Platform auth server')
+        except ConnectionError:
+            raise ConnectionError(
+                'not able to connect to Platform auth server')
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform auth server')
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform auth server did not send any data'
+                'in the allotted amount of time')
 
 
 class PlatformSession:
@@ -104,10 +120,15 @@ class PlatformSession:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
-        except requests.exceptions.Timeout:
-            self.close()
-            raise APITimeoutError(
-                'Platform request timed out')
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
 
     def query_bibId(self, keywords=[], source='sierra-nypl', limit=20):
         """
@@ -129,10 +150,15 @@ class PlatformSession:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response.json()
-        except requests.exceptions.Timeout:
-            self.session.close()
-            raise APITimeoutError(
-                'Platform request timed out')
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
 
     def query_createdDate(
             self, start_date, end_date, limit, source='sierra-nypl'):
@@ -155,10 +181,15 @@ class PlatformSession:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response.json()
-        except requests.exceptions.Timeout:
-            self.session.close()
-            raise APITimeoutError(
-                'Platform request timed out')
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
 
     def query_updatedDate(
             self, start_date, end_date, limit, source='sierra-nypl'):
@@ -181,10 +212,15 @@ class PlatformSession:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response.json()
-        except requests.exceptions.Timeout:
-            self.session.close()
-            raise APITimeoutError(
-                'Platform request timed out')
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
 
     def get_bibItems(self, keyword, source='sierra-nypl'):
         """
@@ -202,10 +238,15 @@ class PlatformSession:
             response = self.session.get(
                 endpoint, timeout=self.timeout)
             return response.json()
-        except requests.exceptions.Timeout:
-            self.session.close()
-            raise APITimeoutError(
-                'Platform request timed out')
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
 
     def close(self):
         self.session.close()
