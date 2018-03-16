@@ -1,13 +1,21 @@
 # constructs Z3950/SierraAPI/PlatformAPI queries for particular resource
 
 
-def status_interpreter(response):
+def test_exc():
+    raise ValueError('custom msg')
+
+def platform_response_interpreter(response=None):
     """
     iterprets request status codes results and raises appropriate msg to
     be passed to gui
+    args:
+        response response return by Platform API
+    return:
+        (status, response) tuple (str, dict)
     """
     if response is not None:
-        return (response.status_code, response.json())
+        code = response.status_code
+        return (status, response.json())
     else:
         return (None, None)
 
@@ -47,8 +55,9 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
                 pass
             else:
                 response = None
-        result = status_interpreter(response)
-        return result
+
+        status = platform_status_interpreter(response)
+        return (status, response.json())
     elif request_dst == 'SierraAPIs':
         pass
     elif request_dst == 'Z3950s':

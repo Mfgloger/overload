@@ -133,4 +133,6 @@ def identify_vendor(bib, vendor_index):
     else:
         return matching_vendors[0]
 
-# def query_matchpoint(vendor):
+
+def get_query_matchpoint(vendor, vendor_index):
+    return vendor_index[vendor]['query']

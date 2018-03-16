@@ -3,16 +3,16 @@
 from datetime import datetime
 import base64
 import shelve
+from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
 
 from bibs.bibs import VendorBibMeta, read_marc21
-from pvf.vendors import vendor_index, identify_vendor
+from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import queries
 from connectors import platform
 from setup_dirs import USER_DATA
 from connectors.platform import PlatformSession
 from connectors.errors import APITokenExpiredError
-
 
 
 def run_platform_queries(base_url, token):
@@ -91,11 +91,13 @@ def run_processing(files, system, library, api_type, api_name):
 
         rules = './rules/vendors.xml'
         vx = vendor_index(rules, system)
+        # print 'vendor_index:', vx
 
         for bib in reader:
             vendor = identify_vendor(bib, vx)
             meta = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
-            print meta.t020
+            query_matchpoints = get_query_matchpoint(vendor, vx)
+
             # on this level I should know if the bib should be requeried
             # result must be evaluated in queries module, here action on
             # the evaluation
@@ -103,13 +105,17 @@ def run_processing(files, system, library, api_type, api_name):
                 print 'sending request to Platform'
                 try:
                     result = queries.query_manager(
-                        api_type, session, meta, '020')
+                        api_type, session, meta, query_matchpoints['primary'])
                 except APITokenExpiredError:
                     # close current session and start over (silently)
                     session.close()
                     session = open_platform_session(api_type, api_name)
                     result = queries.query_manager(
                         api_type, session, meta, '020')
+                except ConnectionError:
+                    session.close()
+                    raise
+
                 print 'status: {}'.format(result[0])
                 print result[1], '\n'
             elif 'api_type' == 'Z3950s':
