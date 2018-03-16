@@ -15,7 +15,7 @@ def vendor_index(vendor_fh, library):
     """
     tree = ET.parse(vendor_fh)
     root = tree.getroot()
-    ven_index = []
+    ven_index = dict()
 
     for system in root.iter('system'):
         if system.attrib['name'] == library:
@@ -37,11 +37,10 @@ def vendor_index(vendor_fh, library):
                 for query in queries:
                     query_dict[query.attrib['type']] = query.text
 
-                # append the index
-                ven_dict[vendor.attrib['name']] = dict(dict(
+                # add to the index
+                ven_index[vendor.attrib['name']] = dict(dict(
                     identification=vids_dict),
                     query=query_dict)
-                ven_index.append(ven_dict)
 
     return ven_index
 
@@ -98,11 +97,10 @@ def identify_vendor(bib, vendor_index):
         vendor str
     """
     matching_vendors = []
-    for vendor_data in vendor_index:
+    for vendor, data in vendor_index.iteritems():
         main = []
         alternative = []
-        name = vendor_data.keys()[0]
-        identification = vendor_data[name]['identification']
+        identification = data['identification']
         for tag, conditions in identification.iteritems():
             operator = conditions['operator']
             type = conditions['type']
@@ -119,8 +117,7 @@ def identify_vendor(bib, vendor_index):
         if matches_needed > 0:
             matches_found = find_matches(bib, main)
             if matches_found == matches_needed:
-                name = vendor_data.keys()[0]
-                matching_vendors.append(name)
+                matching_vendors.append(vendor)
             else:
                 # go to alternarive method
                 # all alt conditions must be met
@@ -128,11 +125,12 @@ def identify_vendor(bib, vendor_index):
                 if matches_needed > 0:
                     matches_found = find_matches(bib, alternative)
                     if matches_found == matches_needed:
-                        name = vendor_data.keys()[0]
-                        matching_vendors.append(name)
+                        matching_vendors.append(vendor)
 
     # set to unknown if not found
     if len(matching_vendors) != 1:
         return 'UNKNOWN'
     else:
         return matching_vendors[0]
+
+# def query_matchpoint(vendor):
