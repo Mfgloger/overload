@@ -14,46 +14,31 @@ class TestPVFvendorIndex(unittest.TestCase):
         self.bpl_data = vendors.vendor_index(self.rules, 'bpl')
 
     def test_vendor_index_returns_list(self):
-        self.assertIs(type(self.nypl_data), list)
-        self.assertIs(type(self.bpl_data), list)
+        self.assertIs(type(self.nypl_data), dict)
+        self.assertIs(type(self.bpl_data), dict)
 
     def test_vendor_index_elements_are_dictionaries(self):
-        for vendor in self.nypl_data:
-            self.assertIs(type(vendor), dict)
-        for vendor in self.bpl_data:
-            self.assertIs(type(vendor), dict)
-
-    def test_vendor_index_elements_main_attrib_is_a_str(self):
-        for vendor in self.nypl_data:
-            self.assertIs(type(vendor.keys()[0]), str)
-        for vendor in self.bpl_data:
-            self.assertIs(type(vendor.keys()[0]), str)
-
-    def test_vendor_index_elements_have_single_main_attrib(self):
-        for vendor in self.nypl_data:
-            # vendor data dictionary should have single main attrib
-            with self.assertRaises(IndexError):
-                vendor.keys()[1]
-        for vendor in self.bpl_data:
-            with self.assertRaises(IndexError):
-                vendor.keys()[1]
+        for vendor, data in self.nypl_data.iteritems():
+            self.assertIs(type(vendor), str)
+            self.assertIs(type(data), dict)
+        for vendor, data in self.bpl_data.iteritems():
+            self.assertIs(type(vendor), str)
+            self.assertIs(type(data), dict)
 
     def test_vendor_index_has_correct_structure(self):
-        for data in self.nypl_data:
-            vendor = data.keys()[0]
-            self.assertIn('query', data[vendor])
-            self.assertIn('identification', data[vendor])
-            self.assertIn('primary', data[vendor]['query'])
-            for key, value in data[vendor]['identification'].iteritems():
+        for vendor, data in self.nypl_data.iteritems():
+            self.assertIn('query', data)
+            self.assertIn('identification', data)
+            self.assertIn('primary', data['query'])
+            for key, value in data['identification'].iteritems():
                 self.assertIn('operator', value)
                 self.assertIn('type', value)
                 self.assertIn('value', value)
-        for data in self.bpl_data:
-            vendor = data.keys()[0]
-            self.assertIn('query', data[vendor])
-            self.assertIn('identification', data[vendor])
-            self.assertIn('primary', data[vendor]['query'])
-            for key, value in data[vendor]['identification'].iteritems():
+        for vendor, data in self.bpl_data.iteritems():
+            self.assertIn('query', data)
+            self.assertIn('identification', data)
+            self.assertIn('primary', data['query'])
+            for key, value in data['identification'].iteritems():
                 self.assertIn('operator', value)
                 self.assertIn('type', value)
                 self.assertIn('value', value)
@@ -186,16 +171,16 @@ class TestIdentifyVendor(unittest.TestCase):
                 tag='001',
                 data='1234'
             ))
-        self.vendor_index = [
-            {'TEST VENDOR1': {
+        self.vendor_index = {
+            'TEST VENDOR1': {
                 'query': {
                     'primary': '020'},
                 'identification': {
                     '901a': {
                         'operator': 'main',
                         'type': 'standard',
-                        'value': 'VENDOR1'}}}},
-            {'TEST VENDOR2': {
+                        'value': 'VENDOR1'}}},
+            'TEST VENDOR2': {
                 'query': {
                     'primary': '020', 'secondary': '001'},
                 'identification': {
@@ -206,7 +191,7 @@ class TestIdentifyVendor(unittest.TestCase):
                     '037a': {
                         'operator': 'main',
                         'type': 'standard',
-                        'value': 'some other value'}}}}]
+                        'value': 'some other value'}}}}
 
     def test_positive_single_main_match(self):
         self.assertEqual(
