@@ -6,6 +6,7 @@ sys.path.insert(
 
 from overload import setup_dirs
 from overload.connectors.sierra_z3950 import z3950_query
+from overload.connectors.platform import AuthorizeAccess, PlatformSession
 from overload.utils import *
 from overload.bibs import bibs
 from overload.pvf import vendors
