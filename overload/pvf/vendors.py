@@ -1,5 +1,4 @@
 import xml.etree.ElementTree as ET
-# from pymarc import Field
 
 
 def vendor_index(vendor_fh, library):
@@ -7,7 +6,7 @@ def vendor_index(vendor_fh, library):
     creates library's vendor index based on rules/vendors.xml file
     the vendor index contains methods of identifying bibs to belong
     to a particuar vendor, as well as preferred Sierra query methods
-    
+
     args:
         library str (nypl or bpl)
     return:
@@ -48,7 +47,6 @@ def vendor_index(vendor_fh, library):
 def find_matches(bib, conditions):
     """
     finds matches in fields and subfieds specified in contitions
-    
     args:
         bib obj (pymarc)
         conditions list of tuples (tag, subfield, value)
