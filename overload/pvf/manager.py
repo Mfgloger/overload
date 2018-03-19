@@ -12,14 +12,32 @@ from pvf import queries
 from connectors import platform
 from setup_dirs import USER_DATA
 from connectors.platform import PlatformSession
-from connectors.errors import APITokenExpiredError
+from connectors.errors import APITokenExpiredError, APITokenError, Error
 
 
-def run_platform_queries(base_url, token):
-    pass
+def run_platform_queries(api_name, session, meta, matchpoint):
+    try:
+        result = queries.query_manager(
+            api_name, session, meta, matchpoint)
+        return result
+    except APITokenExpiredError:
+        # close current session and start over (silently)
+        session.close()
+        session = open_platform_session(api_name)
+        result = queries.query_manager(
+            api_name, session, meta, matchpoint)
+    except ConnectionError as e:
+        session.close()
+        raise Error(e)
+    except ConnectTimeout as e:
+        session.close()
+        raise Error(e)
+    except ReadTimeout as e:
+        session.close()
+        raise Error(e)
 
 
-def open_platform_session(api_type=None, api_name=None):
+def open_platform_session(api_name=None):
     """
     wrapper around platform authorization and platform session obj
     args:
@@ -32,7 +50,7 @@ def open_platform_session(api_type=None, api_name=None):
     try:
         ud = shelve.open(USER_DATA, writeback=True)
         # retrieve specified Platform authorization
-        conn_data = ud[api_type][api_name]
+        conn_data = ud['PlatformAPIs'][api_name]
         client_id = base64.b64decode(conn_data['client_id'])
         client_secret = base64.b64decode(
             conn_data['client_secret'])
@@ -56,12 +74,25 @@ def open_platform_session(api_type=None, api_name=None):
             print 'requesting token for the first time'
             auth = platform.AuthorizeAccess(
                 client_id, client_secret, auth_server)
-            token = auth.get_token()
+            try:
+                token = auth.get_token()
+            except APITokenError as e:
+                # log
+                raise Error(e)
+            except ConnectionError as e:
+                # log
+                raise Error(e)
+            except ConnectTimeout as e:
+                # log
+                raise Error(e)
+            except ReadTimeout as e:
+                # log
+                raise Error(e)
 
         # save token for reuse
         if not reusing_token:
             print 'saving token to shelf'
-            ud[api_type][api_name]['last_token'] = token
+            ud['PlatformAPIs'][api_name]['last_token'] = token
 
     except KeyError:
         raise ValueError(
@@ -79,7 +110,7 @@ def run_processing(files, system, library, api_type, api_name):
 
     # determine destination API
     if api_type == 'PlatformAPIs':
-        session = open_platform_session(api_type, api_name)
+        session = open_platform_session(api_name)
     elif api_type == 'Z3950s':
         print 'parsing Z3950 settings'
     elif api_type == 'SierraAPIs':
@@ -103,18 +134,22 @@ def run_processing(files, system, library, api_type, api_name):
             # the evaluation
             if api_type == 'PlatformAPIs':
                 print 'sending request to Platform'
-                try:
-                    result = queries.query_manager(
-                        api_type, session, meta, query_matchpoints['primary'])
-                except APITokenExpiredError:
-                    # close current session and start over (silently)
-                    session.close()
-                    session = open_platform_session(api_type, api_name)
-                    result = queries.query_manager(
-                        api_type, session, meta, '020')
-                except ConnectionError:
-                    session.close()
-                    raise
+                matchpoint = query_matchpoints['primary']
+                print 'primary matchpoint'
+                result = run_platform_queries(
+                    api_type, session, meta, matchpoint)
+
+                # query_manager returns tuple (status, response in json)
+                if result[0] == 'hit':
+                    print result[1]
+                elif result[0] == 'nohit':
+                    # requery with alternative matchpoint
+                    print 'secondary matchpoint'
+                    matchpoint = query_matchpoints['secondary']
+                    result = run_platform_queries(
+                        api_type, session, meta, matchpoint)
+                elif result[0] == 'error':
+                    raise ConnectionError('Platform server error')
 
                 print 'status: {}'.format(result[0])
                 print result[1], '\n'
