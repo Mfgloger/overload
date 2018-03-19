@@ -1,10 +1,7 @@
 # constructs Z3950/SierraAPI/PlatformAPI queries for particular resource
 
 
-def test_exc():
-    raise ValueError('custom msg')
-
-def platform_response_interpreter(response=None):
+def platform_status_interpreter(response=None):
     """
     iterprets request status codes results and raises appropriate msg to
     be passed to gui
@@ -15,9 +12,24 @@ def platform_response_interpreter(response=None):
     """
     if response is not None:
         code = response.status_code
-        return (status, response.json())
+        if code == 200:
+            status = 'hit'
+        elif code == 404:
+            status = 'nohit'
+        elif code == 405:
+            # log invalid endpoint (method)
+            status = 'error'
+        elif code == 500:
+            status = 'error'
+        else:
+            # log for examination
+            print 'Platform returned unidentified status code: {}'.format(response.status_code)
+            status = None
+            print response.text
+            print response.status_code
     else:
-        return (None, None)
+        status = None
+    return status
 
 
 def query_manager(request_dst, session, bibmeta, matchpoint):
@@ -31,33 +43,42 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
         if matchpoint == '020':
             print '020 matchpoint'
             if len(bibmeta.t020) > 0:
-                response = session.query_standardNo(keywords=bibmeta.t020)
+                print 'keywords: {}'.format(bibmeta.t020)
+                response = session.query_bibStandardNo(keywords=bibmeta.t020)
             else:
                 # do not attempt even to make a request to API
                 response = None
         elif matchpoint == '024':
             print '024 matchpoint'
             if len(bibmeta.t024) > 0:
-                response = session.query_standardNo(keywords=bibmeta.t024)
+                print 'keywords: {}'.format(bibmeta.t024)
+                response = session.query_bisStandardNo(keywords=bibmeta.t024)
             else:
                 response = None
         elif matchpoint == '945':
+            print 'sierraID matchpoint'
             if bibmeta.sierraID is not None:
+                print 'keywords: {}'.format(bibmeta.sierraID)
                 # sierraID must be passed as a list to query_bibId
                 response = session.query_bibId(keywords=[bibmeta.sierraID])
             else:
                 response = None
         elif matchpoint == '001':
+            print '001 matchpoint'
             if bibmeta.t001 is not None:
+                print 'keywords: {}'.format(bibmeta.t001)
                 # endpoint does not exist yet
                 # (must be requested from the Digital)
                 # response = session.query_standardNo(keywords=bibmeta.t001)
-                pass
+                response = None
             else:
                 response = None
 
         status = platform_status_interpreter(response)
-        return (status, response.json())
+
+        if response is not None:
+            response = response.json()
+        return (status, response)
     elif request_dst == 'SierraAPIs':
         pass
     elif request_dst == 'Z3950s':
