@@ -2,8 +2,7 @@ import requests
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 from datetime import datetime, timedelta
 
-from errors import APITokenError, APITokenExpiredError, \
-    APITimeoutError
+from errors import APITokenError, APITokenExpiredError
 
 
 class AuthorizeAccess:
@@ -44,16 +43,18 @@ class AuthorizeAccess:
             if req.status_code == requests.codes.ok:
                 req = req.json()
                 return dict(
-                    id=req['id_token'],
+                    id=req['access_token'],
                     expires_on=datetime.now() +
                     timedelta(seconds=req['expires_in'] - 1))
             else:
                 raise APITokenError(
                     'Not able to obtain access token '
-                    'from Platform auth server')
+                    'from Platform auth server. Error: {}'.format(
+                        req.json()['error']))
         except ConnectionError:
             raise ConnectionError(
-                'not able to connect to Platform auth server')
+                'not able to connect to Platform auth server, '
+                'verify auth server url')
         except ConnectTimeout:
             raise ConnectTimeout(
                 'request timed out while trying to connect '
@@ -98,7 +99,7 @@ class PlatformSession:
             'user-agent': 'overload/0.1.0',
             'Authorization': 'Bearer ' + self.token.get('id')}
 
-    def query_standardNo(self, keywords=[], source='sierra-nypl', limit=20):
+    def query_bibStandardNo(self, keywords=[], source='sierra-nypl', limit=20):
         """
         performs standar number query
         args:
@@ -106,7 +107,7 @@ class PlatformSession:
             source str
             limit int
         return:
-            results in json format
+            results
         """
         self._validate_token()
 
@@ -138,7 +139,7 @@ class PlatformSession:
             source str
             limit int
         return:
-            response in json format
+            response
         """
         self._validate_token()
         endpoint = self.base_url + '/bibs'
@@ -149,7 +150,7 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
-            return response.json()
+            return response
         except ConnectTimeout:
             raise ConnectTimeout(
                 'request timed out while trying to connect '
@@ -160,7 +161,7 @@ class PlatformSession:
                 'in the allotted amount of time'.format(
                     endpoint))
 
-    def query_createdDate(
+    def query_bibCreatedDate(
             self, start_date, end_date, limit, source='sierra-nypl'):
         """
         performs dateCreated query
@@ -169,7 +170,7 @@ class PlatformSession:
             end_date str (format: 2013-09-03T13:17:45Z)
             limit int
         return:
-            results in json format
+            results
         """
         self._validate_token()
         endpoint = self.base_url + '/bibs'
@@ -180,7 +181,7 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
-            return response.json()
+            return response
         except ConnectTimeout:
             raise ConnectTimeout(
                 'request timed out while trying to connect '
@@ -191,7 +192,7 @@ class PlatformSession:
                 'in the allotted amount of time'.format(
                     endpoint))
 
-    def query_updatedDate(
+    def query_bibUpdatedDate(
             self, start_date, end_date, limit, source='sierra-nypl'):
         """
         performs updatedCreated query
@@ -200,7 +201,7 @@ class PlatformSession:
             end_date str (format: 2013-09-03T13:17:45Z)
             limit int
         return:
-            results in json format
+            results
         """
         self._validate_token()
         endpoint = self.base_url + '/bibs'
@@ -211,7 +212,7 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, params=payload, timeout=self.timeout)
-            return response.json()
+            return response
         except ConnectTimeout:
             raise ConnectTimeout(
                 'request timed out while trying to connect '
@@ -224,12 +225,12 @@ class PlatformSession:
 
     def get_bibItems(self, keyword, source='sierra-nypl'):
         """
-        requests item data for particular id
+        requests item data for particular bib id
         args:
-            keyword str (id)
-            sources str
+            keyword str ( bib id)
+            source str
         return:
-            response in json format
+            response
         """
         self._validate_token()
         endpoint = self.base_url + '/bibs/{}/{}/items'.format(
@@ -237,7 +238,187 @@ class PlatformSession:
         try:
             response = self.session.get(
                 endpoint, timeout=self.timeout)
-            return response.json()
+            return response
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
+
+    def query_itemId(self, keywords=[], source='sierra-nypl', limit=10):
+        """
+        requests item data for particular item id
+        args:
+            keyword list (list of item ids)
+            source str
+            limit int
+        return:
+            response
+        """
+        self._validate_token()
+        endpoint = self.base_url + '/items'
+        payload = dict(
+            nyplSource=source,
+            limit=limit,
+            id=','.join(keywords))
+        try:
+            response = self.session.get(
+                endpoint, params=payload, timeout=self.timeout)
+            return response
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
+
+    def query_itemBarcode(self, keyword, source='sierra-nypl', limit=10):
+        """
+        requests item data for particular barcode
+        args:
+            keywords list (list of barcodes)
+            source str
+            limit int
+        return:
+            response
+        """
+        self._validate_token()
+        endpoint = self.base_url + '/items'
+        payload = dict(
+            nyplSource=source,
+            limit=limit,
+            barcode=keyword)
+        try:
+            response = self.session.get(
+                endpoint, params=payload, timeout=self.timeout)
+            return response
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
+
+    def query_itemBibId(self, keyword, source='sierra-nypl', limit=10):
+        """
+        requests item data for particular bib id
+        args:
+            keyword str (bib id)
+            source str
+            limit int
+        return:
+            response
+        """
+        self._validate_token()
+        endpoint = self.base_url + '/items'
+        payload = dict(
+            nyplSource=source,
+            limit=limit,
+            bibId=keyword)
+        try:
+            response = self.session.get(
+                endpoint, params=payload, timeout=self.timeout)
+            return response
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
+
+    def query_itemCreatedDate(
+            self, start_date, end_date, limit=10, source='sierra-nypl'):
+        """
+        requests items created between two dates
+        args:
+            start_date str (format: 2013-09-03T13:17:45Z)
+            end_date str (format: 2013-09-03T13:17:45Z)
+            limit int
+            source str
+        return:
+            results
+        """
+        self._validate_token()
+        endpoint = self.base_url + '/items'
+        payload = dict(
+            createdDate='[{},{}]'.format(start_date, end_date),
+            nyplSource=source,
+            limit=limit)
+        try:
+            response = self.session.get(
+                endpoint, params=payload, timeout=self.timeout)
+            return response
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
+
+    def query_itemUpdateddDate(
+            self, start_date, end_date, limit=10, source='sierra-nypl'):
+        """
+        requests items updated between two dates
+        args:
+            start_date str (format: 2013-09-03T13:17:45Z)
+            end_date str (format: 2013-09-03T13:17:45Z)
+            limit int
+            source str
+        return:
+            results
+        """
+        self._validate_token()
+        endpoint = self.base_url + '/items'
+        payload = dict(
+            updatedDate='[{},{}]'.format(start_date, end_date),
+            nyplSource=source,
+            limit=limit)
+        try:
+            response = self.session.get(
+                endpoint, params=payload, timeout=self.timeout)
+            return response
+        except ConnectTimeout:
+            raise ConnectTimeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ReadTimeout:
+            raise ReadTimeout(
+                'Platform endpoint ({}) did not send any data'
+                'in the allotted amount of time'.format(
+                    endpoint))
+
+    def get_item(self, keyword, source='sierra-nypl'):
+        """
+        requests item data for particular bib id
+        args:
+            keyword str (id)
+            sources str
+        return:
+            response
+        """
+        self._validate_token()
+        endpoint = self.base_url + '/items/{}/{}'.format(
+            source, keyword)
+        try:
+            response = self.session.get(
+                endpoint, timeout=self.timeout)
+            return response
         except ConnectTimeout:
             raise ConnectTimeout(
                 'request timed out while trying to connect '
