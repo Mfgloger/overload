@@ -3,20 +3,13 @@
 import unittest
 from datetime import datetime, timedelta
 from mock import Mock, patch
-import requests
 
 
-from context import AuthorizeAccess
+from context import AuthorizeAccess, PlatformSession
+from context import setup_dirs
 
 
-class TestAuthServer(unittest.TestCase):
-
-    def test_server_is_online(self):
-        response = requests.get('https://isso.nypl.org')
-        self.assertTrue(response.ok)
-
-
-class TestAuthorizeAccess(unittest.TestCase):
+class TestAuthorizeAccessMock(unittest.TestCase):
 
     def setUp(self):
         self.client_id = 'johndoe'
@@ -45,8 +38,8 @@ class TestAuthorizeAccess(unittest.TestCase):
         mock_post.return_value = Mock(status_code=200)
         mock_post.return_value.json.return_value = r
 
+        # self.assertIn(self.auth.get_token())
         self.assertEqual(self.auth.get_token()['id'], '123abcd')
-
 
 
 if __name__ == '__main__':
