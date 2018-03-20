@@ -162,13 +162,13 @@ class PlatformSession:
                     endpoint))
 
     def query_bibCreatedDate(
-            self, start_date, end_date, limit, source='sierra-nypl'):
+            self, start_date, end_date, source='sierra-nypl', limit=10):
         """
         performs dateCreated query
         args:
             start_date str (format: 2013-09-03T13:17:45Z)
             end_date str (format: 2013-09-03T13:17:45Z)
-            limit int
+            limit int (default 10)
         return:
             results
         """
@@ -193,13 +193,13 @@ class PlatformSession:
                     endpoint))
 
     def query_bibUpdatedDate(
-            self, start_date, end_date, limit, source='sierra-nypl'):
+            self, start_date, end_date, source='sierra-nypl', limit=10):
         """
         performs updatedCreated query
         args:
             start_date str (format: 2013-09-03T13:17:45Z)
             end_date str (format: 2013-09-03T13:17:45Z)
-            limit int
+            limit int (default 10)
         return:
             results
         """
@@ -340,13 +340,13 @@ class PlatformSession:
                     endpoint))
 
     def query_itemCreatedDate(
-            self, start_date, end_date, limit=10, source='sierra-nypl'):
+            self, start_date, end_date, source='sierra-nypl', limit=10):
         """
         requests items created between two dates
         args:
             start_date str (format: 2013-09-03T13:17:45Z)
             end_date str (format: 2013-09-03T13:17:45Z)
-            limit int
+            limit int (default 10)
             source str
         return:
             results
@@ -372,13 +372,13 @@ class PlatformSession:
                     endpoint))
 
     def query_itemUpdateddDate(
-            self, start_date, end_date, limit=10, source='sierra-nypl'):
+            self, start_date, end_date, source='sierra-nypl', limit=10):
         """
         requests items updated between two dates
         args:
             start_date str (format: 2013-09-03T13:17:45Z)
             end_date str (format: 2013-09-03T13:17:45Z)
-            limit int
+            limit int (default 10)
             source str
         return:
             results
