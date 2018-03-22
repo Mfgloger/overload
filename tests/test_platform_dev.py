@@ -31,9 +31,32 @@ class TestPlatformMethodsOnDev(unittest.TestCase):
             self.client_id, self.client_secret, self.oauth_server)
         self.token = self.auth.get_token()
         self.sess = PlatformSession(self.base_url, self.token)
+        self.sess.headers.update({'user-agent': 'overload/TESTS'})
 
     def tearDown(self):
         self.sess.close()
+
+    def test_bib_data_structure(self):
+        endpoint = self.base_url + '/bibs'
+        payload = dict(
+            nyplSource='sierra-nypl',
+            limit=1,
+            id='21310805')
+        res = self.sess.get(endpoint, params=payload)
+        self.assertEqual(res.json().keys(), [u'count', u'debugInfo', u'data', u'statusCode'])
+        self.assertEqual(res.json()['data'][0].keys(), [u'varFields', u'materialType', u'locations', u'standardNumbers', u'id', u'author', u'normAuthor', u'deletedDate', u'normTitle', u'nyplSource', u'deleted', u'createdDate', u'suppressed', u'publishYear', u'lang', u'catalogDate', u'fixedFields', u'country', u'nyplType', u'updatedDate', u'title', u'bibLevel'])
+        self.assertEqual(res.json()['data'][0]['locations'][0].keys(), [u'code', u'name'])
+        self.assertEqual(res.json()['data'][0]['varFields'][0].keys(), [u'marcTag', u'ind1', u'ind2', u'content', u'fieldTag', u'subfields'])
+        self.assertEqual(res.json()['data'][0]['varFields'][0]['subfields'][0].keys(), [u'content', u'tag'])
+
+    def test_bibItems_data_structure(self):
+        endpoint = self.base_url + '/bibs/sierra-nypl/21310805/items'
+        res = self.sess.get(endpoint)
+        self.assertEqual(res.json().keys(), [u'count', u'debugInfo', u'data', u'statusCode'])
+        self.assertEqual(res.json()['data'][0].keys(), [u'deletedDate', u'status', u'nyplSource', u'varFields', u'itemType', u'fixedFields', u'nyplType', u'deleted', u'barcode', u'bibIds', u'callNumber', u'updatedDate', u'location', u'createdDate', u'id'])
+        self.assertEqual(res.json()['data'][0]['location'].keys(), [u'code', u'name'])
+        self.assertEqual(res.json()['data'][0]['varFields'][0].keys(), [u'marcTag', u'ind1', u'ind2', u'content', u'fieldTag', u'subfields'])
+        self.assertEqual(res.json()['data'][0]['status'].keys(), [u'code', u'display', u'duedate'])
 
     def test_query_bibStandardNo(self):
         res = self.sess.query_bibStandardNo(keywords=['9781302905620'])
@@ -96,6 +119,7 @@ class TestPlatformMethodsOnDev(unittest.TestCase):
         res = self.sess.get_item(keyword='35362061')
         self.assertTrue(res.status_code in (200, 404))
         self.assertLessEqual(res.json()['count'], 1)
+
 
 if __name__ == '__main__':
     unittest.main()
