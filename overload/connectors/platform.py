@@ -116,6 +116,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def query_bibId(self, keywords=[], source='sierra-nypl', limit=20):
         """
@@ -141,6 +144,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def query_bibCreatedDate(
             self, start_date, end_date, source='sierra-nypl', limit=10):
@@ -167,6 +173,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def query_bibUpdatedDate(
             self, start_date, end_date, source='sierra-nypl', limit=10):
@@ -214,6 +223,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def query_itemId(self, keywords=[], source='sierra-nypl', limit=10):
         """
@@ -239,6 +251,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def query_itemBarcode(self, keyword, source='sierra-nypl', limit=10):
         """
@@ -264,6 +279,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def query_itemBibId(self, keyword, source='sierra-nypl', limit=10):
         """
@@ -289,6 +307,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def query_itemCreatedDate(
             self, start_date, end_date, source='sierra-nypl', limit=10):
@@ -316,6 +337,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def query_itemUpdateddDate(
             self, start_date, end_date, source='sierra-nypl', limit=10):
@@ -343,6 +367,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def get_item(self, keyword, source='sierra-nypl'):
         """
@@ -364,3 +391,6 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')

@@ -15,9 +15,9 @@ from context import setup_dirs
 class TestAuthorizeAccessLogic(unittest.TestCase):
 
     def setUp(self):
-        self.client_id = 'johndoe'
+        self.client_id = 'myid'
         self.client_secret = 'secret'
-        self.base_url = 'https://platform.org'
+        self.base_url = 'https://our_platform.org/api/v0.1'
         self.oauth_server = 'https://isso.nypl.org'
         self.auth = AuthorizeAccess(
             self.client_id, self.client_secret, self.oauth_server)
@@ -29,7 +29,7 @@ class TestAuthorizeAccessLogic(unittest.TestCase):
             'scope': 'offline_access openid api read:bib read:item'}
 
     def test_auth_class_initialization(self):
-        self.assertEquals(self.auth.client_id, 'johndoe')
+        self.assertEquals(self.auth.client_id, 'myid')
         self.assertEqual(self.auth.client_secret, 'secret')
         self.assertEqual(self.auth.oauth_server, 'https://isso.nypl.org')
 
@@ -91,29 +91,109 @@ class TestAuthorizeAccessLogic(unittest.TestCase):
         token = {'expires_on': expires_on, 'id': 'abc1234'}
         sess = PlatformSession(
             self.base_url, token)
-        self.assertIsInstance(sess.session, requests.Session)
+        sess.headers.update({'user-agent': 'overload/TESTS'})
+        self.assertIsInstance(sess, requests.Session)
         self.assertEqual(
-            sess.session.headers,
-            {'user-agent': 'overload/0.1.0',
+            sess.headers,
+            {'user-agent': 'overload/TESTS',
              'Authorization': 'Bearer ' + token.get('id')})
 
-    @patch('overload.connectors.platform.requests.session')
-    def test_query_bibStandardNo(self, session_mock):
+    @patch('overload.connectors.platform.PlatformSession.query_bibStandardNo')
+    def test_query_bibStandardNo(self, mock_query):
+        # way to verify correct methods are hijacked
+        assert mock_query is PlatformSession.query_bibStandardNo
+
         expires_on = datetime.now() + timedelta(
             seconds=5)
         token = {'expires_on': expires_on, 'id': 'abc1234'}
-        session_mock.return_value = MagicMock(get=MagicMock(return_value='bar'))
         sess = PlatformSession(
             self.base_url, token)
         keywords = ['12345']
-        payload = {
-            'nyplSource': 'sierra-nypl',
-            'limit': 1,
-            'standardNumber': '12345'}
-        self.assertEqual(sess.query_bibStandardNo(keywords, limit=1), 'bar')
-        mock_get.assert_called_with(
-            self.base_url + '/bibs',
-            payload, (5, 5))
+        limit = 1
+
+        mock_query.return_value = 'bar'
+        res = sess.query_bibStandardNo(keywords, limit=limit)
+        self.assertEqual(res, 'bar')
+        mock_query.assert_called_with(['12345'], limit=limit)
+
+        # test exceptions are raised
+        mock_query.side_effect = [Timeout, ConnectionError]
+        with self.assertRaises(Timeout):
+            sess.query_bibStandardNo(keywords)
+            sess.query_bibStandardNo(keywords)
+
+    @patch('overload.connectors.platform.PlatformSession.query_bibId')
+    def test_query_bibId(self, mock_query):
+        # way to verify correct methods are hijacked
+        assert mock_query is PlatformSession.query_bibId
+
+        expires_on = datetime.now() + timedelta(
+            seconds=5)
+        token = {'expires_on': expires_on, 'id': 'abc1234'}
+        sess = PlatformSession(
+            self.base_url, token)
+        keywords = ['12345']
+        limit = 1
+
+        mock_query.return_value = 'bar'
+        res = sess.query_bibId(keywords, limit=limit)
+        self.assertEqual(res, 'bar')
+        mock_query.assert_called_with(['12345'], limit=limit)
+
+        # test exceptions are raised
+        mock_query.side_effect = [Timeout, ConnectionError]
+        with self.assertRaises(Timeout):
+            sess.query_bibId(keywords)
+            sess.query_bibId(keywords)
+
+    @patch('overload.connectors.platform.PlatformSession.query_bibCreatedDate')
+    def test_query_bibId(self, mock_query):
+        # way to verify correct methods are hijacked
+        assert mock_query is PlatformSession.query_bibCreatedDate
+
+        expires_on = datetime.now() + timedelta(
+            seconds=5)
+        token = {'expires_on': expires_on, 'id': 'abc1234'}
+        sess = PlatformSession(
+            self.base_url, token)
+        keywords = ['12345']
+        limit = 1
+
+        mock_query.return_value = 'bar'
+        res = sess.query_bibCreatedDate(keywords, limit=limit)
+        self.assertEqual(res, 'bar')
+        mock_query.assert_called_with(['12345'], limit=limit)
+
+        # test exceptions are raised
+        mock_query.side_effect = [Timeout, ConnectionError]
+        with self.assertRaises(Timeout):
+            sess.query_bibCreatedDate(keywords)
+            sess.query_bibCreatedDate(keywords)
+
+    @patch('overload.connectors.platform.PlatformSession.query_bibUpdatedDate')
+    def test_query_bibId(self, mock_query):
+        # way to verify correct methods are hijacked
+        assert mock_query is PlatformSession.query_bibUpdatedDate
+
+        expires_on = datetime.now() + timedelta(
+            seconds=5)
+        token = {'expires_on': expires_on, 'id': 'abc1234'}
+        sess = PlatformSession(
+            self.base_url, token)
+        keywords = ['12345']
+        limit = 1
+
+        mock_query.return_value = 'bar'
+        res = sess.query_bibUpdatedDate(keywords, limit=limit)
+        self.assertEqual(res, 'bar')
+        mock_query.assert_called_with(['12345'], limit=limit)
+
+        # test exceptions are raised
+        mock_query.side_effect = [Timeout, ConnectionError]
+        with self.assertRaises(Timeout):
+            sess.query_bibUpdatedDate(keywords)
+            sess.query_bibUpdatedDate(keywords)
+
 
 if __name__ == '__main__':
     unittest.main()
