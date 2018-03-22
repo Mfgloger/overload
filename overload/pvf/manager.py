@@ -105,7 +105,7 @@ def open_platform_session(api_name=None):
     return session
 
 
-def run_processing(files, system, library, api_type, api_name):
+def run_processing(files, system, library, agent, api_type, api_name):
     # tokens and sessions are opened on this level
 
     # determine destination API
@@ -121,7 +121,7 @@ def run_processing(files, system, library, api_type, api_name):
         reader = read_marc21(file)
 
         rules = './rules/vendors.xml'
-        vx = vendor_index(rules, system)
+        vx = vendor_index(rules, system, agent)
         # print 'vendor_index:', vx
 
         for bib in reader:
