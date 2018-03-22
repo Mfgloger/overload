@@ -18,11 +18,11 @@ from gui_utils import ToolTip, BusyManager
 from validators import MARCEdit
 import overload_help
 import processes as proc
-from connectors.sierra_api import SierraSession
-from connectors.errors import APISettingsError, APICriticalError, \
-    ExceededLimitsError, APITimeoutError, UnhandledException, APITokenError
-from setup_dirs import MY_DOCS, USER_DATA, BATCH_STATS, CVAL_REP, \
+# from connectors.sierra_api import SierraSession
+from connectors.errors import UnhandledException, Error
+from setup_dirs import MY_DOCS, USER_DATA, BATCH_STATS, CVAL_REP, MVAL_REP, \
     USER_STATS
+from temp2 import test
 
 
 overload_logger = logging.getLogger('main')
@@ -167,7 +167,7 @@ class ProcessVendorFiles(tk.Frame):
         self.processBtn = ttk.Button(
             self.baseFrm,
             text='process',
-            command=self.process,
+            command=self.test,
             cursor='hand2',
             width=12)
         self.processBtn.grid(
@@ -325,6 +325,12 @@ class ProcessVendorFiles(tk.Frame):
         self.archived.set('')
         self.archivedLbl.update()
         self.progbar['value'] = 0
+
+    def test(self):
+        try:
+            test()
+        except Error as e:
+            tkMessageBox.showerror('Error', e)    
 
     def process(self):
 
@@ -494,11 +500,10 @@ class ProcessVendorFiles(tk.Frame):
                             client_id, client_secret, self.target['host'])
                     except APISettingsError as e:
                         tkMessageBox.showerror('API error', e)
-                    except APITimeoutError as e:
+                    except ConnectTimeout as e:
                         tkMessageBox.showerror('API error', e)
-                    except APITokenError as e:
-                        tkMessageBox.showerror(
-                            'API error', e)
+                    except ReadTimeout as e:
+                        tkMessageBox.showerror('API error: {}'.format(e))
                     except UnhandledException as e:
                         tkMessageBox.showerror('Unexpected error', e)
                     else:
@@ -519,14 +524,14 @@ class ProcessVendorFiles(tk.Frame):
                                         bib_counter += 1
                                         self.progbar['value'] = bib_counter
                                         self.progbar.update()
-                            except APICriticalError as e:
+                            except APISettingsError as e:
                                 tkMessageBox.showerror('API error', e)
-                            except ExceededLimitsError as e:
+                            except ConnectTimeout as e:
                                 tkMessageBox.showerror('API error', e)
-                            except APITimeoutError as e:
-                                tkMessageBox.showerror('API error', e)
+                            except ReadTimeout as e:
+                                tkMessageBox.showerror('API error: {}'.format(e))
                             except UnhandledException as e:
-                                tkMessageBox.showerror('API error', e)
+                                tkMessageBox.showerror('Unexpected error', e)
 
                 else:
                     overload_logger.error(
