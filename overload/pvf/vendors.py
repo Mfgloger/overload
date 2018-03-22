@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 
-def vendor_index(vendor_fh, library):
+def vendor_index(vendor_fh, library, agent):
     """
     creates library's vendor index based on rules/vendors.xml file
     the vendor index contains methods of identifying bibs to belong
@@ -17,7 +17,8 @@ def vendor_index(vendor_fh, library):
     ven_index = dict()
 
     for system in root.iter('system'):
-        if system.attrib['name'] == library:
+        if system.attrib['name'] == library and \
+                system.attrib['agent'] == agent:
             for vendor in system:
 
                 # parse identification methods
