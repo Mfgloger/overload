@@ -61,11 +61,16 @@ class AuthorizeAccess:
                 'to Platform auth server')
 
 
-class PlatformSession:
+class PlatformSession(requests.Session):
     """
     NYPL Platform wrapper
+    args:
+        base_url str
+        token (dict token obj {id: token_id, expires_on: datetime}
+    creates requests.Session object tailored to NYPL Platform
     """
     def __init__(self, base_url=None, token=None):
+        requests.Session.__init__(self)
         self.base_url = base_url
         self.token = token
         self.timeout = (5, 5)
@@ -74,26 +79,16 @@ class PlatformSession:
             raise ValueError(
                 'Required Platform setting parameter is missing')
 
+        self.headers = {
+            'user-agent': 'overload/0.1.0',
+            'Authorization': 'Bearer ' + self.token.get('id')}
+
         self._validate_token()
-        self._open_session()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.session.close()
 
     def _validate_token(self):
         if self.token.get('expires_on') < datetime.now():
             raise APITokenExpiredError(
                 'Platform access token expired')
-
-    def _open_session(self):
-        print 'attempting to open session'
-        self.session = requests.Session()
-        self.session.headers = {
-            'user-agent': 'overload/0.1.0',
-            'Authorization': 'Bearer ' + self.token.get('id')}
 
     def query_bibStandardNo(self, keywords=[], source='sierra-nypl', limit=20):
         """
@@ -114,7 +109,7 @@ class PlatformSession:
             limit=limit,
             standardNumber=','.join(keywords))
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -139,7 +134,7 @@ class PlatformSession:
             limit=limit,
             id=','.join(keywords))
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -165,7 +160,7 @@ class PlatformSession:
             nyplSource=source,
             limit=limit)
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -191,7 +186,7 @@ class PlatformSession:
             nyplSource=source,
             limit=limit)
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -212,7 +207,7 @@ class PlatformSession:
         endpoint = self.base_url + '/bibs/{}/{}/items'.format(
             source, keyword)
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, timeout=self.timeout)
             return response
         except Timeout:
@@ -237,7 +232,7 @@ class PlatformSession:
             limit=limit,
             id=','.join(keywords))
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -262,7 +257,7 @@ class PlatformSession:
             limit=limit,
             barcode=keyword)
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -287,7 +282,7 @@ class PlatformSession:
             limit=limit,
             bibId=keyword)
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -314,7 +309,7 @@ class PlatformSession:
             nyplSource=source,
             limit=limit)
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -341,7 +336,7 @@ class PlatformSession:
             nyplSource=source,
             limit=limit)
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, params=payload, timeout=self.timeout)
             return response
         except Timeout:
@@ -362,13 +357,10 @@ class PlatformSession:
         endpoint = self.base_url + '/items/{}/{}'.format(
             source, keyword)
         try:
-            response = self.session.get(
+            response = self.get(
                 endpoint, timeout=self.timeout)
             return response
         except Timeout:
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
-
-    def close(self):
-        self.session.close()
