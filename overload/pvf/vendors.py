@@ -21,14 +21,33 @@ def vendor_index(vendor_fh, library, agent):
                 system.attrib['agent'] == agent:
             for vendor in system:
 
-                # parse identification methods
-                vids = vendor.findall('id_marc_tag')
                 vids_dict = dict()
-                for vid in vids:
-                    vids_dict[vid.attrib['tag']] = {
-                        'operator': vid.attrib['operator'],
-                        'type': vid.attrib['type'],
-                        'value': vid.find('tag_value').text}
+                if agent == 'cat':
+                    # parse identification methods for cat bibs
+                    vids = vendor.findall('vendor_tag')
+                    for vid in vids:
+                        vids_dict[vid.attrib['tag']] = {
+                            'operator': vid.attrib['operator'],
+                            'type': vid.attrib['type'],
+                            'value': vid.text}
+
+                # load applicable templates
+                templates_dict = dict()
+                templates = vendor.findall('template')
+                for template in templates:
+                    # define bibliographic record template to be applied
+                    fields = []
+                    for field in template.findall('field'):
+                        subfields_dict = dict()
+                        for subfield in field.findall('subfield'):
+                            subfields_dict[
+                                subfield.attrib['code']] = subfield.text
+                        fields.append({
+                            'tag': field.find('tag').text,
+                            'ind1': field.find('ind1').text,
+                            'ind2': field.find('ind2').text,
+                            'subfields': subfields_dict})
+                    templates_dict[template.attrib['type']] = fields
 
                 # parse query points
                 query_dict = dict()
@@ -39,7 +58,8 @@ def vendor_index(vendor_fh, library, agent):
                 # add to the index
                 ven_index[vendor.attrib['name']] = dict(dict(
                     identification=vids_dict),
-                    query=query_dict)
+                    query=query_dict,
+                    template=templates_dict)
 
     return ven_index
 
