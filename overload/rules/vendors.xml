@@ -7,7 +7,80 @@
 <!--then enter vendor name-->
 <!--enter vendor_tag attributes: type ("standard" or "control_field" (001-009)), tag (tagsubfield, ex: 901a), and operator ("main" - multiple "main" match if all of them match, or "alternative" - multiple "alternative conditions match if all of them match")-->
 <!-- enter tag_value to be match for identificaiton-->
-<!--provide query_tag attribute type ("primary", "secondary") and marc tag number to be used for the query--> 
+<!--provide query_tag attribute type ("primary", "secondary") and marc tag number to be used for the query-->
+<!--########################################-->
+<!--bib record template:
+
+<template type = 'bib'>
+	<field>
+		<tag>949</tag>
+		<ind1></ind1>
+		<ind2></ind2>
+		<subfield code = 'a'>*b2=a;</subfield>
+	</field>
+	<field>
+		<tag>901</tag>
+		<ind1></ind1>
+		<ind2></ind2>
+		<subfield code = 'a'>tak</subfield>
+		<subfield code = 'n'>CATBL</subfield>
+	</field>
+</template>
+
+-->
+<!--#########################################-->
+<!--order record template:
+
+<template type = 'ord'>
+	<field>
+		<tag>960</tag>
+		<ind1></ind1>
+		<ind2></ind2>
+		<subfield code = 'a' desc = 'acq type'></subfield>
+		<subfield code = 'b' desc = 'claim'></subfield>
+		<subfield code = 'c' desc = 'code1'></subfield>
+		<subfield code = 'd' desc = 'code2'></subfield>
+		<subfield code = 'e' desc = 'code3'></subfield>
+		<subfield code = 'f' desc = 'code4'></subfield>
+		<subfield code = 'g' desc = 'form'></subfield>
+		<subfield code = 'h' desc = 'order note'></subfield>
+		<subfield code = 'i' desc = 'order type'></subfield>
+		<subfield code = 'j' desc = 'raction'></subfield>
+		<subfield code = 'k' desc = 'rloc'></subfield>
+		<subfield code = 'l' desc = 'bloc'></subfield>
+		<subfield code = 'm' desc = 'status'>1</subfield>
+		<subfield code = 'n' desc = 'tloc'></subfield>
+		<subfield code = 'o' desc = 'copies'></subfield>
+		<subfield code = 'p' desc = 'cdate'></subfield>
+		<subfield code = 'q' desc = 'odate'></subfield>
+		<subfield code = 'r' desc = 'rdate'></subfield>
+		<subfield code = 's' desc = 'eprice'></subfield>
+		<subfield code = 't' desc = 'location'></subfield>
+		<subfield code = 'u' desc = 'fund'></subfield>
+		<subfield code = 'v' desc = 'vendor'></subfield>
+		<subfield code = 'w' desc = 'lang'></subfield>
+		<subfield code = 'x' desc = 'country'></subfield>
+		<subfield code = 'y' desc = 'volume'></subfield>
+		<subfield code = 'z' desc = 'for curr'></subfield>
+	</field>
+	<field>
+		<tag>961</tag>
+		<ind1></ind1>
+		<ind2></ind2>
+		<subfield code = 'a' desc = 'indentity'></subfield>
+		<subfield code = 'c' desc = 'note'></subfield>
+		<subfield code = 'd' desc = 'int note'></subfield>
+		<subfield code = 'e' desc = 'old ord #'></subfield>
+		<subfield code = 'f' desc = 'selector'></subfield>
+		<subfield code = 'g' desc = 'ven addr'></subfield>
+		<subfield code = 'i' desc = 'ven title #'></subfield>
+		<subfield code = 'j' desc = 'paid note'></subfield>
+		<subfield code = 'k' desc = 'ship to'></subfield>
+		<subfield code = 'l' desc = 'requestor'></subfield>
+	</field>
+</template>
+-->
+
 <data>
 	<system name = "nypl" agent='cat'>
 		<vendor name = "BT SERIES">
@@ -20,76 +93,72 @@
 			<query_tag type = "primary">020</query_tag>
 		</vendor>
 	</system>
-	<system name = "nypl" agent='sel'>
+	<system name = "nypl" agent = 'sel'>
 		<vendor name = "BT SERIES" code = '10001'>
 			<query_tag type = "primary">020</query_tag>
 			<query_tag type = "secondary">001</query_tag>
-			<order_template>
-				<acq_type></acq_type>
-				<code1></code1>
-				<code2></code2>
-				<code3></code3>
-				<opac_display></opac_display>
-				<format></format>
-				<fund></fund>
-				<order_type></order_type>
-				<status></status>
-				<language></language>
-				<country></country>
-				<vendor_note></vendor_note>
-				<internal_note></internal_note>
-				<blanket_po></blanket_po>
-			</order_template>
+			<template type = 'bib'>
+				<field>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+				<field>
+					<tag>901</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>tak</subfield>
+					<subfield code = 'n'>CATBL</subfield>
+				</field>
+			</template>
+			<template type = 'ord'>
+				<field>
+					<tag>960</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a' desc = 'acq type'></subfield>
+					<subfield code = 'c' desc = 'code1'>-</subfield>
+					<subfield code = 'd' desc = 'code2'>c</subfield>
+					<subfield code = 'e' desc = 'code3'>d</subfield>
+					<subfield code = 'g' desc = 'form'>i</subfield>
+					<subfield code = 'i' desc = 'order type'>f</subfield>
+					<subfield code = 'm' desc = 'status'>1</subfield>
+					<subfield code = 'v' desc = 'vendor'>7064</subfield>
+					<subfield code = 'w' desc = 'lang'>eng</subfield>
+					<subfield code = 'x' desc = 'country'>xxu</subfield>
+				</field>
+				<field>
+					<tag>961</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a' desc = 'indentity'>CCD/BL</subfield>
+				</field>
+			</template>
 		</vendor>
-		<vendor name = "BT ROMANCE", code = '10002'>
+		<vendor name = "BT ROMANCE" code = '10002'>
 			<query_tag type = "primary">020</query_tag>
-			<order_template>
-				<acq_type></acq_type>
-				<code1></code1>
-				<code2></code2>
-				<code3></code3>
-				<opac_display></opac_display>
-				<format></format>
-				<fund></fund>
-				<order_type></order_type>
-				<status></status>
-				<language></language>
-				<country></country>
-				<vendor_note></vendor_note>
-				<internal_note></internal_note>
-				<blanket_po></blanket_po>
-			</order_template>
 		</vendor>
 	</system>
 	<system name = "nypl" agent='acq'>
 		<vendor name = "BT SERIES" code = '10001'>
 			<query_tag type = "primary">020</query_tag>
 			<query_tag type = "secondary">001</query_tag>
-			<order_template>
-				<acq_type></acq_type>
-				<code1></code1>
-				<code2></code2>
-				<code3></code3>
-				<opac_display></opac_display>
-				<format></format>
-				<fund></fund>
-				<order_type></order_type>
-				<status></status>
-				<language></language>
-				<country></country>
-				<vendor_note></vendor_note>
-				<internal_note></internal_note>
-				<blanket_po></blanket_po>
-			</order_template>
-			<invoice_template></invoice_template>
 		</vendor>
 	</system>
-	<system name = "bpl">
+	<system name = "bpl" agent = 'cat'>
 		<vendor name = "BT SERIES">
-			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T SERIES
-			</vendor_tag>
+			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T SERIES</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T SERIES</vendor_tag>
 			<query_tag type = "primary">020</query_tag>
+			<template type = 'bib'>
+				<field>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</template>
 		</vendor>
 		<vendor name = "BT ROMANCE">
 			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T ROMANCE</vendor_tag>
