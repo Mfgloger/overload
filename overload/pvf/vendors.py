@@ -22,7 +22,6 @@ def vendor_index(vendor_fh, library, agent):
             for vendor in system:
 
                 # parse identification methods
-                ven_dict = dict()
                 vids = vendor.findall('id_marc_tag')
                 vids_dict = dict()
                 for vid in vids:
