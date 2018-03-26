@@ -128,7 +128,7 @@ class BibMeta:
                     bib.get_fields('907')[0].value())
             elif '945' in bib:
                 self.sierraID = parse_sierra_id(
-                    bib.get_field('945')[0].value())
+                    bib.get_fields('945')[0].value())
 
         # parse branches call number
         if '099' in bib:
@@ -233,10 +233,12 @@ class InhouseBibMeta(BibMeta):
         # for nypl check also locations
         bl = False
         rl = False
+        # brief order record scenario
         if 'zzzzz' in locations:
             bl = True
         if 'xxx' in locations:
             rl = True
+        # full bib scenario
         if self.ownLibrary is None:
             if '091' in bib or '099' in bib:
                 bl = True
