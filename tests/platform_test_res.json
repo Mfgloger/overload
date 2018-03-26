@@ -1,0 +1,2297 @@
+{
+  "data": [
+    {
+      "id": "17409211",
+      "nyplSource": "sierra-nypl",
+      "nyplType": "bib",
+      "updatedDate": "2016-12-05T19:33:51-05:00",
+      "createdDate": "2008-12-23T14:52:00-05:00",
+      "deletedDate": null,
+      "deleted": false,
+      "locations": [
+        {
+          "code": "fwy",
+          "name": "Fort Washington Young Adult"
+        },
+        {
+          "code": "tvy",
+          "name": "Tottenville Young Adult"
+        }
+      ],
+      "suppressed": false,
+      "lang": {
+        "code": "eng",
+        "name": "English"
+      },
+      "title": "Harry Potter and the prisoner of Azkaban",
+      "author": "Rowling, J. K.",
+      "materialType": {
+        "code": "a",
+        "value": "BOOK/TEXT"
+      },
+      "bibLevel": {
+        "code": "m",
+        "value": "MONOGRAPH"
+      },
+      "publishYear": 1999,
+      "catalogDate": "2012-08-09",
+      "country": {
+        "code": "nyu",
+        "name": "New York (State)"
+      },
+      "normTitle": "harry potter and the prisoner of azkaban",
+      "normAuthor": "rowling j k",
+      "standardNumbers": [
+        "0439136350",
+        "9780439136358"
+      ],
+      "fixedFields": {
+        "24": {
+          "label": "Language",
+          "value": "eng",
+          "display": "English"
+        },
+        "25": {
+          "label": "Skip",
+          "value": "0",
+          "display": null
+        },
+        "26": {
+          "label": "Location",
+          "value": "multi",
+          "display": null
+        },
+        "27": {
+          "label": "COPIES",
+          "value": "3",
+          "display": null
+        },
+        "28": {
+          "label": "Cat. Date",
+          "value": "2012-08-09",
+          "display": null
+        },
+        "29": {
+          "label": "Bib Level",
+          "value": "m",
+          "display": "MONOGRAPH"
+        },
+        "30": {
+          "label": "Material Type",
+          "value": "a",
+          "display": "BOOK/TEXT"
+        },
+        "31": {
+          "label": "Bib Code 3",
+          "value": "a",
+          "display": null
+        },
+        "80": {
+          "label": "Record Type",
+          "value": "b",
+          "display": null
+        },
+        "81": {
+          "label": "Record Number",
+          "value": "17409211",
+          "display": null
+        },
+        "83": {
+          "label": "Created Date",
+          "value": "2008-12-23T14:52:00Z",
+          "display": null
+        },
+        "84": {
+          "label": "Updated Date",
+          "value": "2016-12-05T19:33:51Z",
+          "display": null
+        },
+        "85": {
+          "label": "No. of Revisions",
+          "value": "1617",
+          "display": null
+        },
+        "86": {
+          "label": "Agency",
+          "value": "1",
+          "display": null
+        },
+        "89": {
+          "label": "Country",
+          "value": "nyu",
+          "display": "New York (State)"
+        },
+        "98": {
+          "label": "PDATE",
+          "value": "2016-11-25T16:24:40Z",
+          "display": null
+        },
+        "107": {
+          "label": "MARC Type",
+          "value": " ",
+          "display": null
+        }
+      },
+      "varFields": [
+        {
+          "fieldTag": "a",
+          "marcTag": "100",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Rowling, J. K."
+            }
+          ]
+        },
+        {
+          "fieldTag": "c",
+          "marcTag": "091",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "FIC"
+            },
+            {
+              "tag": "c",
+              "content": "ROWLING"
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "600",
+          "ind1": "1",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Potter, Harry"
+            },
+            {
+              "tag": "c",
+              "content": "(Fictitious character)"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Granger, Hermione (Fictitious character)"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Weasley, Ron (Fictitious character)"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Hogwarts School of Witchcraft and Wizardry (Imaginary organization)"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Wizards"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Magic"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Schools"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "651",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "England"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "1",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Wizards"
+            },
+            {
+              "tag": "v",
+              "content": "Fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "1",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Magic"
+            },
+            {
+              "tag": "v",
+              "content": "Fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "1",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Schools"
+            },
+            {
+              "tag": "v",
+              "content": "Fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "651",
+          "ind1": " ",
+          "ind2": "1",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "England"
+            },
+            {
+              "tag": "v",
+              "content": "Fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "655",
+          "ind1": " ",
+          "ind2": "7",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Fantasy fiction"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile."
+            },
+            {
+              "tag": "2",
+              "content": "gsafd"
+            }
+          ]
+        },
+        {
+          "fieldTag": "i",
+          "marcTag": "020",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "0439136350 (hc)"
+            }
+          ]
+        },
+        {
+          "fieldTag": "i",
+          "marcTag": "020",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "9780439136358 (hc)"
+            }
+          ]
+        },
+        {
+          "fieldTag": "l",
+          "marcTag": "010",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "   99023982"
+            }
+          ]
+        },
+        {
+          "fieldTag": "l",
+          "marcTag": "035",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "(OCoLC)41266045"
+            },
+            {
+              "tag": "z",
+              "content": "(OCoLC)308560027"
+            },
+            {
+              "tag": "z",
+              "content": "(OCoLC)519740398"
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "500",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "\"Year 3\"--Spine."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "500",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Sequel to: Harry Potter and the Chamber of Secrets."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "500",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Sequel: Harry Potter and the goblet of fire."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "520",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "During his third year at Hogwarts School for Witchcraft and Wizardry, Harry Potter must confront the devious and dangerous wizard responsible for his parents' deaths."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "505",
+          "ind1": "0",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Owl Post -- Aunt Marge's Big Mistake -- The Knight Bus -- The Leaky Cauldron -- The Dementor -- Talons and Tea Leaves -- The Boggart in the Wardrobe -- Flight of the Fat Lady -- Grim Defeat -- The Marauder's Map -- The Firebolt -- The Patronus -- Gryffindor Versus Ravenclaw -- Snape's Grudge -- The Quidditch Final -- Professor Trelawney's Prediction -- Cat, Rat, and Dog -- Moony, Wormtail, Padfoot, and Prongs -- The Servant of Lord Voldemort -- The Dementor's Kiss -- Hermione's Secret -- Owl Post Again -- ."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "586",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "ALA Notable Children's Book, 2000."
+            }
+          ]
+        },
+        {
+          "fieldTag": "o",
+          "marcTag": "001",
+          "ind1": " ",
+          "ind2": " ",
+          "content": "41266045 ",
+          "subfields": null
+        },
+        {
+          "fieldTag": "p",
+          "marcTag": "260",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "New York :"
+            },
+            {
+              "tag": "b",
+              "content": "Arthur A. Levine Books,"
+            },
+            {
+              "tag": "c",
+              "content": "1999."
+            }
+          ]
+        },
+        {
+          "fieldTag": "r",
+          "marcTag": "300",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "ix, 435 p. :"
+            },
+            {
+              "tag": "b",
+              "content": "ill. ;"
+            },
+            {
+              "tag": "c",
+              "content": "24 cm."
+            }
+          ]
+        },
+        {
+          "fieldTag": "s",
+          "marcTag": "490",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Harry Potter ;"
+            },
+            {
+              "tag": "v",
+              "content": "3"
+            }
+          ]
+        },
+        {
+          "fieldTag": "s",
+          "marcTag": "800",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Rowling, J. K."
+            },
+            {
+              "tag": "t",
+              "content": "Harry Potter series ;"
+            },
+            {
+              "tag": "v",
+              "content": "3."
+            }
+          ]
+        },
+        {
+          "fieldTag": "s",
+          "marcTag": "800",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Rowling, J. K."
+            },
+            {
+              "tag": "t",
+              "content": "Year ... at Hogwarts ;"
+            },
+            {
+              "tag": "v",
+              "content": "3."
+            }
+          ]
+        },
+        {
+          "fieldTag": "s",
+          "marcTag": "830",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Harry Potter ;"
+            },
+            {
+              "tag": "v",
+              "content": "3."
+            }
+          ]
+        },
+        {
+          "fieldTag": "t",
+          "marcTag": "245",
+          "ind1": "1",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Harry Potter and the prisoner of Azkaban /"
+            },
+            {
+              "tag": "c",
+              "content": "by J.K. Rowling."
+            }
+          ]
+        },
+        {
+          "fieldTag": "v",
+          "marcTag": "995",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "1483934"
+            }
+          ]
+        },
+        {
+          "fieldTag": "v",
+          "marcTag": "995",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "2701169"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "003",
+          "ind1": " ",
+          "ind2": " ",
+          "content": "OCoLC",
+          "subfields": null
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "005",
+          "ind1": " ",
+          "ind2": " ",
+          "content": "20120731084140.9",
+          "subfields": null
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "008",
+          "ind1": " ",
+          "ind2": " ",
+          "content": "990408s1999    nyua   c      000 1 eng dcam a ",
+          "subfields": null
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "019",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "308560027"
+            },
+            {
+              "tag": "a",
+              "content": "519740398"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "040",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "DLC"
+            },
+            {
+              "tag": "c",
+              "content": "DLC"
+            },
+            {
+              "tag": "d",
+              "content": "BAKER"
+            },
+            {
+              "tag": "d",
+              "content": "GK8"
+            },
+            {
+              "tag": "d",
+              "content": "XY4"
+            },
+            {
+              "tag": "d",
+              "content": "YDXCP"
+            },
+            {
+              "tag": "d",
+              "content": "BTCTA"
+            },
+            {
+              "tag": "d",
+              "content": "LSH"
+            },
+            {
+              "tag": "d",
+              "content": "CRU"
+            },
+            {
+              "tag": "d",
+              "content": "SJE"
+            },
+            {
+              "tag": "d",
+              "content": "Z87"
+            },
+            {
+              "tag": "d",
+              "content": "SADPL "
+            },
+            {
+              "tag": "d",
+              "content": "TXBXL"
+            },
+            {
+              "tag": "d",
+              "content": "MNW"
+            },
+            {
+              "tag": "d",
+              "content": "EYP"
+            },
+            {
+              "tag": "d",
+              "content": "CTN"
+            },
+            {
+              "tag": "d",
+              "content": "TnLvILS"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "042",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "lcac"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "043",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "e-uk-en"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "049",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "IG$A"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "050",
+          "ind1": "0",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "PZ7.R79835"
+            },
+            {
+              "tag": "b",
+              "content": "Ham 1999"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "082",
+          "ind1": "0",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "[Fic]"
+            },
+            {
+              "tag": "2",
+              "content": "21"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "996",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "(OCoLC)47947275"
+            },
+            {
+              "tag": "z",
+              "content": "(OCoLC)81149323"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "908",
+          "ind1": " ",
+          "ind2": "4",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "PR6068.O94"
+            },
+            {
+              "tag": "b",
+              "content": "H27 2001"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "908",
+          "ind1": "1",
+          "ind2": "4",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "PZ7.R79835"
+            },
+            {
+              "tag": "b",
+              "content": "Ham 2001 (juv)"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "901",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "BTCLSD110408A"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "901",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "vlr"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "901",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "INGRAM120809C"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "945",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": ".o15621455"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "901",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "rbf"
+            }
+          ]
+        },
+        {
+          "fieldTag": "_",
+          "marcTag": null,
+          "ind1": null,
+          "ind2": null,
+          "content": "00000cam  2200637 a 4500",
+          "subfields": null
+        }
+      ]
+    },
+    {
+      "id": "19940853",
+      "nyplSource": "sierra-nypl",
+      "nyplType": "bib",
+      "updatedDate": "2017-08-24T17:51:52-04:00",
+      "createdDate": "2013-08-30T18:25:00-04:00",
+      "deletedDate": null,
+      "deleted": false,
+      "locations": [
+        {
+          "code": "fej",
+          "name": "58th Street Children"
+        },
+        {
+          "code": "ssj",
+          "name": "67th Street Children"
+        },
+        {
+          "code": "nsj",
+          "name": "96th Street Children"
+        },
+        {
+          "code": "huj",
+          "name": "115th Street Children"
+        },
+        {
+          "code": "alj",
+          "name": "Allerton Children"
+        },
+        {
+          "code": "bcj",
+          "name": "Bronx Library Center Children"
+        },
+        {
+          "code": "bej",
+          "name": "Belmont Children"
+        },
+        {
+          "code": "blj",
+          "name": "Bloomingdale Children"
+        },
+        {
+          "code": "btj",
+          "name": "Battery Park Children"
+        },
+        {
+          "code": "caj",
+          "name": "Terence Cardinal Cooke-Cathedral Children"
+        },
+        {
+          "code": "chj",
+          "name": "Chatham Square Children"
+        },
+        {
+          "code": "cij",
+          "name": "City Island Children"
+        },
+        {
+          "code": "clj",
+          "name": "Morningside Heights Children"
+        },
+        {
+          "code": "cpj",
+          "name": "Clason's Point Children "
+        },
+        {
+          "code": "cpjr",
+          "name": "Clason's Point Children's Reference "
+        },
+        {
+          "code": "ctj",
+          "name": "Castle Hill Children"
+        },
+        {
+          "code": "dhj",
+          "name": "Dongan Hills Children "
+        },
+        {
+          "code": "dyj",
+          "name": "Spuyten Duyvil Children"
+        },
+        {
+          "code": "eaj",
+          "name": "Eastchester Children"
+        },
+        {
+          "code": "epj",
+          "name": "Epiphany Children"
+        },
+        {
+          "code": "fwj",
+          "name": "Fort Washington Children"
+        },
+        {
+          "code": "gcj",
+          "name": "Grand Central Children"
+        },
+        {
+          "code": "gdj",
+          "name": "Grand Concourse Children"
+        },
+        {
+          "code": "gkj",
+          "name": "Great Kills Children"
+        },
+        {
+          "code": "hfj",
+          "name": "Hamilton Fish Park Children"
+        },
+        {
+          "code": "hkj",
+          "name": "Huguenot Park Children "
+        },
+        {
+          "code": "hlj",
+          "name": "Harlem Children"
+        },
+        {
+          "code": "hsj",
+          "name": "Hunt's Point Children"
+        },
+        {
+          "code": "inj",
+          "name": "Inwood Children"
+        },
+        {
+          "code": "jmj",
+          "name": "Jefferson Market Children"
+        },
+        {
+          "code": "kbj",
+          "name": "Kingsbridge Children"
+        },
+        {
+          "code": "kpj",
+          "name": "Kips Bay Children"
+        },
+        {
+          "code": "lmj",
+          "name": "New Amsterdam Children"
+        },
+        {
+          "code": "mbj",
+          "name": "Macomb's Bridge Children"
+        },
+        {
+          "code": "mej",
+          "name": "Melrose Children"
+        },
+        {
+          "code": "mhj",
+          "name": "Mott Haven Children"
+        },
+        {
+          "code": "mlj",
+          "name": "Mulberry Street Children"
+        },
+        {
+          "code": "mnj",
+          "name": "Mariner's Harbor Children"
+        },
+        {
+          "code": "moj",
+          "name": "Mosholu Children"
+        },
+        {
+          "code": "mrj",
+          "name": "Morrisania Children"
+        },
+        {
+          "code": "muj",
+          "name": "Muhlenberg Children"
+        },
+        {
+          "code": "pkj",
+          "name": "Parkchester Children"
+        },
+        {
+          "code": "prj",
+          "name": "Port Richmond Children"
+        },
+        {
+          "code": "rdj",
+          "name": "Riverdale Children"
+        },
+        {
+          "code": "rij",
+          "name": "Roosevelt Island Children"
+        },
+        {
+          "code": "rsj",
+          "name": "Riverside Children"
+        },
+        {
+          "code": "rtj",
+          "name": "Richmondtown Children"
+        },
+        {
+          "code": "sej",
+          "name": "Seward Park Children"
+        },
+        {
+          "code": "stj",
+          "name": "Stapleton Children"
+        },
+        {
+          "code": "tgj",
+          "name": "Throg's Neck Children"
+        },
+        {
+          "code": "thj",
+          "name": "Todt Hill-Westerleigh Children"
+        },
+        {
+          "code": "tsj",
+          "name": "Tompkins Square Children"
+        },
+        {
+          "code": "whj",
+          "name": "Washington Heights Children"
+        },
+        {
+          "code": "wk",
+          "name": "Wakefield"
+        },
+        {
+          "code": "wkj",
+          "name": "Wakefield Children"
+        },
+        {
+          "code": "wlj",
+          "name": "Woodlawn Heights Children"
+        },
+        {
+          "code": "yvj",
+          "name": "Yorkville Children"
+        },
+        {
+          "code": "mal",
+          "name": "SASB - Service Desk Rm 315"
+        },
+        {
+          "code": "ccj",
+          "name": "SASB - Children's Center Rm 84"
+        }
+      ],
+      "suppressed": false,
+      "lang": {
+        "code": "eng",
+        "name": "English"
+      },
+      "title": "Harry Potter and the prisoner of Azkaban",
+      "author": "Rowling, J. K.",
+      "materialType": {
+        "code": "a",
+        "value": "BOOK/TEXT"
+      },
+      "bibLevel": {
+        "code": "m",
+        "value": "MONOGRAPH"
+      },
+      "publishYear": 1999,
+      "catalogDate": "2013-10-10",
+      "country": {
+        "code": "nyu",
+        "name": "New York (State)"
+      },
+      "normTitle": "harry potter and the prisoner of azkaban",
+      "normAuthor": "rowling j k",
+      "standardNumbers": [
+        "0439136350",
+        "9780439136358"
+      ],
+      "fixedFields": {
+        "24": {
+          "label": "Language",
+          "value": "eng",
+          "display": "English"
+        },
+        "25": {
+          "label": "Skip",
+          "value": "0",
+          "display": null
+        },
+        "26": {
+          "label": "Location",
+          "value": "multi",
+          "display": null
+        },
+        "27": {
+          "label": "COPIES",
+          "value": "112",
+          "display": null
+        },
+        "28": {
+          "label": "Cat. Date",
+          "value": "2013-10-10",
+          "display": null
+        },
+        "29": {
+          "label": "Bib Level",
+          "value": "m",
+          "display": "MONOGRAPH"
+        },
+        "30": {
+          "label": "Material Type",
+          "value": "a",
+          "display": "BOOK/TEXT"
+        },
+        "31": {
+          "label": "Bib Code 3",
+          "value": "a",
+          "display": null
+        },
+        "80": {
+          "label": "Record Type",
+          "value": "b",
+          "display": null
+        },
+        "81": {
+          "label": "Record Number",
+          "value": "19940853",
+          "display": null
+        },
+        "83": {
+          "label": "Created Date",
+          "value": "2013-08-30T18:25:00Z",
+          "display": null
+        },
+        "84": {
+          "label": "Updated Date",
+          "value": "2017-08-24T17:51:52Z",
+          "display": null
+        },
+        "85": {
+          "label": "No. of Revisions",
+          "value": "2315",
+          "display": null
+        },
+        "86": {
+          "label": "Agency",
+          "value": "1",
+          "display": null
+        },
+        "89": {
+          "label": "Country",
+          "value": "nyu",
+          "display": "New York (State)"
+        },
+        "98": {
+          "label": "PDATE",
+          "value": "2017-08-24T15:08:46Z",
+          "display": null
+        },
+        "107": {
+          "label": "MARC Type",
+          "value": " ",
+          "display": null
+        }
+      },
+      "varFields": [
+        {
+          "fieldTag": "a",
+          "marcTag": "100",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Rowling, J. K."
+            }
+          ]
+        },
+        {
+          "fieldTag": "b",
+          "marcTag": "700",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "GrandPré, Mary."
+            }
+          ]
+        },
+        {
+          "fieldTag": "c",
+          "marcTag": "091",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "p",
+              "content": "J"
+            },
+            {
+              "tag": "a",
+              "content": "FIC"
+            },
+            {
+              "tag": "c",
+              "content": "ROWLING"
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "600",
+          "ind1": "1",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Potter, Harry"
+            },
+            {
+              "tag": "c",
+              "content": "(Fictitious character)"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Granger, Hermione (Fictitious character)"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Weasley, Ron (Fictitious character)"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Hogwarts School of Witchcraft and Wizardry (Imaginary organization)"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Wizards"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Magic"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Schools"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "651",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "England"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "1",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Wizards"
+            },
+            {
+              "tag": "v",
+              "content": "Fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "1",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Magic"
+            },
+            {
+              "tag": "v",
+              "content": "Fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "650",
+          "ind1": " ",
+          "ind2": "1",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Schools"
+            },
+            {
+              "tag": "v",
+              "content": "Fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "651",
+          "ind1": " ",
+          "ind2": "1",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "England"
+            },
+            {
+              "tag": "v",
+              "content": "Fiction."
+            }
+          ]
+        },
+        {
+          "fieldTag": "d",
+          "marcTag": "655",
+          "ind1": " ",
+          "ind2": "7",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Fantasy fiction"
+            },
+            {
+              "tag": "v",
+              "content": "Juvenile."
+            },
+            {
+              "tag": "2",
+              "content": "gsafd"
+            }
+          ]
+        },
+        {
+          "fieldTag": "i",
+          "marcTag": "020",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "0439136350 (hc)"
+            }
+          ]
+        },
+        {
+          "fieldTag": "i",
+          "marcTag": "020",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "9780439136358 (hc)"
+            }
+          ]
+        },
+        {
+          "fieldTag": "l",
+          "marcTag": "010",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "   99023982"
+            }
+          ]
+        },
+        {
+          "fieldTag": "l",
+          "marcTag": "035",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "(OCoLC)41266045"
+            },
+            {
+              "tag": "z",
+              "content": "(OCoLC)308560027"
+            },
+            {
+              "tag": "z",
+              "content": "(OCoLC)519740398"
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "500",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "\"Year 3\"--Spine."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "500",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Sequel to: Harry Potter and the Chamber of Secrets."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "500",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Sequel: Harry Potter and the goblet of fire."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "520",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "During his third year at Hogwarts School for Witchcraft and Wizardry, Harry Potter must confront the devious and dangerous wizard responsible for his parents' deaths."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "505",
+          "ind1": "0",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Owl Post -- Aunt Marge's Big Mistake -- The Knight Bus -- The Leaky Cauldron -- The Dementor -- Talons and Tea Leaves -- The Boggart in the Wardrobe -- Flight of the Fat Lady -- Grim Defeat -- The Marauder's Map -- The Firebolt -- The Patronus -- Gryffindor Versus Ravenclaw -- Snape's Grudge -- The Quidditch Final -- Professor Trelawney's Prediction -- Cat, Rat, and Dog -- Moony, Wormtail, Padfoot, and Prongs -- The Servant of Lord Voldemort -- The Dementor's Kiss -- Hermione's Secret -- Owl Post Again -- ."
+            }
+          ]
+        },
+        {
+          "fieldTag": "n",
+          "marcTag": "586",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "ALA Notable Children's Book, 2000."
+            }
+          ]
+        },
+        {
+          "fieldTag": "o",
+          "marcTag": "001",
+          "ind1": " ",
+          "ind2": " ",
+          "content": "41266045 ",
+          "subfields": null
+        },
+        {
+          "fieldTag": "p",
+          "marcTag": "260",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "New York :"
+            },
+            {
+              "tag": "b",
+              "content": "Arthur A. Levine Books,"
+            },
+            {
+              "tag": "c",
+              "content": "1999."
+            }
+          ]
+        },
+        {
+          "fieldTag": "q",
+          "marcTag": "852",
+          "ind1": "8",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "h",
+              "content": "JFE 03-7401"
+            }
+          ]
+        },
+        {
+          "fieldTag": "r",
+          "marcTag": "300",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "ix, 435 p. :"
+            },
+            {
+              "tag": "b",
+              "content": "ill. ;"
+            },
+            {
+              "tag": "c",
+              "content": "24 cm."
+            }
+          ]
+        },
+        {
+          "fieldTag": "s",
+          "marcTag": "490",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Harry Potter ;"
+            },
+            {
+              "tag": "v",
+              "content": "3"
+            }
+          ]
+        },
+        {
+          "fieldTag": "s",
+          "marcTag": "800",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Rowling, J. K."
+            },
+            {
+              "tag": "t",
+              "content": "Harry Potter series ;"
+            },
+            {
+              "tag": "v",
+              "content": "3."
+            }
+          ]
+        },
+        {
+          "fieldTag": "s",
+          "marcTag": "800",
+          "ind1": "1",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Rowling, J. K."
+            },
+            {
+              "tag": "t",
+              "content": "Year ... at Hogwarts ;"
+            },
+            {
+              "tag": "v",
+              "content": "3."
+            }
+          ]
+        },
+        {
+          "fieldTag": "s",
+          "marcTag": "830",
+          "ind1": " ",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Harry Potter ;"
+            },
+            {
+              "tag": "v",
+              "content": "3."
+            }
+          ]
+        },
+        {
+          "fieldTag": "t",
+          "marcTag": "245",
+          "ind1": "1",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "Harry Potter and the prisoner of Azkaban /"
+            },
+            {
+              "tag": "c",
+              "content": "by J.K. Rowling."
+            }
+          ]
+        },
+        {
+          "fieldTag": "v",
+          "marcTag": "995",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": ".b59921705"
+            },
+            {
+              "tag": "b",
+              "content": "03-28-07"
+            },
+            {
+              "tag": "c",
+              "content": "12-02-99"
+            }
+          ]
+        },
+        {
+          "fieldTag": "v",
+          "marcTag": "995",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "1433943"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "003",
+          "ind1": " ",
+          "ind2": " ",
+          "content": "OCoLC",
+          "subfields": null
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "005",
+          "ind1": " ",
+          "ind2": " ",
+          "content": "20120731084140.9",
+          "subfields": null
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "008",
+          "ind1": " ",
+          "ind2": " ",
+          "content": "990408s1999    nyua   c      000 1 eng dcam a ",
+          "subfields": null
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "019",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "308560027"
+            },
+            {
+              "tag": "a",
+              "content": "519740398"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "040",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "DLC"
+            },
+            {
+              "tag": "c",
+              "content": "DLC"
+            },
+            {
+              "tag": "d",
+              "content": "BAKER"
+            },
+            {
+              "tag": "d",
+              "content": "GK8"
+            },
+            {
+              "tag": "d",
+              "content": "XY4"
+            },
+            {
+              "tag": "d",
+              "content": "YDXCP"
+            },
+            {
+              "tag": "d",
+              "content": "BTCTA"
+            },
+            {
+              "tag": "d",
+              "content": "LSH"
+            },
+            {
+              "tag": "d",
+              "content": "CRU"
+            },
+            {
+              "tag": "d",
+              "content": "SJE"
+            },
+            {
+              "tag": "d",
+              "content": "Z87"
+            },
+            {
+              "tag": "d",
+              "content": "SADPL "
+            },
+            {
+              "tag": "d",
+              "content": "TXBXL"
+            },
+            {
+              "tag": "d",
+              "content": "MNW"
+            },
+            {
+              "tag": "d",
+              "content": "EYP"
+            },
+            {
+              "tag": "d",
+              "content": "CTN"
+            },
+            {
+              "tag": "d",
+              "content": "TnLvILS"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "042",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "lcac"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "043",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "e-uk-en"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "049",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "IG$A"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "050",
+          "ind1": "0",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "PZ7.R79835"
+            },
+            {
+              "tag": "b",
+              "content": "Ham 1999"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "082",
+          "ind1": "0",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "[Fic]"
+            },
+            {
+              "tag": "2",
+              "content": "21"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "908",
+          "ind1": "0",
+          "ind2": "0",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "PZ7.R79835"
+            },
+            {
+              "tag": "b",
+              "content": "Ham 1999"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "901",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "INGRAM131010-9"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "945",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": ".o17309906"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "901",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "INGRAM131007-30"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "945",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": ".o17196036"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "901",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "MARS"
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "969",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "DOE migration record (2011)."
+            }
+          ]
+        },
+        {
+          "fieldTag": "y",
+          "marcTag": "901",
+          "ind1": " ",
+          "ind2": " ",
+          "content": null,
+          "subfields": [
+            {
+              "tag": "a",
+              "content": "BTCLS"
+            }
+          ]
+        },
+        {
+          "fieldTag": "_",
+          "marcTag": null,
+          "ind1": null,
+          "ind2": null,
+          "content": "00000cam  2200625 a 4500",
+          "subfields": null
+        }
+      ]
+    }
+  ],
+  "count": 2,
+  "statusCode": 200,
+  "debugInfo": []
+}
