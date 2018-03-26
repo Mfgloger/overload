@@ -4,7 +4,7 @@ from pymarc import Record, Field
 from bibs import InhouseBibMeta
 
 
-def platform2pymarc_obj(data):
+def platform2pymarc_obj(data=None):
     """
     converts platform bib data into pymarc object
     args:
@@ -12,9 +12,7 @@ def platform2pymarc_obj(data):
     return:
         pymarc Record obj
     """
-    # get MARC data
-    record = Record(force_utf8=True)
-
+    record = Record(to_unicode=True, force_utf8=True)
     # parse variable fields
     varFields = data.get('varFields')
     for f in varFields:
@@ -40,7 +38,7 @@ def platform2pymarc_obj(data):
     return record
 
 
-def platform2meta(results):
+def platform2meta(results=None):
     """
     extracts meta from Platform results
     args:
@@ -48,9 +46,12 @@ def platform2meta(results):
     return:
         list of inhouse bibs meta
     """
+
     bibs = []
     data = results.get('data')
     for b in data:
+        # print b
+        # print '\n'
         # get Sierra data
         bid = b.get('id')
         locations = [x.get('code') for x in b.get('locations')]
