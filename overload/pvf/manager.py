@@ -3,7 +3,7 @@
 from datetime import datetime
 import base64
 import shelve
-from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
+from requests.exceptions import ConnectionError, Timeout
 
 
 from bibs.bibs import VendorBibMeta, read_marc21
@@ -29,10 +29,7 @@ def run_platform_queries(api_name, session, meta, matchpoint):
     except ConnectionError as e:
         session.close()
         raise Error(e)
-    except ConnectTimeout as e:
-        session.close()
-        raise Error(e)
-    except ReadTimeout as e:
+    except Timeout as e:
         session.close()
         raise Error(e)
 
@@ -82,10 +79,7 @@ def open_platform_session(api_name=None):
             except ConnectionError as e:
                 # log
                 raise Error(e)
-            except ConnectTimeout as e:
-                # log
-                raise Error(e)
-            except ReadTimeout as e:
+            except Timeout as e:
                 # log
                 raise Error(e)
 
@@ -149,7 +143,7 @@ def run_processing(files, system, library, agent, api_type, api_name):
                     result = run_platform_queries(
                         api_type, session, meta, matchpoint)
                 elif result[0] == 'error':
-                    raise ConnectionError('Platform server error')
+                    raise Error('Platform server error')
 
                 print 'status: {}'.format(result[0])
                 print result[1], '\n'
