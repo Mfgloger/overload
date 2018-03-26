@@ -1,5 +1,5 @@
-import json
 from pymarc import Record, Field
+
 
 from bibs import InhouseBibMeta
 
@@ -7,6 +7,10 @@ from bibs import InhouseBibMeta
 def platform2pymarc_obj(data):
     """
     converts platform bib data into pymarc object
+    args:
+        data in json format
+    return:
+        pymarc Record obj
     """
     # get MARC data
     record = Record(force_utf8=True)
@@ -37,6 +41,13 @@ def platform2pymarc_obj(data):
 
 
 def platform2meta(results):
+    """
+    extracts meta from Platform results
+    args:
+        results (json format)
+    return:
+        list of inhouse bibs meta
+    """
     bibs = []
     data = results.get('data')
     for b in data:
