@@ -19,7 +19,7 @@ def platform_status_interpreter(response=None):
         elif code == 405:
             # log invalid endpoint (method)
             status = 'error'
-        elif code == 500:
+        elif code >= 500:
             status = 'error'
         else:
             # log for examination

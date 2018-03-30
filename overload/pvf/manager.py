@@ -7,13 +7,14 @@ from requests.exceptions import ConnectionError, Timeout
 
 
 from bibs.bibs import VendorBibMeta, read_marc21
+from bibs.crosswalks import platform2meta
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import queries
+from analyzer import nypl_analysis, bpl_analysis
 from connectors import platform
 from setup_dirs import USER_DATA
 from connectors.platform import PlatformSession
 from connectors.errors import APITokenExpiredError, APITokenError, Error
-
 
 def run_platform_queries(api_name, session, meta, matchpoint):
     try:
@@ -120,7 +121,7 @@ def run_processing(files, system, library, agent, api_type, api_name):
 
         for bib in reader:
             vendor = identify_vendor(bib, vx)
-            meta = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
+            meta_in = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
             query_matchpoints = get_query_matchpoint(vendor, vx)
 
             # on this level I should know if the bib should be requeried
@@ -131,26 +132,34 @@ def run_processing(files, system, library, agent, api_type, api_name):
                 matchpoint = query_matchpoints['primary']
                 print 'primary matchpoint'
                 result = run_platform_queries(
-                    api_type, session, meta, matchpoint)
+                    api_type, session, meta_in, matchpoint)
 
                 # query_manager returns tuple (status, response in json)
+                meta_out = []
                 if result[0] == 'hit':
-                    print result[1]
+                    meta_out = platform2meta(result[1])
                 elif result[0] == 'nohit':
                     # requery with alternative matchpoint
                     print 'secondary matchpoint'
                     matchpoint = query_matchpoints['secondary']
                     result = run_platform_queries(
-                        api_type, session, meta, matchpoint)
+                        api_type, session, meta_in, matchpoint)
+                    if result[0] == 'hit':
+                        meta_out = platform2meta(result[1])
+                    elif result[0] == 'error':
+                        raise Error('Platform server error')
                 elif result[0] == 'error':
                     raise Error('Platform server error')
 
-                print 'status: {}'.format(result[0])
-                print result[1], '\n'
             elif 'api_type' == 'Z3950s':
                 print 'sending reuqest to Z3950'
             elif 'api_type' == 'SierraAPIs':
                 print 'sending request to SierraAPI'
+
+            if system == 'nypl':
+                nypl_analysis(library, agent, meta_in, meta_out)
+            elif system == 'bpl':
+                bpl_analysis(agent, meta_in, meta_out)
 
     # clean-up
     # close any open session if Platform or Sierra API has been used
