@@ -10,4 +10,5 @@ from overload.connectors.platform import AuthorizeAccess, PlatformSession
 from overload.utils import *
 from overload.bibs import bibs, crosswalks
 from overload.pvf import vendors
+from overload.pvf.analyzer import PVRReport, PVR_NYPLReport
 from overload.connectors import errors
