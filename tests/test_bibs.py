@@ -131,7 +131,7 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertIs(type(reader), JSONReader)
 
     def test_bibmeta_object(self):
-        meta = bibs.BibMeta(self.marc_bib, sierraID='12345678')
+        meta = bibs.BibMeta(self.marc_bib, sierraId='12345678')
         self.assertIsInstance(meta, bibs.BibMeta)
         self.assertEqual(meta.t001, '0001-test-control_field')
         self.assertIsNone(meta.t005)
@@ -139,7 +139,7 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(meta.t022, [])
         self.assertEqual(meta.t024, [])
         self.assertEqual(meta.t028, [])
-        self.assertEqual(meta.sierraID, '12345678')
+        self.assertEqual(meta.sierraId, '12345678')
         self.assertIsNone(meta.bCallNumber)
         self.assertEqual(meta.rCallNumber, [])
 

@@ -50,12 +50,11 @@ def platform2meta(results=None):
     bibs = []
     data = results.get('data')
     for b in data:
-        # print b
-        # print '\n'
         # get Sierra data
         bid = b.get('id')
         locations = [x.get('code') for x in b.get('locations')]
         bib = platform2pymarc_obj(b)
-        meta = InhouseBibMeta(bib, sierraID=bid, locations=locations)
+        # parse marc data
+        meta = InhouseBibMeta(bib, sierraId=bid, locations=locations)
         bibs.append(meta)
     return bibs

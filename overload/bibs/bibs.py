@@ -64,9 +64,9 @@ class BibMeta:
     creates a general record meta object
     args:
         bib obj (pymarc)
-        sierraID str
+        sierraId str
     """
-    def __init__(self, bib, sierraID=None):
+    def __init__(self, bib, sierraId=None):
         self.t001 = None
         self.t003 = None
         self.t005 = None
@@ -76,7 +76,7 @@ class BibMeta:
         self.t028 = []
         self.t901 = []
         self.t947 = []
-        self.sierraID = sierraID
+        self.sierraId = sierraId
         self.bCallNumber = None
         self.rCallNumber = []
 
@@ -122,12 +122,12 @@ class BibMeta:
             self.t947.append(field.value())
 
         # parse Sierra number
-        if self.sierraID is None:
+        if self.sierraId is None:
             if '907' in bib:
-                self.sierraID = parse_sierra_id(
+                self.sierraId = parse_sierra_id(
                     bib.get_fields('907')[0].value())
             elif '945' in bib:
-                self.sierraID = parse_sierra_id(
+                self.sierraId = parse_sierra_id(
                     bib.get_fields('945')[0].value())
 
         # parse branches call number
@@ -145,7 +145,7 @@ class BibMeta:
 
     def __repr__(self):
         return "<BibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, 024:{}, " \
-            "028:{}, 901:{}, 947:{}, sierraID:{}, " \
+            "028:{}, 901:{}, 947:{}, sierraId:{}, " \
             "bCallNumber:{}, rCallNumber:{})>".format(
                 self.t001,
                 self.t003,
@@ -156,7 +156,7 @@ class BibMeta:
                 self.t028,
                 self.t901,
                 self.t947,
-                self.sierraID,
+                self.sierraId,
                 self.bCallNumber,
                 self.rCallNumber)
 
@@ -178,7 +178,7 @@ class VendorBibMeta(BibMeta):
     def __repr__(self):
         return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
             "024:{}, 028:{}, 901:{}, 947:{}, " \
-            "sierraID:{}, bCallNumber:{}, rCallNumber:{}, " \
+            "sierraId:{}, bCallNumber:{}, rCallNumber:{}, " \
             "vendor:{}, dstLibrary:{}, action:{})>".format(
                 self.t001,
                 self.t003,
@@ -189,7 +189,7 @@ class VendorBibMeta(BibMeta):
                 self.t028,
                 self.t901,
                 self.t947,
-                self.sierraID,
+                self.sierraId,
                 self.bCallNumber,
                 self.rCallNumber,
                 self.vendor,
@@ -202,13 +202,13 @@ class InhouseBibMeta(BibMeta):
     Implements inhouse specific bib metadata
     args:
         bib obj (pymarc)
-        sierraID str
+        sierraId str
         location list
     """
 
-    def __init__(self, bib, sierraID=None, locations=[]):
+    def __init__(self, bib, sierraId=None, locations=[]):
         BibMeta.__init__(self, bib)
-        self.sierraID = sierraID
+        self.sierraId = sierraId
         self.catSource = 'vendor'
         self.ownLibrary = None
 
@@ -258,7 +258,7 @@ class InhouseBibMeta(BibMeta):
     def __repr__(self):
         return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
             "024:{}, 028:{}, 901:{}, 947:{}, " \
-            "sierraID:{}, bCallNumber:{}, rCallNumber:{}, " \
+            "sierraId:{}, bCallNumber:{}, rCallNumber:{}, " \
             "catSource:{}, ownLibrary:{})>".format(
                 self.t001,
                 self.t003,
@@ -269,7 +269,7 @@ class InhouseBibMeta(BibMeta):
                 self.t028,
                 self.t901,
                 self.t947,
-                self.sierraID,
+                self.sierraId,
                 self.bCallNumber,
                 self.rCallNumber,
                 self.catSource,
