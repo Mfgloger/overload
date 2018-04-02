@@ -98,6 +98,9 @@ class PVR_NYPLReport(PVRReport):
     def __init__(self, library, agent, meta_vendor, meta_inhouse):
         PVRReport.__init__(self, agent, meta_vendor, meta_inhouse)
         self.library = library
+        self._matched = []
+        self.mixed = []
+        self.other = []
 
         self._group_by_library()
 
@@ -109,18 +112,15 @@ class PVR_NYPLReport(PVRReport):
             self._acquisition_workflow()
 
     def _group_by_library(self):
-        self.matched = []
-        self.mixed = []
-        self.other = []
 
         for meta in self._meta_inhouse:
             if self._meta_vendor.dstLibrary == self.library:
                 # correct library
                 self.matched.append(meta)
             elif meta.ownLibrary == 'mixed':
-                self.mixed.append(meta)
+                self.mixed.append(meta.sierraId)
             else:
-                self.other.append(meta)
+                self.other.append(meta.sierraId)
 
     def _cataloging_workflow(self):
         print 'nypl cat activated'
@@ -137,7 +137,7 @@ class PVR_NYPLReport(PVRReport):
             'vendor': self.vendor,
             'updated_by_vendor': self.updated_by_vendor,
             'callNo_match': self.callNo_match,
-            'inhouse_callNos': ','.join(self.inhouse_callNos),
+            'inhouse_callNo_matched': self.inhouse_callNo_matched,
             'inhouse_dups': ','.join(self.inhouse_dups),
             'target_sierraId': self.target_sierraId,
             'mixed': ','.join(self.mixed),
