@@ -64,31 +64,6 @@ class PVRReport:
             match = True
         return match
 
-    def to_dict(self):
-        return {
-            'resource_id': self.vendor_resource_id,
-            'vendor': self.vendor,
-            'updated_by_vendor': self.updated_by_vendor,
-            'callNo_match': self.callNo_match,
-            'inhouse_callNo_matched': self.inhouse_callNo_matched,
-            'inhouse_dups': ','.join(self.inhouse_dups),
-            'target_sierraId': self.target_sierraId,
-            'action': self.action}
-
-    def __repr__(self):
-        return "<PVF Report(vendor_resource_id={}, vendor={}, " \
-            "callNo_match={}, inhouse_callNo_matched={}, " \
-            "updated_by_vendor={}, " \
-            "inhouse_dups={}, target_sierraId={}, action={})>".format(
-                self.vendor_resource_id,
-                self.vendor,
-                self.callNo_match,
-                self.inhouse_callNo_matched,
-                self.updated_by_vendor,
-                self.inhouse_dups,
-                self.target_sierraId,
-                self.action)
-
 
 class PVR_NYPLReport(PVRReport):
     """
@@ -96,7 +71,7 @@ class PVR_NYPLReport(PVRReport):
     to retrieved from the catalog existing matching bibs
     """
     def __init__(self, library, agent, meta_vendor, meta_inhouse):
-        PVRReport.__init__(self, agent, meta_vendor, meta_inhouse)
+        PVRReport.__init__(self, meta_vendor, meta_inhouse)
         self.library = library
         self._matched = []
         self.mixed = []
@@ -116,7 +91,7 @@ class PVR_NYPLReport(PVRReport):
         for meta in self._meta_inhouse:
             if self._meta_vendor.dstLibrary == self.library:
                 # correct library
-                self.matched.append(meta)
+                self._matched.append(meta)
             elif meta.ownLibrary == 'mixed':
                 self.mixed.append(meta.sierraId)
             else:

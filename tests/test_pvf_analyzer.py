@@ -74,30 +74,21 @@ class Test_PVRReport(unittest.TestCase):
         self.inhouse_meta2 = MagicMock()
         self.inhouse_meta2.configure_mock(**attrs3)
 
-    def test_to_dict(self):
-        keys = ['inhouse_dups', 'target_sierraId', 'vendor',
-                'resource_id', 'action', 'inhouse_callNo_matched',
-                'callNo_match', 'updated_by_vendor']
-        report = PVRReport(
-            self.vendor_meta, [self.inhouse_meta1, self.inhouse_meta2])
-        self.assertEqual(report.to_dict().keys(), keys)
-        print report.to_dict()
-
     def test_determine_resource_id(self):
         # if control field
         report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.to_dict()['resource_id'], 'bl41266045')
+        self.assertEqual(report.vendor_resource_id, 'bl41266045')
 
         # if no control field
         self.vendor_meta.t001 = None
         report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.to_dict()['resource_id'], '0439136350')
+        self.assertEqual(report.vendor_resource_id, '0439136350')
 
         # if only 024 present
         self.vendor_meta.t020 = []
         self.vendor_meta.t024 = ['12345']
         report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.to_dict()['resource_id'], '12345')
+        self.assertEqual(report.vendor_resource_id, '12345')
 
     def test_determine_record_updated(self):
         # vendor bib not updated - same date in 005
@@ -227,13 +218,13 @@ class TestNYPL_PVRReport(unittest.TestCase):
         self.inhouse_meta2 = MagicMock()
         self.inhouse_meta2.configure_mock(**attrs3)
 
-    # @patch('overload.bibs.bibs.VendorBibMeta')
-    # def test_to_dict(self):
-    #     # assert mock_vendor_meta is bibs.VendorBibMeta
-
-    #     report = PVR_NYPLReport(
-    #         'branches', 'cat', self.vendor_meta, [self.inhouse_meta1, self.inhouse_meta2])
-    #     print report.to_dict()
+    def test_to_dict(self):
+        keys = ['inhouse_dups', 'target_sierraId', 'other', 'vendor', 'action', 'resource_id', 'mixed', 'inhouse_callNo_matched', 'callNo_match', 'updated_by_vendor']
+        report = PVR_NYPLReport(
+            'branches', 'cat',
+            self.vendor_meta, [self.inhouse_meta1, self.inhouse_meta2])
+        self.assertEqual(report.to_dict().keys(), keys)
+        # print report.to_dict().keys()
 
 if __name__ == '__main__':
     unittest.main()
