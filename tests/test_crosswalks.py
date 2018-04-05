@@ -131,7 +131,7 @@ class TestPlatform2Meta(unittest.TestCase):
     def test_correct_data(self):
         m1 = crosswalks.platform2meta(self.results)[0]
         self.assertEqual(
-            m1.sierraID, '17409211')
+            m1.sierraId, '17409211')
         self.assertEqual(
             m1.catSource, 'vendor')
         self.assertEqual(
