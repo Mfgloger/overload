@@ -173,13 +173,12 @@ class VendorBibMeta(BibMeta):
         BibMeta.__init__(self, bib)
         self.vendor = vendor
         self.dstLibrary = dstLibrary
-        self.action = 'attach'
 
     def __repr__(self):
         return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
             "024:{}, 028:{}, 901:{}, 947:{}, " \
             "sierraId:{}, bCallNumber:{}, rCallNumber:{}, " \
-            "vendor:{}, dstLibrary:{}, action:{})>".format(
+            "vendor:{}, dstLibrary:{})>".format(
                 self.t001,
                 self.t003,
                 self.t005,
@@ -193,8 +192,7 @@ class VendorBibMeta(BibMeta):
                 self.bCallNumber,
                 self.rCallNumber,
                 self.vendor,
-                self.dstLibrary,
-                self.action)
+                self.dstLibrary)
 
 
 class InhouseBibMeta(BibMeta):
