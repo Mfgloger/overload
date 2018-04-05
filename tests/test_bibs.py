@@ -156,7 +156,6 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertIsNone(meta.bCallNumber)
         self.assertEqual(meta.rCallNumber, [])
         self.assertEqual(meta.vendor, 'Amalivre')
-        self.assertEqual(meta.action, 'attach')
         self.assertEqual(meta.dstLibrary, 'rl')
 
 
