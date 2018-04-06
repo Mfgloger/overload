@@ -10,7 +10,7 @@ from bibs.bibs import VendorBibMeta, read_marc21
 from bibs.crosswalks import platform2meta
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import queries
-from analyzer import nypl_analysis, bpl_analysis
+from analyzer import PVRReport, PVR_NYPLReport
 from connectors import platform
 from setup_dirs import USER_DATA
 from connectors.platform import PlatformSession
@@ -120,7 +120,7 @@ def run_processing(files, system, library, agent, api_type, api_name):
         # print 'vendor_index:', vx
 
         for bib in reader:
-            vendor = identify_vendor(bib, vx)
+            vendor = identify_vendor(bib, vx)  # in SEL or ACQ scenario vendor provided via GUI
             meta_in = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
             query_matchpoints = get_query_matchpoint(vendor, vx)
 

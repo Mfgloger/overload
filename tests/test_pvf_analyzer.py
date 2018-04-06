@@ -248,6 +248,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             self.report.other[0], '01234569')
 
     def test_to_dict(self):
+<<<<<<< HEAD
         self.assertEqual(
             self.report.to_dict().keys(), ['inhouse_dups', 'target_sierraId', 'other', 'vendor', 'action', 'resource_id', 'mixed', 'target_callNo', 'callNo_match', 'updated_by_vendor'])
 
@@ -530,6 +531,14 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.target_callNo, 'FIC ROWLING')
         self.assertEqual(
             report.inhouse_dups, ['01234567', '01234568'])
+=======
+        keys = ['inhouse_dups', 'target_sierraId', 'other', 'vendor', 'action', 'resource_id', 'mixed', 'inhouse_callNo_matched', 'callNo_match', 'updated_by_vendor']
+        report = PVR_NYPLReport(
+            'branches', 'cat',
+            self.vendor_meta, [self.inhouse_meta1, self.inhouse_meta2])
+        self.assertEqual(report.to_dict().keys(), keys)
+        # print report.to_dict().keys()
+>>>>>>> e907b588f207b8ee11e117b0af3b59ba0c63ecce
 
 if __name__ == '__main__':
     unittest.main()
