@@ -222,10 +222,11 @@ class InhouseBibMeta(BibMeta):
                 if '901' in bib:
                     fields = bib.get_fields('901')
                     for field in fields:
-                        subfield = field['b'][0]
-                        if 'CAT' in subfield:
-                            self.catSource = 'inhouse'
-                            break
+                        if 'b' in field:
+                            subfield = field['b'][0]
+                            if 'CAT' in subfield:
+                                self.catSource = 'inhouse'
+                                break
 
         # owning library
         # for nypl check also locations
