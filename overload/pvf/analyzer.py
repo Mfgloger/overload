@@ -176,7 +176,31 @@ class PVR_NYPLReport(PVRReport):
             self.inhouse_dups = [meta.sierraId for meta in self._matched]
 
     def _selection_workflow(self):
-        pass
+        # default action = 'insert'
+        n = len(self._matched)
+        if n > 0:
+            c = 0
+            for meta in self._matched:
+                c += 1
+                if meta.bCallNumber is not None or \
+                        len(meta.rCallNumber) > 0:
+                    # full bib situation
+                    self.action = 'attach'
+                    self.target_sierraId = meta.sierraId
+
+                    # determine Sierra target call number
+                    if self._meta_vendor.dstLibrary == 'branches':
+                        self.target_callNo = meta.bCallNumber
+                    elif self._meta_vendor.dstLibrary == 'research':
+                        self.target_callNo = ','.join(meta.rCallNumber)
+                else:
+                    # brief record situation
+                    if c == n:
+                        # no other bibs to consider
+                        self.action = 'attach'
+                        self.target_sierraId = meta.sierraId
+        if n > 1:
+            self.inhouse_dups = [meta.sierraId for meta in self._matched]
 
     def _acquisition_workflow(self):
         pass
