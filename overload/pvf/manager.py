@@ -10,7 +10,7 @@ from bibs.bibs import VendorBibMeta, read_marc21
 from bibs.crosswalks import platform2meta
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import queries
-from analyzer import PVRReport, PVR_NYPLReport
+from analyzer import PVR_NYPLReport
 from connectors import platform
 from setup_dirs import USER_DATA
 from connectors.platform import PlatformSession
@@ -157,7 +157,7 @@ def run_processing(files, system, library, agent, api_type, api_name):
                 print 'sending request to SierraAPI'
 
             if system == 'nypl':
-                nypl_analysis(library, agent, meta_in, meta_out)
+                print PVR_NYPLReport(agent, meta_in, meta_out)
             elif system == 'bpl':
                 bpl_analysis(agent, meta_in, meta_out)
 
