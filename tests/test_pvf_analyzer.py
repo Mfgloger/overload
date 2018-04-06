@@ -1025,5 +1025,453 @@ class TestPVR_NYPLReport(unittest.TestCase):
         self.assertEqual(
             report.inhouse_dups, [])
 
+    def test_sel_scenario1(self):
+        attrs1 = dict(
+            t001=None,
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='INGRAM',
+            dstLibrary='branches')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+
+        report = PVR_NYPLReport(
+            'sel', vendor_meta, [])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertIsNone(
+            report.target_sierraId)
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, [])
+        self.assertEqual(
+            report.vendor, 'INGRAM')
+        self.assertFalse(
+            report.callNo_match)
+        self.assertIsNone(
+            report.vendor_callNo)
+        self.assertFalse(
+            report.updated_by_vendor)
+        self.assertIsNone(
+            report.target_callNo)
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_sel_scenario2(self):
+        attrs1 = dict(
+            t001=None,
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='INGRAM',
+            dstLibrary='branches')
+        attrs2 = dict(
+            t001=None,
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=[],
+            catSource='vendor',
+            ownLibrary='branches')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+
+        report = PVR_NYPLReport(
+            'sel', vendor_meta, [inhouse_meta1])
+        self.assertEqual(
+            report.action, 'attach')
+        self.assertEquals(
+            report.target_sierraId, '000001')
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, [])
+        self.assertEqual(
+            report.vendor, 'INGRAM')
+        self.assertFalse(
+            report.callNo_match)
+        self.assertIsNone(
+            report.vendor_callNo)
+        self.assertFalse(
+            report.updated_by_vendor)
+        self.assertIsNone(
+            report.target_callNo)
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_sel_scenario3(self):
+        attrs1 = dict(
+            t001=None,
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='INGRAM',
+            dstLibrary='branches')
+        attrs2 = dict(
+            t001=None,
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=[],
+            catSource='vendor',
+            ownLibrary='branches')
+        attrs3 = dict(
+            t001=None,
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000002',
+            bCallNumber=None,
+            rCallNumber=[],
+            catSource='vendor',
+            ownLibrary='research')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+        inhouse_meta2 = MagicMock()
+        inhouse_meta2.configure_mock(**attrs3)
+
+        report = PVR_NYPLReport(
+            'sel', vendor_meta, [inhouse_meta1, inhouse_meta2])
+        self.assertEqual(
+            report.action, 'attach')
+        self.assertEquals(
+            report.target_sierraId, '000001')
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, ['000002'])
+        self.assertEqual(
+            report.vendor, 'INGRAM')
+        self.assertFalse(
+            report.callNo_match)
+        self.assertIsNone(
+            report.vendor_callNo)
+        self.assertFalse(
+            report.updated_by_vendor)
+        self.assertIsNone(
+            report.target_callNo)
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_sel_scenario4(self):
+        attrs1 = dict(
+            t001='wlo001',
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='Sentrum',
+            dstLibrary='branches')
+        attrs2 = dict(
+            t001='on001',
+            t003='OCoLC',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=['JEF 001'],
+            catSource='inhouse',
+            ownLibrary='research')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+
+        report = PVR_NYPLReport(
+            'sel', vendor_meta, [inhouse_meta1])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertIsNone(
+            report.target_sierraId)
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, ['000001'])
+        self.assertEqual(
+            report.vendor, 'Sentrum')
+        self.assertFalse(
+            report.callNo_match)
+        self.assertIsNone(
+            report.vendor_callNo)
+        self.assertFalse(
+            report.updated_by_vendor)
+        self.assertIsNone(
+            report.target_callNo)
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_sel_scenario7(self):
+        attrs1 = dict(
+            t001='MWT001',
+            t003=None,
+            t005=None,
+            t020=[],
+            t022=['0439136350', '9780439136358'],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='MWT',
+            dstLibrary='branches')
+        attrs2 = dict(
+            t001='on001',
+            t003='OCoLC',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=[],
+            t022=['0439136350', '9780439136358'],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber='DVD M',
+            rCallNumber=[],
+            catSource='vendor',
+            ownLibrary='branches')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+
+        report = PVR_NYPLReport(
+            'sel', vendor_meta, [inhouse_meta1])
+        self.assertEqual(
+            report.action, 'attach')
+        self.assertEqual(
+            report.target_sierraId, '000001')
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, [])
+        self.assertEqual(
+            report.vendor, 'MWT')
+        self.assertFalse(
+            report.callNo_match)
+        self.assertIsNone(
+            report.vendor_callNo)
+        self.assertFalse(
+            report.updated_by_vendor)
+        self.assertEqual(
+            report.target_callNo, 'DVD M')
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_sel_scenario8(self):
+        attrs1 = dict(
+            t001='MWT001',
+            t003=None,
+            t005=None,
+            t020=[],
+            t022=['0439136350', '9780439136358'],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=['JER DVD'],
+            vendor='MWT',
+            dstLibrary='research')
+        attrs2 = dict(
+            t001=None,
+            t003=None,
+            t005=None,
+            t020=[],
+            t022=['0439136350', '9780439136358'],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=[],
+            catSource='vendor',
+            ownLibrary='branches')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+
+        report = PVR_NYPLReport(
+            'sel', vendor_meta, [inhouse_meta1])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertIsNone(
+            report.target_sierraId)
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, ['000001'])
+        self.assertEqual(
+            report.vendor, 'MWT')
+        self.assertFalse(
+            report.callNo_match)
+        self.assertEqual(
+            report.vendor_callNo, 'JER DVD')
+        self.assertFalse(
+            report.updated_by_vendor)
+        self.assertIsNone(
+            report.target_callNo)
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_sel_scenario9(self):
+        attrs1 = dict(
+            t001='MWT001',
+            t003=None,
+            t005=None,
+            t020=[],
+            t022=['0439136350', '9780439136358'],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=['JER DVD'],
+            vendor='MWT',
+            dstLibrary='research')
+        attrs2 = dict(
+            t001='oc0001',
+            t003='MWT',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=[],
+            t022=['0439136350', '9780439136358'],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber='DVD M',
+            rCallNumber=[],
+            catSource='vendor',
+            ownLibrary='branches')
+
+        attrs3 = dict(
+            t001='oc0002',
+            t003='MWT',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=[],
+            t022=['0439136350', '9780439136358'],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000002',
+            bCallNumber=None,
+            rCallNumber=['JER DVD'],
+            catSource='vendor',
+            ownLibrary='research')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+        inhouse_meta2 = MagicMock()
+        inhouse_meta2.configure_mock(**attrs3)
+
+        report = PVR_NYPLReport(
+            'sel', vendor_meta, [inhouse_meta1, inhouse_meta2])
+        self.assertEqual(
+            report.action, 'attach')
+        self.assertEqual(
+            report.target_sierraId, '000002')
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, ['000001'])
+        self.assertEqual(
+            report.vendor, 'MWT')
+        self.assertFalse(
+            report.callNo_match)
+        self.assertEqual(
+            report.vendor_callNo, 'JER DVD')
+        self.assertFalse(
+            report.updated_by_vendor)
+        self.assertEqual(
+            report.target_callNo, 'JER DVD')
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+
+
 if __name__ == '__main__':
     unittest.main()
