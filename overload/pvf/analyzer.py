@@ -212,6 +212,7 @@ class PVR_NYPLReport(PVRReport):
             'updated_by_vendor': self.updated_by_vendor,
             'callNo_match': self.callNo_match,
             'target_callNo': self.target_callNo,
+            'vendor_callNo': self.vendor_callNo,
             'inhouse_dups': ','.join(self.inhouse_dups),
             'target_sierraId': self.target_sierraId,
             'mixed': ','.join(self.mixed),
@@ -220,13 +221,15 @@ class PVR_NYPLReport(PVRReport):
 
     def __repr__(self):
         return "<PVF Report(vendor_resource_id={}, vendor={}, " \
-            "callNo_match={}, target_callNo={}, updated_by_vendor={}, " \
+            "callNo_match={}, target_callNo={}, vendor_callNo={}, " \
+            "updated_by_vendor={}, " \
             "inhouse_dups={}, target_sierraId={}, mixed={}, "\
             "other={}, action={})>".format(
                 self.vendor_resource_id,
                 self.vendor,
                 self.callNo_match,
                 self.target_callNo,
+                self.vendor_callNo,
                 self.updated_by_vendor,
                 self.inhouse_dups,
                 self.target_sierraId,

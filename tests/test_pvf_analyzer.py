@@ -284,7 +284,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
 
     def test_to_dict(self):
         self.assertEqual(
-            self.report.to_dict().keys(), ['inhouse_dups', 'target_sierraId', 'other', 'vendor', 'action', 'resource_id', 'mixed', 'target_callNo', 'callNo_match', 'updated_by_vendor'])
+            self.report.to_dict().keys(), ['inhouse_dups', 'vendor', 'resource_id', 'updated_by_vendor', 'target_sierraId', 'mixed', 'target_callNo', 'vendor_callNo', 'other', 'callNo_match', 'action'])
 
     def test_cat_scenario1(self):
         attrs1 = dict(
