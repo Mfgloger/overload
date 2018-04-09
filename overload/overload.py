@@ -1816,8 +1816,6 @@ if __name__ == "__main__":
     if not os.path.isdir(TEMP_DIR):
         os.mkdir(TEMP_DIR)
 
-    if not os.path.isdir(SUMMARIES_DIR):
-        os.mkdir(SUMMARIES_DIR)
     p = re.compile(r'.*\\Users\\(.*)\\AppData.*')
     m = p.search(APP_DIR)
     if m:
