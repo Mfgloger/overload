@@ -3,6 +3,7 @@
 from datetime import datetime
 import base64
 import shelve
+import pandas as pd
 from requests.exceptions import ConnectionError, Timeout
 
 
@@ -12,9 +13,11 @@ from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import queries
 from analyzer import PVR_NYPLReport
 from connectors import platform
-from setup_dirs import USER_DATA
+from setup_dirs import USER_DATA, BATCH_STATS, BATCH_META
 from connectors.platform import PlatformSession
 from connectors.errors import APITokenExpiredError, APITokenError, Error
+from datastore import session_scope
+
 
 def run_platform_queries(api_name, session, meta, matchpoint):
     try:
@@ -111,7 +114,20 @@ def run_processing(files, system, library, agent, api_type, api_name):
     elif api_type == 'SierraAPIs':
         print 'parsing SierraAPI settings'
 
+    # clean-up batch metadata & stats
+    batch = shelve.open(BATCH_META, writeback=True)
+    batch.clear()
+    batch['timestamp'] = datetime.now().strftime('%Y%M%d%H%M.%f')
+    batch['system'] = system
+    batch['library'] = library
+    batch['agent'] = agent
+    batch.close()
+
+    stats = shelve.open(BATCH_STATS, writeback=True)
+    stats.clear()
+
     # run queries and results analysis for each bib in each file
+    n = 0
     for file in files:
         reader = read_marc21(file)
 
@@ -120,6 +136,7 @@ def run_processing(files, system, library, agent, api_type, api_name):
         # print 'vendor_index:', vx
 
         for bib in reader:
+            n += 1
             vendor = identify_vendor(bib, vx)  # in SEL or ACQ scenario vendor provided via GUI
             meta_in = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
             query_matchpoints = get_query_matchpoint(vendor, vx)
@@ -157,12 +174,44 @@ def run_processing(files, system, library, agent, api_type, api_name):
                 print 'sending request to SierraAPI'
 
             if system == 'nypl':
-                print PVR_NYPLReport(agent, meta_in, meta_out)
+                analysis = PVR_NYPLReport(agent, meta_in, meta_out)
             elif system == 'bpl':
-                bpl_analysis(agent, meta_in, meta_out)
+                # analysis = PVR_BPLReport(agent, meta_in, meta_out)
+                pass
+
+            # save analysis to shelf
+            analysis = analysis.to_dict()
+            stats[str(n)] = analysis
+
 
     # clean-up
     # close any open session if Platform or Sierra API has been used
     if api_type in ('PlatformAPIs', 'SierraAPIs') and session is not None:
         session.close()
         print 'session closed'
+
+    stats.close()
+
+    create_stats_dataframe()
+
+
+def create_stats_dataframe():
+    stats = shelve.open(BATCH_STATS)
+    frames = []
+    for key, value in stats.iteritems():
+        # print value
+        frames.append(pd.DataFrame(value, index=[key]))
+    df = pd.concat(frames, ignore_index=True)
+    stats.close()
+    return df
+
+
+def archive():
+    batch = shelve.open(BATCH_STATS)
+    timestamp = batch['timestamp']
+
+    with session_scope() as session:
+        # insert_or_ingore(session, )
+        pass
+
+    batch.close()
