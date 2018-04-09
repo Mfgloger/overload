@@ -94,18 +94,18 @@ class Test_PVRReport(unittest.TestCase):
     def test_determine_resource_id(self):
         # if control field
         report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.vendor_resource_id, 'bl41266045')
+        self.assertEqual(report.vendor_id, 'bl41266045')
 
         # if no control field
         self.vendor_meta.t001 = None
         report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.vendor_resource_id, '0439136350')
+        self.assertEqual(report.vendor_id, '0439136350')
 
         # if only 024 present
         self.vendor_meta.t020 = []
         self.vendor_meta.t024 = ['12345']
         report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.vendor_resource_id, '12345')
+        self.assertEqual(report.vendor_id, '12345')
 
     def test_determine_vendor_callNo(self):
         self.vendor_meta.dstLibrary = 'research'
@@ -284,7 +284,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
 
     def test_to_dict(self):
         self.assertEqual(
-            self.report.to_dict().keys(), ['inhouse_dups', 'vendor', 'resource_id', 'updated_by_vendor', 'target_sierraId', 'mixed', 'target_callNo', 'vendor_callNo', 'other', 'callNo_match', 'action'])
+            self.report.to_dict().keys(), ['inhouse_dups', 'vendor', 'vendor_id', 'updated_by_vendor', 'target_sierraId', 'mixed', 'target_callNo', 'vendor_callNo', 'other', 'callNo_match', 'action'])
 
     def test_cat_scenario1(self):
         attrs1 = dict(

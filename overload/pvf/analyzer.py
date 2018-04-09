@@ -9,7 +9,7 @@ class PVRReport:
     def __init__(self, meta_vendor, meta_inhouse):
         self._meta_vendor = meta_vendor
         self._meta_inhouse = meta_inhouse
-        self.vendor_resource_id = None
+        self.vendor_id = None
         self.vendor = meta_vendor.vendor
         self.updated_by_vendor = False
         self.callNo_match = False
@@ -25,11 +25,11 @@ class PVRReport:
 
     def _determine_resource_id(self):
         if self._meta_vendor.t001 is not None:
-            self.vendor_resource_id = self._meta_vendor.t001
+            self.vendor_id = self._meta_vendor.t001
         elif self._meta_vendor.t020 != []:
-            self.vendor_resource_id = self._meta_vendor.t020[0]
+            self.vendor_id = self._meta_vendor.t020[0]
         elif self._meta_vendor.t024 != []:
-            self.vendor_resource_id = self._meta_vendor.t024[0]
+            self.vendor_id = self._meta_vendor.t024[0]
 
     def _determine_vendor_callNo(self):
         if self._meta_vendor.dstLibrary == 'branches':
@@ -207,7 +207,7 @@ class PVR_NYPLReport(PVRReport):
 
     def to_dict(self):
         return {
-            'resource_id': self.vendor_resource_id,
+            'vendor_id': self.vendor_id,
             'vendor': self.vendor,
             'updated_by_vendor': self.updated_by_vendor,
             'callNo_match': self.callNo_match,
@@ -220,19 +220,19 @@ class PVR_NYPLReport(PVRReport):
             'action': self.action}
 
     def __repr__(self):
-        return "<PVF Report(vendor_resource_id={}, vendor={}, " \
+        return "<PVF Report(vendor_id={}, vendor={}, " \
             "callNo_match={}, target_callNo={}, vendor_callNo={}, " \
             "updated_by_vendor={}, " \
             "inhouse_dups={}, target_sierraId={}, mixed={}, "\
             "other={}, action={})>".format(
-                self.vendor_resource_id,
+                self.vendor_id,
                 self.vendor,
                 self.callNo_match,
                 self.target_callNo,
                 self.vendor_callNo,
                 self.updated_by_vendor,
-                self.inhouse_dups,
+                ','.join(self.inhouse_dups),
                 self.target_sierraId,
-                self.mixed,
-                self.other,
+                ','.join(self.mixed),
+                ','.join(self.other),
                 self.action)
