@@ -213,10 +213,11 @@ class PVR_NYPLReport(PVRReport):
             'callNo_match': self.callNo_match,
             'target_callNo': self.target_callNo,
             'vendor_callNo': self.vendor_callNo,
-            'inhouse_dups': ','.join(self.inhouse_dups),
-            'target_sierraId': self.target_sierraId,
-            'mixed': ','.join(self.mixed),
-            'other': ','.join(self.other),
+            'inhouse_dups': ','.join(
+                ['b{}a'.format(bid) for bid in self.inhouse_dups]),
+            'target_sierraId': 'b{}a'.format(self.target_sierraId),
+            'mixed': ','.join(['b{}a'.format(bid) for bid in self.mixed]),
+            'other': ','.join(['b{}a'.format(bid) for bid in self.other]),
             'action': self.action}
 
     def __repr__(self):

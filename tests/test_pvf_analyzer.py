@@ -285,6 +285,14 @@ class TestPVR_NYPLReport(unittest.TestCase):
     def test_to_dict(self):
         self.assertEqual(
             self.report.to_dict().keys(), ['inhouse_dups', 'vendor', 'vendor_id', 'updated_by_vendor', 'target_sierraId', 'mixed', 'target_callNo', 'vendor_callNo', 'other', 'callNo_match', 'action'])
+        self.assertIsInstance(
+            self.report.to_dict()['vendor_id'], str)
+        self.assertIsInstance(
+            self.report.to_dict()['vendor'], str)
+        self.assertIsInstance(
+            self.report.to_dict()['updated_by_vendor'], bool)
+        self.assertIsInstance(
+            self.report.to_dict()['callNo_match'], bool)
 
     def test_cat_scenario1(self):
         attrs1 = dict(
