@@ -20,9 +20,9 @@ import overload_help
 import processes as proc
 # from connectors.sierra_api import SierraSession
 from connectors.errors import UnhandledException, Error
-from setup_dirs import MY_DOCS, USER_DATA, BATCH_STATS, CVAL_REP, MVAL_REP, \
-    USER_STATS
-from temp2 import test
+from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, MVAL_REP, \
+    BATCH_META, BATCH_STATS
+import reports
 
 
 overload_logger = logging.getLogger('main')
@@ -52,11 +52,14 @@ class ProcessVendorFiles(tk.Frame):
         self.processed = tk.StringVar()
         self.archived = tk.StringVar()
         self.validated = tk.StringVar()
-        self.statDetails = tk.StringVar()
+        # self.statDetails = tk.StringVar()  # clean-up later
         self.last_directory_check = tk.IntVar()
         self.last_directory = None
         self.files = None
-        self.df = None
+        # self.df = None
+        self.system = 'nypl'
+        self.library = 'branches'
+        self.agent = 'cat'
 
         # layout
 
@@ -167,7 +170,7 @@ class ProcessVendorFiles(tk.Frame):
         self.processBtn = ttk.Button(
             self.baseFrm,
             text='process',
-            command=self.test,
+            command=None,
             cursor='hand2',
             width=12)
         self.processBtn.grid(
@@ -207,7 +210,7 @@ class ProcessVendorFiles(tk.Frame):
         self.statsBtn = ttk.Button(
             self.baseFrm,
             text='stats',
-            command=self.details,
+            command=self.batch_summary,
             cursor='hand2',
             width=12)
         self.statsBtn.grid(
@@ -325,12 +328,6 @@ class ProcessVendorFiles(tk.Frame):
         self.archived.set('')
         self.archivedLbl.update()
         self.progbar['value'] = 0
-
-    def test(self):
-        try:
-            test()
-        except Error as e:
-            tkMessageBox.showerror('Error', e)    
 
     def process(self):
 
@@ -779,63 +776,108 @@ class ProcessVendorFiles(tk.Frame):
             m = 'Validation report not available'
             tkMessageBox.showwarning('validation report', m)
 
-    def details(self):
+    def batch_summary(self):
 
-        # create report
-        s = shelve.open(BATCH_STATS)
-        data = dict(s)
-        s.close()
+        self.topD = tk.Toplevel(self, background='white')
+        # self.topD.minsize(width=800, height=500)
+        self.topD.iconbitmap('./icons/report.ico')
+        self.topD.title('Vendor files report')
 
-        if 'processing_time' in data:
+        self.topD.columnconfigure(0, minsize=10)
+        self.topD.columnconfigure(1, minsize=750)
+        self.topD.columnconfigure(11, minsize=10)
+        self.topD.rowconfigure(0, minsize=10)
+        self.topD.rowconfigure(1, minsize=450)
+        self.topD.rowconfigure(11, minsize=10)
+        self.topD.rowconfigure(13, minsize=10)
 
-            self.topD = tk.Toplevel(self, background='white')
-            # self.topD.minsize(width=800, height=500)
-            self.topD.iconbitmap('./icons/report.ico')
-            self.topD.title('Vendor files report')
+        self.yscrollbarD = tk.Scrollbar(self.topD, orient=tk.VERTICAL)
+        self.yscrollbarD.grid(
+            row=1, column=10, rowspan=9, sticky='nse', padx=2)
+        self.xscrollbarD = tk.Scrollbar(self.topD, orient=tk.HORIZONTAL)
+        self.xscrollbarD.grid(
+            row=10, column=1, columnspan=9, sticky='swe')
 
-            self.topD.columnconfigure(0, minsize=10)
-            self.topD.columnconfigure(1, minsize=750)
-            self.topD.columnconfigure(11, minsize=10)
-            self.topD.rowconfigure(0, minsize=10)
-            self.topD.rowconfigure(1, minsize=450)
-            self.topD.rowconfigure(11, minsize=10)
-            self.topD.rowconfigure(13, minsize=10)
+        self.reportDTxt = tk.Text(
+            self.topD,
+            borderwidth=0,
+            wrap=tk.NONE,
+            yscrollcommand=self.yscrollbarD.set,
+            xscrollcommand=self.xscrollbarD.set)
+        self.reportDTxt.grid(
+            row=1, column=1, rowspan=9, columnspan=9, sticky='snew')
+        self.reportDTxt.tag_config('blue', foreground='blue', underline=1)
+        self.reportDTxt.tag_config('red', foreground='red')
 
-            self.yscrollbarD = tk.Scrollbar(self.topD, orient=tk.VERTICAL)
-            self.yscrollbarD.grid(
-                row=1, column=10, rowspan=9, sticky='nse', padx=2)
-            self.xscrollbarD = tk.Scrollbar(self.topD, orient=tk.HORIZONTAL)
-            self.xscrollbarD.grid(
-                row=10, column=1, columnspan=9, sticky='swe')
+        self.yscrollbarD.config(command=self.reportDTxt.yview)
+        self.xscrollbarD.config(command=self.reportDTxt.xview)
 
-            self.reportDTxt = tk.Text(
-                self.topD,
-                borderwidth=0,
-                wrap=tk.NONE,
-                yscrollcommand=self.yscrollbarD.set,
-                xscrollcommand=self.xscrollbarD.set)
-            self.reportDTxt.grid(
-                row=1, column=1, rowspan=9, columnspan=9, sticky='snew')
-            self.reportDTxt.tag_config('blue', foreground='blue', underline=1)
-            self.reportDTxt.tag_config('red', foreground='red')
+        ttk.Button(
+            self.topD,
+            text='detailed view',
+            width=12,
+            cursor='hand2',
+            command=self.detailed_view).grid(
+            row=12, column=2, sticky='nw', padx=5)
 
-            self.yscrollbarD.config(command=self.reportDTxt.yview)
-            self.xscrollbarD.config(command=self.reportDTxt.xview)
+        ttk.Button(
+            self.topD,
+            text='close',
+            width=12,
+            cursor='hand2',
+            command=self.topD.destroy).grid(
+            row=12, column=6, sticky='nw', padx=5)
 
-            ttk.Button(
-                self.topD,
-                text='close',
-                width=12,
-                cursor='hand2',
-                command=self.topD.destroy).grid(
-                row=12, column=6, sticky='nw', padx=5)
+        # generate report
+        self.create_processing_report()
 
-            # generate report
-            self.create_processing_report(data)
+    def detailed_view(self):
 
-        else:
-            m = 'Stats report not available'
-            tkMessageBox.showinfo('Stats Report', m)
+        self.topB = tk.Toplevel(self, background='white')
+        # self.topD.minsize(width=800, height=500)
+        self.topB.iconbitmap('./icons/report.ico')
+        self.topB.title('Vendor files detailed view')
+
+        self.topB.columnconfigure(0, minsize=10)
+        self.topB.columnconfigure(1, minsize=750)
+        self.topB.columnconfigure(11, minsize=10)
+        self.topB.rowconfigure(0, minsize=10)
+        self.topB.rowconfigure(1, minsize=450)
+        self.topB.rowconfigure(11, minsize=10)
+        self.topB.rowconfigure(13, minsize=10)
+
+        self.yscrollbarB = tk.Scrollbar(self.topB, orient=tk.VERTICAL)
+        self.yscrollbarB.grid(
+            row=1, column=10, rowspan=9, sticky='nse', padx=2)
+        self.xscrollbarB = tk.Scrollbar(self.topB, orient=tk.HORIZONTAL)
+        self.xscrollbarB.grid(
+            row=10, column=1, columnspan=9, sticky='swe')
+
+        self.reportBTxt = tk.Text(
+            self.topB,
+            borderwidth=0,
+            wrap=tk.NONE,
+            yscrollcommand=self.yscrollbarB.set,
+            xscrollcommand=self.xscrollbarB.set)
+        self.reportBTxt.grid(
+            row=1, column=1, rowspan=9, columnspan=9, sticky='snew')
+        self.reportBTxt.tag_config('blue', foreground='blue', underline=1)
+        self.reportBTxt.tag_config('red', foreground='red')
+
+        self.yscrollbarB.config(command=self.reportBTxt.yview)
+        self.xscrollbarB.config(command=self.reportBTxt.xview)
+
+        ttk.Button(
+            self.topB,
+            text='close',
+            width=12,
+            cursor='hand2',
+            command=self.topB.destroy).grid(
+            row=12, column=6, sticky='nw', padx=5)
+
+        # generate report
+        self.create_detailed_report()
+
 
     def create_validation_report(self):
         # reset report
@@ -849,186 +891,80 @@ class ProcessVendorFiles(tk.Frame):
         mReport.close()
         self.reportVTxt['state'] = tk.DISABLED
 
-    def create_processing_report(self, data):
+    def create_processing_report(self):
         # reset report
         self.reportDTxt.delete(1.0, tk.END)
+        # generate summary
+        try:
+            summary = reports.generate_processing_summary(
+                self.system, self.library, self.agent, BATCH_META)
+            for line in summary:
+                self.reportDTxt.insert(tk.END, line)
+        except KeyError:
+            self.reportDTxt.insert(tk.END, 'SUMMARY PARSING ERROR\n')
+        self.reportDTxt.insert(tk.END, ('-' * 60) + '\n')
 
-        # determine if any files have been processed
-        # summary
-        files = []
-        bib_count = 0
-        if 'files' in data:
-            for key, value in data['files'].iteritems():
-                files.append(key.split('/')[-1])
-                bib_count += len(value)
+        # create dataframe to be tabulated
+        try:
+            df = reports.shelf2dataframe(BATCH_STATS)
+        except KeyError:
+            df = None
 
+        # generate vendor stats
+        self.reportDTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
+        if df is not None:
+            stats = reports.create_stats(df)
+            self.reportDTxt.insert(tk.END, stats.to_string())
             self.reportDTxt.insert(
-                tk.END, 'total processed files: {}\n'.format(
-                    len(files)), 'red')
-            self.reportDTxt.insert(
-                tk.END, 'file names: {}\n'.format(','.join(files)))
-            self.reportDTxt.insert(
-                tk.END, 'total process records: {}\n'.format(bib_count), 'red')
-            self.reportDTxt.insert(
-                tk.END, 'processing time: {}\n'.format(
-                    data['processing_time']))
-            self.reportDTxt.insert(
-                tk.END, '\n')
-
-            # create pandas dataframes to analyze
-            if self.df is None:
-                frames = []
-                for file, bibs_meta in data['files'].iteritems():
-                    frames.append(pd.DataFrame.from_dict(bibs_meta))
-                self.df = pd.concat(frames, ignore_index=True)
-
-            # tabulate by vendor & load type
-            self.reportDTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
-            self.reportDTxt.insert(tk.END, 'vendor\t\t\tnew\tdup\ttotal\n')
-            # print df.head()
-            for vendor, data in self.df.groupby('vendor'):
-                new = data[
-                    data['overlay'] == True]['overlay'].count()
-                # new = new['overlay'].count()
-                dup = data[data['overlay'] == False]['overlay'].count()
-                self.reportDTxt.insert(
-                    tk.END, '{}\t\t\t{}\t{}\t{}\n'.format(
-                        vendor, new, dup, new + dup))
-
-            # identify new bibs without call number
-            # ncself.df = self.df[self.df['vCallNumber'].isnull()]
-            # no_vcall_df = ncdf[ncdf['overlay'] == True].sort_values('vendor')
-            no_vcall_df = self.df[(self.df['overlay'] == True) & (
-                self.df['vCallNumber'].isnull())].sort_values('vendor')
-            self.reportDTxt.insert(tk.END, '\n')
-            self.reportDTxt.insert(
-                tk.END, 'Missing  call number on vendor record:\n', 'blue')
-            if no_vcall_df.empty:
-                self.reportDTxt.insert(tk.END, 'ALL CLEAR\n')
-            else:
-                self.reportDTxt.insert(
-                    tk.END,
-                    'bNumber\t   vendor\t\tvendor call#\t\tinhouse call#\t\tISBN\n')
-                for index, row in no_vcall_df.iterrows():
-                    self.reportDTxt.insert(
-                        tk.END, 'b{}a\t|{}\t\t|{}\t\t|{}\t\t|{}\n'.format(
-                            row['target_id'],
-                            row['vendor'],
-                            row['vCallNumber'],
-                            row['bCallNumber'],
-                            ','.join(row['vISBN'])))
-
-            # report incoming call numbers that don't match
-            # does not display brief records being overlayed with full one
-            no_call_match_df = self.df[
-                (self.df['callNumber_match'] == False) & (
-                    self.df['bCallNumber'].notnull()) & (
-                    self.df['vCallNumber'].notnull())].sort_values('vendor')
-            # print no_call_match_df.head()
-            self.reportDTxt.insert(tk.END, '\n')
-            self.reportDTxt.insert(
-                tk.END, 'Different call number on vendor record:\n', 'blue')
-            if no_call_match_df.empty:
-                self.reportDTxt.insert(tk.END, 'ALL CLEAR\n')
-            else:
-                self.reportDTxt.insert(
-                    tk.END,
-                    'bNumber\t   vendor\t\tvendor call#\t\t\tinhouse call#\t\tISBN\n')
-                for index, row in no_call_match_df.iterrows():
-                    self.reportDTxt.insert(
-                        tk.END, 'b{}a\t|{}\t\t|{}\t\t\t|{}\t\t|{}\n'.format(
-                            row['target_id'],
-                            row['vendor'],
-                            row['vCallNumber'],
-                            row['bCallNumber'],
-                            ','.join(row['vISBN'])))
-
-            # report duplicates found
-            dups_df = self.df[self.df['dups'] == True].sort_values('vendor')
-            self.reportDTxt.insert(tk.END, '\n')
-            self.reportDTxt.insert(
-                tk.END,
-                'Duplicate records found in catalog:\n', 'blue')
-            if dups_df.empty:
-                self.reportDTxt.insert(tk.END, 'ALL CLEAR\n')
-            else:
-                self.reportDTxt.insert(
-                    tk.END,
-                    'vendor\t\t|vendor ISBN  \t\t\t\t|vendor call#\t\t'
-                    '|inhouse call#\t\t\t|bNumber\t\t'
-                    '|bib numbers of dups\n')
-                self.reportDTxt.insert(
-                    tk.END,
-                    '      \t\t             \t          \t\t        matched to\t\t\t  matched to\t\n')
-                for index, row in dups_df.iterrows():
-                    self.reportDTxt.insert(
-                        tk.END, '{}\t\t|{}\t      |{}\t\t|{}       \t\t\t|{} \t\t\t\t|{}\n'.format(
-                            row['vendor'],
-                            ','.join(row['vISBN']),
-                            row['vCallNumber'],
-                            row['bCallNumber'],
-                            'b' + row['target_id'] + 'a',
-                            ','.join(['b{}a'.format(x) for x in row['dups_id']])))
-
-            # report protected bibs
-            self.reportDTxt.insert(tk.END, '\n')
-            protected_df = self.df[
-                ((self.df['overlay'] == False) &
-                    (self.df['fullBib'] == True)) |
-                ((self.df['overlay'] == True) &
-                    (self.df['rCallNumber'] == True))]
-            # exclude CLS & MidWest? ask
-            self.reportDTxt.insert(tk.END, '\n')
-            self.reportDTxt.insert(
-                tk.END,
-                'Protected inhouse records:\n', 'blue')
-
-            # determine library & show protected records
-            if protected_df.empty:
-                self.reportDTxt.insert(tk.END, 'total: ')
-                self.reportDTxt.insert(tk.END, '0\n\n', 'red')
-            else:
-                library = protected_df['library'].iloc[0]
-                if library == 'NYPL':
-                    self.reportDTxt.insert(
-                        tk.END,
-                        'total\tRL bibs only\n')
-                    total_bibs = protected_df.shape[0]
-                    rl_bibs = protected_df[
-                        protected_df[
-                            'rCallNumber'] == True].shape[0]
-                    self.reportDTxt.insert(
-                        tk.END,
-                        '{}\t{}\n\n'.format(
-                            total_bibs,
-                            rl_bibs))
-
-                else:  # BPL
-                    self.reportDTxt.insert(
-                        tk.END,
-                        'total:  ')
-                    total_bibs = protected_df['target_id'].shape[0]
-                    self.reportDTxt.insert(
-                        tk.END,
-                        '{}\n\n'.format(
-                            total_bibs), 'red')
-
-            # updated by vendor and overlayed?
-            updated_count = self.df[(self.df['bCallNumber'].notnull()) &
-                (self.df['fullBib'] == False) & (
-                    self.df['overlay'] == True)].shape[0]
-            self.reportDTxt.insert(
-                tk.END,
-                'Records updated by vendor:\n', 'blue')
-            self.reportDTxt.insert(
-                tk.END,
-                'total: {}\n\n'.format(updated_count))
-
-            self.reportDTxt['state'] = tk.DISABLED
-
+                tk.END, '\n' + ('-' * 60) + '\n')
         else:
-            self.reportDTxt.insert(tk.END, 'NOTHING TO REPORT :/')
+            self.reportDTxt.insert(tk.END, 'STATS PARSING ERROR\n')
+
+        # report duplicates
+        self.reportDTxt.insert(tk.END, 'Duplicates report:\n', 'blue')
+        if df is not None:
+            dups = reports.report_dups(
+                self.system, self.library, df)
+            if dups.size == 0:
+                self.reportDTxt.insert(tk.END, 'All clear\n')
+            else:
+                self.reportDTxt.insert(tk.END, dups.to_string() + '\n')
+        else:
+            self.reportDTxt.insert(
+                tk.END, 'DUPLICATE REPORT PARSING ERROR\n')
+        self.reportDTxt.insert(
+            tk.END, '\n' + ('-' * 60) + '\n')
+
+        # report callNo issues
+        self.reportDTxt.insert(tk.END, 'Call number issues:\n', 'blue')
+        if df is not None:
+            callNos = reports.report_callNo_issues(df)
+            if callNos.size == 0:
+                self.reportDTxt.insert(tk.END, 'All clear\n')
+            else:
+                self.reportDTxt.insert(tk.END, callNos.to_string() + '\n')
+        else:
+            self.reportDtxt.insert(
+                tk.END, 'CALL NUMBER CONFLICTS PARSING ERROR\n')
+        # prevent edits
         self.reportDTxt['state'] = tk.DISABLED
+
+    def create_detailed_report(self):
+        # reset report
+        self.reportBTxt.delete(1.0, tk.END)
+
+        # create dataframe to be tabulated
+        try:
+            df = reports.shelf2dataframe(BATCH_STATS)
+        except KeyError:
+            df = None
+
+        if df is not None:
+            df = reports.report_details(
+                self.system, self.library, df)
+            self.reportBTxt.insert(tk.END, df.to_string())
+        # prevent edits
+        self.reportBTxt['state'] = tk.DISABLED
 
     def changeTarget(self):
         user_data = shelve.open(USER_DATA)
