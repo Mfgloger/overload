@@ -3,7 +3,6 @@
 from datetime import datetime
 import base64
 import shelve
-import pandas as pd
 from requests.exceptions import ConnectionError, Timeout
 
 
@@ -117,18 +116,20 @@ def run_processing(files, system, library, agent, api_type, api_name):
     # clean-up batch metadata & stats
     batch = shelve.open(BATCH_META, writeback=True)
     batch.clear()
-    batch['timestamp'] = datetime.now().strftime('%Y%M%d%H%M.%f')
+    batch['timestamp'] = datetime.now()
     batch['system'] = system
     batch['library'] = library
     batch['agent'] = agent
-    batch.close()
+    batch['file_names'] = files
 
     stats = shelve.open(BATCH_STATS, writeback=True)
     stats.clear()
 
     # run queries and results analysis for each bib in each file
     n = 0
+    f = 0
     for file in files:
+        f += 1
         reader = read_marc21(file)
 
         rules = './rules/vendors.xml'
@@ -183,27 +184,17 @@ def run_processing(files, system, library, agent, api_type, api_name):
             analysis = analysis.to_dict()
             stats[str(n)] = analysis
 
+    batch['processing_time'] = datetime.now() - batch['timestamp']
+    batch['processed_files'] = f
+    batch['processed_bibs'] = n
+    batch.close()
+    stats.close()
 
     # clean-up
     # close any open session if Platform or Sierra API has been used
     if api_type in ('PlatformAPIs', 'SierraAPIs') and session is not None:
         session.close()
         print 'session closed'
-
-    stats.close()
-
-    create_stats_dataframe()
-
-
-def create_stats_dataframe():
-    stats = shelve.open(BATCH_STATS)
-    frames = []
-    for key, value in stats.iteritems():
-        # print value
-        frames.append(pd.DataFrame(value, index=[key]))
-    df = pd.concat(frames, ignore_index=True)
-    stats.close()
-    return df
 
 
 def archive():
