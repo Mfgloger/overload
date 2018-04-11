@@ -1,6 +1,6 @@
 # general tools to read, parse, and write MARC files
 
-from pymarc import MARCReader, JSONReader, MARCWriter
+from pymarc import MARCReader, JSONReader, MARCWriter, Field
 import re
 from datetime import datetime
 
@@ -57,6 +57,23 @@ def write_marc21(outfile, bib):
 def read_marc_in_json(data):
     reader = JSONReader(data)
     return reader
+
+
+def create_target_id_field(library, bNumber=None):
+    if len(bNumber) != 8:
+        raise ValueError('incorrect Sierra bib number')
+    if bNumber is not None:
+        bNumber = 'b{}a'.format()
+        if library == 'bpl':
+            return Field(
+                tag='907',
+                indicators=[' ', ' '],
+                subfields=['a', bNumber])
+        if library == 'nypl':
+            return Field(
+                tag='945',
+                indicators=[' ', ' '],
+                subfields=['a', bNumber])
 
 
 class BibMeta:
