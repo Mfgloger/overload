@@ -284,7 +284,10 @@ class TestPVR_NYPLReport(unittest.TestCase):
 
     def test_to_dict(self):
         self.assertEqual(
-            self.report.to_dict().keys(), ['inhouse_dups', 'vendor', 'vendor_id', 'updated_by_vendor', 'target_sierraId', 'mixed', 'target_callNo', 'vendor_callNo', 'other', 'callNo_match', 'action'])
+            self.report.to_dict().keys(),
+            ['inhouse_dups', 'vendor', 'vendor_id', 'updated_by_vendor',
+             'target_sierraId', 'mixed', 'target_callNo', 'vendor_callNo',
+             'other', 'callNo_match', 'action'])
         self.assertIsInstance(
             self.report.to_dict()['vendor_id'], str)
         self.assertIsInstance(
@@ -293,6 +296,20 @@ class TestPVR_NYPLReport(unittest.TestCase):
             self.report.to_dict()['updated_by_vendor'], bool)
         self.assertIsInstance(
             self.report.to_dict()['callNo_match'], bool)
+        self.assertIsInstance(
+            self.report.to_dict()['inhouse_dups'], str)
+        self.assertIsInstance(
+            self.report.to_dict()['target_sierraId'], str)
+        self.assertIsInstance(
+            self.report.to_dict()['mixed'], str)
+        self.assertIsInstance(
+            self.report.to_dict()['target_callNo'], str)
+        self.assertIsInstance(
+            self.report.to_dict()['vendor_callNo'], str)
+        self.assertIsInstance(
+            self.report.to_dict()['other'], str)
+        self.assertIsInstance(
+            self.report.to_dict()['action'], str)
 
     def test_cat_scenario1(self):
         attrs1 = dict(
