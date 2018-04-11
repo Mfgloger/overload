@@ -1,6 +1,6 @@
 # handles and oversees processing of vendor records (top level below gui)
 # logging and passing exception to gui happens here
-from datetime import datetime
+from datetime import datetime, date
 import base64
 import shelve
 from requests.exceptions import ConnectionError, Timeout
@@ -102,7 +102,9 @@ def open_platform_session(api_name=None):
     return session
 
 
-def run_processing(files, system, library, agent, api_type, api_name):
+def run_processing(
+    files, system, library, agent, api_type, api_name,
+        output_directory):
     # tokens and sessions are opened on this level
 
     # determine destination API
@@ -130,7 +132,7 @@ def run_processing(files, system, library, agent, api_type, api_name):
     f = 0
     for file in files:
         f += 1
-        reader = read_marc21(file)
+        reader = read_marc21(file, force_utf8=True)
 
         rules = './rules/vendors.xml'
         vx = vendor_index(rules, system, agent)
@@ -183,6 +185,16 @@ def run_processing(files, system, library, agent, api_type, api_name):
             # save analysis to shelf
             analysis = analysis.to_dict()
             stats[str(n)] = analysis
+
+            # determine mrc files namehandles
+            date_today = date.today().strftime('%y%m%d')
+            fh_dups = output_directory + '/{}.DUP-0.mrc'.format(
+                date_today)
+            fh_new = output_directory + '/{}.NEW-0.mrc'.format(
+                date_today)
+
+            # output processed records according to analysis
+            if analysis['target_sierraId'] is 
 
     batch['processing_time'] = datetime.now() - batch['timestamp']
     batch['processed_files'] = f
