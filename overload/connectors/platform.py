@@ -120,6 +120,36 @@ class PlatformSession(requests.Session):
             raise ConnectionError(
                 'unable to connect to Platform')
 
+    def query_bibControlNo(self, keywords=[], source='sierra-nypl', limit=20):
+        """
+        performs control number query (field 001)
+        args:
+            keywords list
+            source str
+            limit int
+        return:
+            results
+        """
+        self._validate_token()
+
+        # prep request
+        endpoint = self.base_url + '/bibs'
+        payload = dict(
+            nyplSource=source,
+            limit=limit,
+            controlNumber=','.join(keywords))
+        try:
+            response = self.get(
+                endpoint, params=payload, timeout=self.timeout)
+            return response
+        except Timeout:
+            raise Timeout(
+                'request timed out while trying to connect '
+                'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
+
     def query_bibId(self, keywords=[], source='sierra-nypl', limit=20):
         """
         performs bib ID query
