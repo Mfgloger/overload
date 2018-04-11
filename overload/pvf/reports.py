@@ -42,33 +42,39 @@ def shelf2dataframe(batch_stats):
     frames = []
     for key, value in stats.iteritems():
         frames.append(pd.DataFrame(value, index=[int(key)]))
-    df = pd.concat(frames).replace('', np.NaN)
+    try:
+        df = pd.concat(frames).replace('', np.NaN)
+    except ValueError:
+        df = None 
     stats.close()
     return df
 
 
 def create_stats(df):
-    frames = []
-    n = 0
-    for vendor, data in df.groupby('vendor'):
-        n += 1
-        attach = data[
-            data['action'] == 'attach']['action'].count()
-        insert = data[
-            data['action'] == 'insert']['action'].count()
-        update = data[
-            data['action'] == 'overlay']['action'].count()
-        frames.append(pd.DataFrame(
-            data={
-                'vendor': vendor,
-                'attach': attach,
-                'insert': insert,
-                'update': update,
-                'total': attach + insert + update},
-            columns=['vendor', 'attach', 'insert', 'update', 'total'],
-            index=[n]))
-    df_rep = pd.concat(frames)
-    return df_rep
+    if df is not None:
+        frames = []
+        n = 0
+        for vendor, data in df.groupby('vendor'):
+            n += 1
+            attach = data[
+                data['action'] == 'attach']['action'].count()
+            insert = data[
+                data['action'] == 'insert']['action'].count()
+            update = data[
+                data['action'] == 'overlay']['action'].count()
+            frames.append(pd.DataFrame(
+                data={
+                    'vendor': vendor,
+                    'attach': attach,
+                    'insert': insert,
+                    'update': update,
+                    'total': attach + insert + update},
+                columns=['vendor', 'attach', 'insert', 'update', 'total'],
+                index=[n]))
+        df_rep = pd.concat(frames)
+        return df_rep
+    else:
+        return None
 
 
 def report_dups(system, library, df):
