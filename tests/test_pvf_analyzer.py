@@ -297,17 +297,17 @@ class TestPVR_NYPLReport(unittest.TestCase):
         self.assertIsInstance(
             self.report.to_dict()['callNo_match'], bool)
         self.assertIsInstance(
-            self.report.to_dict()['inhouse_dups'], str)
+            self.report.to_dict()['inhouse_dups'], list)
         self.assertIsInstance(
             self.report.to_dict()['target_sierraId'], str)
         self.assertIsInstance(
-            self.report.to_dict()['mixed'], str)
+            self.report.to_dict()['mixed'], list)
         self.assertIsInstance(
             self.report.to_dict()['target_callNo'], str)
         self.assertIsInstance(
             self.report.to_dict()['vendor_callNo'], str)
         self.assertIsInstance(
-            self.report.to_dict()['other'], str)
+            self.report.to_dict()['other'], list)
         self.assertIsInstance(
             self.report.to_dict()['action'], str)
 
