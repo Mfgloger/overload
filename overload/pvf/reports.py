@@ -40,12 +40,18 @@ def generate_processing_summary(system, library, agent, batch_meta):
 def shelf2dataframe(batch_stats):
     stats = shelve.open(batch_stats)
     frames = []
+    list2str = ['inhouse_dups', 'mixed', 'other']
     for key, value in stats.iteritems():
+        for cat in list2str:
+            if value[cat] == []:
+                value[cat] = ''
+            else:
+                value[cat] = ','.join(['b{}a'.format(bid) for bid in value[cat]])
         frames.append(pd.DataFrame(value, index=[int(key)]))
     try:
         df = pd.concat(frames).replace('', np.NaN)
     except ValueError:
-        df = None 
+        df = None
     stats.close()
     return df
 
@@ -114,7 +120,6 @@ def report_details(system, library, df):
         dups = '{} dups'.format(library)
 
     df = df.sort_index()
-    print df.columns.tolist()
     df = df[[
         'vendor', 'vendor_id', 'action', 'target_sierraId',
         'updated_by_vendor',

@@ -17,10 +17,10 @@ class Test_Reports(unittest.TestCase):
                 'callNo_match': True,
                 'target_callNo': 'TEST CALL',
                 'vendor_callNo': 'TEST CALL',
-                'inhouse_dups': '',
+                'inhouse_dups': [],
                 'target_sierraId': 'b0001',
-                'mixed': 'b0003',
-                'other': 'b0004',
+                'mixed': ['b0003'],
+                'other': ['b0004'],
                 'action': 'attach'},
             '2': {
                 'vendor_id': 'ven0002',
@@ -29,10 +29,10 @@ class Test_Reports(unittest.TestCase):
                 'callNo_match': False,
                 'target_callNo': 'TEST CALL A',
                 'vendor_callNo': 'TEST CALL B',
-                'inhouse_dups': '',
+                'inhouse_dups': [],
                 'target_sierraId': 'b0002',
-                'mixed': '',
-                'other': '',
+                'mixed': [],
+                'other': [],
                 'action': 'overlay'},
         }
         stats_shelf = shelve.open('temp')
