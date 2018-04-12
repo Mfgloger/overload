@@ -55,7 +55,7 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
                 response = session.query_bisStandardNo(keywords=bibmeta.t024)
             else:
                 response = None
-        elif matchpoint == '945':
+        elif matchpoint == 'sierra_id':
             print 'sierraID matchpoint'
             if bibmeta.sierraID is not None:
                 print 'keywords: {}'.format(bibmeta.sierraID)
@@ -67,10 +67,7 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
             print '001 matchpoint'
             if bibmeta.t001 is not None:
                 print 'keywords: {}'.format(bibmeta.t001)
-                # endpoint does not exist yet
-                # (must be requested from the Digital)
-                # response = session.query_standardNo(keywords=bibmeta.t001)
-                response = None
+                response = session.query_bibControlNo(keywords=bibmeta.t001)
             else:
                 response = None
 
