@@ -85,22 +85,23 @@
 	<system name = "nypl" agent='cat'>
 		<vendor name = "BT SERIES">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTSERIES</vendor_tag>
-			<query_tag type = "primary">020</query_tag>
-			<query_tag type = "secondary">001</query_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
 		</vendor>
 		<vendor name = "BT ROMANCE">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">ROMANCE</vendor_tag>
-			<query_tag type = "primary">020</query_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 		</vendor>
 		<vendor name = "BT ODC">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTODC</vendor_tag>
-			<query_tag type = "primary">020</query_tag>
+			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 		</vendor>
 	</system>
 	<system name = "nypl" agent = 'sel'>
 		<vendor name = "BT SERIES" code = '10001'>
-			<query_tag type = "primary">020</query_tag>
-			<query_tag type = "secondary">001</query_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
 			<template type = 'bib'>
 				<field>
 					<tag>949</tag>
@@ -141,20 +142,20 @@
 			</template>
 		</vendor>
 		<vendor name = "BT ROMANCE" code = '10002'>
-			<query_tag type = "primary">020</query_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 		</vendor>
 	</system>
 	<system name = "nypl" agent='acq'>
 		<vendor name = "BT SERIES" code = '10001'>
-			<query_tag type = "primary">020</query_tag>
-			<query_tag type = "secondary">001</query_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
 		</vendor>
 	</system>
 	<system name = "bpl" agent = 'cat'>
 		<vendor name = "BT SERIES">
 			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T SERIES</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T SERIES</vendor_tag>
-			<query_tag type = "primary">020</query_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 			<template type = 'bib'>
 				<field>
 					<tag>949</tag>
@@ -167,8 +168,8 @@
 		<vendor name = "BT ROMANCE">
 			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T ROMANCE</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T ROMANCE</vendor_tag>
-			<query_tag type = "primary">020</query_tag>
-			<query_tag type = "secondary">001</query_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
 		</vendor>
 	</system>
 </data>

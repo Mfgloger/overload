@@ -53,7 +53,8 @@ def vendor_index(vendor_fh, library, agent):
                 query_dict = dict()
                 queries = vendor.findall('query_tag')
                 for query in queries:
-                    query_dict[query.attrib['type']] = query.text
+                    query_dict[query.attrib['preference']] = (
+                        query.attrib['type'], query.text)
 
                 # add to the index
                 ven_index[vendor.attrib['name']] = dict(dict(

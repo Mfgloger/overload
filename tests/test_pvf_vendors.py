@@ -34,6 +34,11 @@ class TestPVFvendorIndex(unittest.TestCase):
                 self.assertIn('operator', value)
                 self.assertIn('type', value)
                 self.assertIn('value', value)
+
+            for preference, details in data['query'].iteritems():
+                self.assertIsInstance(
+                    details, tuple)
+
         for vendor, data in self.bpl_data.iteritems():
             self.assertIn('query', data)
             self.assertIn('identification', data)
