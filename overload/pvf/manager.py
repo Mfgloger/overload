@@ -6,7 +6,8 @@ import shelve
 from requests.exceptions import ConnectionError, Timeout
 
 
-from bibs.bibs import VendorBibMeta, read_marc21
+from bibs.bibs import VendorBibMeta, read_marc21, \
+    create_target_id_field, write_marc21, check_sierra_id_presence
 from bibs.crosswalks import platform2meta
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import queries
@@ -132,7 +133,7 @@ def run_processing(
     f = 0
     for file in files:
         f += 1
-        reader = read_marc21(file, force_utf8=True)
+        reader = read_marc21(file)
 
         rules = './rules/vendors.xml'
         vx = vendor_index(rules, system, agent)
@@ -194,7 +195,20 @@ def run_processing(
                 date_today)
 
             # output processed records according to analysis
-            if analysis['target_sierraId'] is 
+            # add Sierra bib id if matched
+            sierra_id_present = check_sierra_id_presence(
+                system, bib)
+            if not sierra_id_present and \
+                    analysis['target_sierraId'] is not None:
+                bib.add_field(
+                    create_target_id_field(
+                        system, analysis['target_sierraId']))
+
+            # append to appropirate output file
+            if analysis['action'] == 'attach':
+                write_marc21(fh_dups, bib)
+            else:
+                write_marc21(fh_new, bib)
 
     batch['processing_time'] = datetime.now() - batch['timestamp']
     batch['processed_files'] = f
