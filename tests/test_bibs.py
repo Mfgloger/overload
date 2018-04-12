@@ -148,7 +148,7 @@ class TestBibsUtilities(unittest.TestCase):
             [' ', ' '])
         self.assertEqual(
             bibs.create_target_id_field('bpl', '01234567').subfields,
-            ['a', 'b01234567a'])
+            ['a', '.b01234567a'])
         self.assertEqual(
             bibs.create_target_id_field('nypl', '01234567').tag,
             '945')
@@ -157,7 +157,7 @@ class TestBibsUtilities(unittest.TestCase):
             [' ', ' '])
         self.assertEqual(
             bibs.create_target_id_field('nypl', '01234567').subfields,
-            ['a', 'b01234567a'])
+            ['a', '.b01234567a'])
 
     def test_check_sierra_id_presence(self):
         self.assertFalse(
@@ -169,14 +169,14 @@ class TestBibsUtilities(unittest.TestCase):
             Field(
                 tag='945',
                 indicators=[' ', ' '],
-                subfields=['a', 'b01234567a']))
+                subfields=['a', '.b01234567a']))
         self.assertTrue(
             bibs.check_sierra_id_presence('nypl', self.marc_bib))
         self.marc_bib.add_field(
             Field(
                 tag='907',
                 indicators=[' ', ' '],
-                subfields=['a', 'b01234567a']))
+                subfields=['a', '.b01234567a']))
         self.assertTrue(
             bibs.check_sierra_id_presence('bpl', self.marc_bib))
 
@@ -207,7 +207,6 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(meta.rCallNumber, [])
         self.assertEqual(meta.vendor, 'Amalivre')
         self.assertEqual(meta.dstLibrary, 'rl')
-
 
 
 if __name__ == '__main__':

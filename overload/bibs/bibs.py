@@ -62,7 +62,7 @@ def read_marc_in_json(data):
 def create_target_id_field(system, bNumber):
     if len(bNumber) != 8:
         raise ValueError('incorrect Sierra bib number')
-    bNumber = 'b{}a'.format(bNumber)
+    bNumber = '.b{}a'.format(bNumber)
     if system == 'bpl':
         return Field(
             tag='907',
