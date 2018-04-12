@@ -59,21 +59,31 @@ def read_marc_in_json(data):
     return reader
 
 
-def create_target_id_field(library, bNumber=None):
+def create_target_id_field(system, bNumber):
     if len(bNumber) != 8:
         raise ValueError('incorrect Sierra bib number')
-    if bNumber is not None:
-        bNumber = 'b{}a'.format()
-        if library == 'bpl':
-            return Field(
-                tag='907',
-                indicators=[' ', ' '],
-                subfields=['a', bNumber])
-        if library == 'nypl':
-            return Field(
-                tag='945',
-                indicators=[' ', ' '],
-                subfields=['a', bNumber])
+    bNumber = 'b{}a'.format(bNumber)
+    if system == 'bpl':
+        return Field(
+            tag='907',
+            indicators=[' ', ' '],
+            subfields=['a', bNumber])
+    if system == 'nypl':
+        return Field(
+            tag='945',
+            indicators=[' ', ' '],
+            subfields=['a', bNumber])
+
+
+def check_sierra_id_presence(system, bib):
+    found = False
+    if system == 'nypl':
+        if '945' in bib:
+            found = True
+    elif system == 'bpl':
+        if '907' in bib:
+            found = True
+    return found
 
 
 class BibMeta:

@@ -130,6 +130,56 @@ class TestBibsUtilities(unittest.TestCase):
         reader = JSONReader('test.json')
         self.assertIs(type(reader), JSONReader)
 
+    def test_create_target_id_field_exceptions(self):
+        with self.assertRaises(ValueError):
+            bibs.create_target_id_field('nypl', '012345')
+
+    def test_create_target_id_field_returns_instance_of_pymarc_Field(self):
+        self.assertIsInstance(
+            bibs.create_target_id_field('nypl', '01234567'),
+            Field)
+
+    def test_create_target_id_field_returns_correct_field_values(self):
+        self.assertEqual(
+            bibs.create_target_id_field('bpl', '01234567').tag,
+            '907')
+        self.assertEqual(
+            bibs.create_target_id_field('bpl', '01234567').indicators,
+            [' ', ' '])
+        self.assertEqual(
+            bibs.create_target_id_field('bpl', '01234567').subfields,
+            ['a', 'b01234567a'])
+        self.assertEqual(
+            bibs.create_target_id_field('nypl', '01234567').tag,
+            '945')
+        self.assertEqual(
+            bibs.create_target_id_field('nypl', '01234567').indicators,
+            [' ', ' '])
+        self.assertEqual(
+            bibs.create_target_id_field('nypl', '01234567').subfields,
+            ['a', 'b01234567a'])
+
+    def test_check_sierra_id_presence(self):
+        self.assertFalse(
+            bibs.check_sierra_id_presence('nypl', self.marc_bib))
+        self.assertFalse(
+            bibs.check_sierra_id_presence('bpl', self.marc_bib))
+        # add 945
+        self.marc_bib.add_field(
+            Field(
+                tag='945',
+                indicators=[' ', ' '],
+                subfields=['a', 'b01234567a']))
+        self.assertTrue(
+            bibs.check_sierra_id_presence('nypl', self.marc_bib))
+        self.marc_bib.add_field(
+            Field(
+                tag='907',
+                indicators=[' ', ' '],
+                subfields=['a', 'b01234567a']))
+        self.assertTrue(
+            bibs.check_sierra_id_presence('bpl', self.marc_bib))
+
     def test_bibmeta_object(self):
         meta = bibs.BibMeta(self.marc_bib, sierraId='12345678')
         self.assertIsInstance(meta, bibs.BibMeta)
