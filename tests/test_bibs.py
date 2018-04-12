@@ -208,6 +208,25 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(meta.vendor, 'Amalivre')
         self.assertEqual(meta.dstLibrary, 'rl')
 
+    def test_vendor_bibmeta_object_when_sierra_id_is_provided(self):
+        # nypl scenario
+        self.marc_bib.add_field(
+            Field(
+                tag='945',
+                indicators=[' ', ' '],
+                subfields=['a', '.b01234567a']))
+        meta = bibs.VendorBibMeta(self.marc_bib, vendor='BTODC', dstLibrary='branches')
+        self.assertEqual(meta.sierraId, '01234567')
+        # bpl scencario
+        self.marc_bib.remove_fields('945')
+        self.marc_bib.add_field(
+            Field(
+                tag='907',
+                indicators=[' ', ' '],
+                subfields=['a', '.b01234568a']))
+        meta = bibs.VendorBibMeta(self.marc_bib, vendor='BTCLS', dstLibrary='branches')
+        self.assertEqual(meta.sierraId, '01234568')
+
 
 if __name__ == '__main__':
     unittest.main()
