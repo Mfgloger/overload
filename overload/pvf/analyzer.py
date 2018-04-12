@@ -151,7 +151,7 @@ class PVR_NYPLReport(PVRReport):
                                         self.action = 'attach'
                     else:
                         # research path, no callNo match checking
-                        self.callNo_match = True  # is it ok to do? can differences in the call numbers be ignored for research mats?
+                        self.callNo_match = True
                         self.target_sierraId = meta.sierraId
                         self.target_callNo = ','.join(meta.rCallNumber)
                         if meta.catSource == 'inhouse':
