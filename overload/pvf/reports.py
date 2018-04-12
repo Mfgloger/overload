@@ -103,7 +103,7 @@ def report_dups(system, library, df):
 
 
 def report_callNo_issues(df):
-    df_call = df[~df['callNo_match']]
+    df_call = df[~df['callNo_match']].sort_index()
     df_call = df_call[
         ['vendor', 'vendor_id', 'target_sierraId',
          'vendor_callNo', 'target_callNo', 'inhouse_dups']].replace(np.NaN, '')
