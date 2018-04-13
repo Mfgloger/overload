@@ -11,12 +11,14 @@ from bibs.bibs import VendorBibMeta, read_marc21, \
 from bibs.crosswalks import platform2meta
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import queries
+from pvf import reports
 from analyzer import PVR_NYPLReport
 from connectors import platform
 from setup_dirs import USER_DATA, BATCH_STATS, BATCH_META
 from connectors.platform import PlatformSession
 from connectors.errors import APITokenExpiredError, APITokenError, Error
-from datastore import session_scope
+from datastore import session_scope, insert_or_ignore, Vendor, \
+    PVR_Batch, PVR_File
 
 
 def run_platform_queries(api_name, session, meta, matchpoint):
@@ -150,7 +152,7 @@ def run_processing(
             # the evaluation
             if api_type == 'PlatformAPIs':
                 print 'sending request to Platform'
-                matchpoint = query_matchpoints['primary']
+                matchpoint = query_matchpoints['primary'][1]
                 print 'primary matchpoint'
                 result = run_platform_queries(
                     api_type, session, meta_in, matchpoint)
@@ -161,14 +163,15 @@ def run_processing(
                     meta_out = platform2meta(result[1])
                 elif result[0] == 'nohit':
                     # requery with alternative matchpoint
-                    print 'secondary matchpoint'
-                    matchpoint = query_matchpoints['secondary']
-                    result = run_platform_queries(
-                        api_type, session, meta_in, matchpoint)
-                    if result[0] == 'hit':
-                        meta_out = platform2meta(result[1])
-                    elif result[0] == 'error':
-                        raise Error('Platform server error')
+                    if 'secondary' in query_matchpoints:
+                        print 'secondary matchpoint'
+                        matchpoint = query_matchpoints['secondary'][1]
+                        result = run_platform_queries(
+                            api_type, session, meta_in, matchpoint)
+                        if result[0] == 'hit':
+                            meta_out = platform2meta(result[1])
+                        elif result[0] == 'error':
+                            raise Error('Platform server error')
                 elif result[0] == 'error':
                     raise Error('Platform server error')
 
@@ -224,11 +227,43 @@ def run_processing(
 
 
 def archive():
-    batch = shelve.open(BATCH_STATS)
+    batch = shelve.open(BATCH_META)
     timestamp = batch['timestamp']
-
-    with session_scope() as session:
-        # insert_or_ingore(session, )
-        pass
-
+    system = batch['system']
+    library = batch['library']
+    agent = batch['agent']
+    file_qty = len(batch['file_names'])
     batch.close()
+
+    df = reports.shelf2dataframe(BATCH_STATS)
+    if df is not None:
+        stats = reports.create_stats(df)
+
+        with session_scope() as session:
+            # find out if timestamp already added
+            # if not add records
+            # add batch record
+            record = insert_or_ignore(
+                session, PVR_Batch,
+                timestamp=timestamp,
+                system=system,
+                library=library,
+                agent=agent,
+                file_qty=file_qty)
+            session.flush()
+            bid = record.bid
+            for row in stats.iterrows():
+                name = row[1]['vendor']
+                record = insert_or_ignore(session, Vendor, name=name)
+                session.flush()
+                vid = record.vid
+
+                record = insert_or_ignore(
+                    session, PVR_File,
+                    bid=bid,
+                    vid=vid,
+                    new=row[1]['insert'],
+                    dups=row[1]['attach'],
+                    updated=row[1]['update'],
+                    mixed=row[1]['mixed'],
+                    other=row[1]['other'])
