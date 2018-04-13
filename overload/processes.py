@@ -585,7 +585,7 @@ def pvf_analysis(
         if needed:
             bib.add_field(
                 bibs.create_sierra_format_field(a['format']))
-  
+
         # write record in the new bibs file
         module_logger.debug('Writing bib to NEW file')
         bibs.write_bib(fh_new, bib)
