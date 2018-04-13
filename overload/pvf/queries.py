@@ -70,6 +70,10 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
                 response = session.query_bibControlNo(keywords=bibmeta.t001)
             else:
                 response = None
+        else:
+            raise ValueError(
+                'unsupported matchpoint specified: {}'.format(
+                    matchpoint))
 
         status = platform_status_interpreter(response)
 
