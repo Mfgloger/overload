@@ -61,15 +61,15 @@ class PVR_File(Base):
                 self.other)
 
 
-class Vendors(Base):
+class Vendor(Base):
     """PVR module vendor data"""
-    __tablename__ = 'vendors'
+    __tablename__ = 'vendor'
     vid = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, default='UNKNOWN')
 
     def __repr__(self):
-        return "<Vendors(vendor_id='%s', name='%s)>" % (
-            self.id,
+        return "<Vendor(vendor_id='%s', name='%s)>" % (
+            self.vid,
             self.name)
 
 
