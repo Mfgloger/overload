@@ -944,7 +944,7 @@ class ProcessVendorFiles(tk.Frame):
             else:
                 self.reportDTxt.insert(tk.END, callNos.to_string() + '\n')
         else:
-            self.reportDtxt.insert(
+            self.reportDTxt.insert(
                 tk.END, 'CALL NUMBER CONFLICTS PARSING ERROR\n')
         # prevent edits
         self.reportDTxt['state'] = tk.DISABLED
