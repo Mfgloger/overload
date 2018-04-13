@@ -237,7 +237,7 @@ def archive():
 
     df = reports.shelf2dataframe(BATCH_STATS)
     if df is not None:
-        stats = reports.create_stats(df)
+        stats = reports.create_stats(system, df)
 
         with session_scope() as session:
             # find out if timestamp already added
@@ -258,12 +258,21 @@ def archive():
                 session.flush()
                 vid = record.vid
 
-                record = insert_or_ignore(
-                    session, PVR_File,
-                    bid=bid,
-                    vid=vid,
-                    new=row[1]['insert'],
-                    dups=row[1]['attach'],
-                    updated=row[1]['update'],
-                    mixed=row[1]['mixed'],
-                    other=row[1]['other'])
+                if system == 'nypl':
+                    record = insert_or_ignore(
+                        session, PVR_File,
+                        bid=bid,
+                        vid=vid,
+                        new=row[1]['insert'],
+                        dups=row[1]['attach'],
+                        updated=row[1]['update'],
+                        mixed=row[1]['mixed'],
+                        other=row[1]['other'])
+                else:
+                    record = insert_or_ignore(
+                        session, PVR_File,
+                        bid=bid,
+                        vid=vid,
+                        new=row[1]['insert'],
+                        dups=row[1]['attach'],
+                        updated=row[1]['update'])
