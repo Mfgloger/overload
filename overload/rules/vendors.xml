@@ -97,6 +97,10 @@
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 		</vendor>
+		<vendor name = "BT LEASED">
+			<vendor_tag type = "standard" tag = "901a" operator = "main">LEASED</vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+		</vendor>
 	</system>
 	<system name = "nypl" agent = 'sel'>
 		<vendor name = "BT SERIES" code = '10001'>
