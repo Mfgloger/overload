@@ -785,7 +785,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, [])
         self.assertEqual(
             report.vendor, 'BTSERIES')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertEqual(
             report.vendor_callNo, 'FIC ROWLING')
@@ -830,7 +830,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, [])
         self.assertEqual(
             report.vendor, 'BTPBP')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertEqual(
             report.vendor_callNo, 'FIC ROWLING')
@@ -974,7 +974,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, ['000001'])
         self.assertEqual(
             report.vendor, 'Sulaiman')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertIsNone(
             report.vendor_callNo)

@@ -110,7 +110,10 @@ class PVR_NYPLReport(PVRReport):
     def _cataloging_workflow(self):
         # default action = 'insert'
         n = len(self._matched)
-        if n > 0:
+        if n == 0:
+            # no matches found
+            self.callNo_match = True
+        elif n > 0:
             c = 0
             for meta in self._matched:
                 c += 1
