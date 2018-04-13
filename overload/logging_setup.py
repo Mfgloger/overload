@@ -1,6 +1,6 @@
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,  # this fixes the problem
+    'disable_existing_loggers': False,
     'formatters': {
         'brief': {
             'format': '%(name)s-%(asctime)s-%(filename)s-%(lineno)s-%(levelname)s-%(levelno)s-%(message)s'
@@ -15,7 +15,7 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'brief'
         },
-        'loggly_standard': {
+        'loggly': {
             'level': 'INFO',
             'class': 'loggly.handlers.HTTPSHandler',
             'formatter': 'standard',
@@ -24,7 +24,7 @@ LOGGING = {
     },
     'loggers': {
         'main': {
-            'handlers': ['console'],  # add loggly_standard after the tests
+            'handlers': ['loggly'],
             'level': 'INFO',
             'propagate': True
         },
