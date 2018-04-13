@@ -59,9 +59,9 @@ class Test_Reports(unittest.TestCase):
             df.index[df['mixed'].isnull()].tolist(),
             [2])
 
-    def test_creat_stats(self):
+    def test_create_nypl_stats(self):
         df = reports.shelf2dataframe('temp')
-        stats = reports.create_stats(df)
+        stats = reports.create_stats('nypl', df)
         self.assertEqual(
             stats.shape, (2, 7))
         self.assertEqual(
@@ -95,6 +95,35 @@ class Test_Reports(unittest.TestCase):
             stats.iloc[1]['mixed'], 0)
         self.assertEqual(
             stats.iloc[1]['other'], 0)
+
+    def test_create_bpl_stats(self):
+        df = reports.shelf2dataframe('temp')
+        stats = reports.create_stats('bpl', df)
+        self.assertEqual(
+            stats.shape, (2, 5))
+        self.assertEqual(
+            stats.columns.tolist(),
+            ['vendor', 'attach', 'insert', 'update', 'total'])
+        self.assertEqual(
+            stats.iloc[0]['attach'], 1)
+        self.assertEqual(
+            stats.iloc[0]['vendor'], 'TEST VENDOR1')
+        self.assertEqual(
+            stats.iloc[0]['insert'], 0)
+        self.assertEqual(
+            stats.iloc[0]['update'], 0)
+        self.assertEqual(
+            stats.iloc[0]['total'], 1)
+        self.assertEqual(
+            stats.iloc[1]['attach'], 0)
+        self.assertEqual(
+            stats.iloc[1]['vendor'], 'TEST VENDOR2')
+        self.assertEqual(
+            stats.iloc[1]['insert'], 0)
+        self.assertEqual(
+            stats.iloc[1]['update'], 1)
+        self.assertEqual(
+            stats.iloc[1]['total'], 1)
 
     def test_report_dups(self):
         df = reports.shelf2dataframe('temp')

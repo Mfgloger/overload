@@ -61,7 +61,7 @@ def shelf2dataframe(batch_stats):
     return df
 
 
-def create_stats(df):
+def create_stats(system, df):
     frames = []
     n = 0
     for vendor, data in df.groupby('vendor'):
@@ -72,21 +72,33 @@ def create_stats(df):
             data['action'] == 'insert']['action'].count()
         update = data[
             data['action'] == 'overlay']['action'].count()
-        mixed = data[
-            data['mixed'].notnull()]['mixed'].count()
-        other = data[
-            data['other'].notnull()]['other'].count()
-        frames.append(pd.DataFrame(
-            data={
-                'vendor': vendor,
-                'attach': attach,
-                'insert': insert,
-                'update': update,
-                'total': attach + insert + update,
-                'mixed': mixed,
-                'other': other},
-            columns=['vendor', 'attach', 'insert', 'update', 'total', 'mixed', 'other'],
-            index=[n]))
+        if system == 'nypl':
+            mixed = data[
+                data['mixed'].notnull()]['mixed'].count()
+            other = data[
+                data['other'].notnull()]['other'].count()
+            frames.append(pd.DataFrame(
+                data={
+                    'vendor': vendor,
+                    'attach': attach,
+                    'insert': insert,
+                    'update': update,
+                    'total': attach + insert + update,
+                    'mixed': mixed,
+                    'other': other},
+                columns=['vendor', 'attach', 'insert', 'update', 'total', 'mixed', 'other'],
+                index=[n]))
+        else:
+            # bpl stats
+            frames.append(pd.DataFrame(
+                data={
+                    'vendor': vendor,
+                    'attach': attach,
+                    'insert': insert,
+                    'update': update,
+                    'total': attach + insert + update},
+                columns=['vendor', 'attach', 'insert', 'update', 'total'],
+                index=[n]))
     df_rep = pd.concat(frames)
     return df_rep
 
@@ -99,13 +111,23 @@ def report_dups(system, library, df):
             other = 'branches'
         dups = '{} dups'.format(library)
 
-    df_rep = df[[
-        'vendor_id', 'vendor', 'target_sierraId',
-        'inhouse_dups', 'mixed', 'other']]
+        df_rep = df[[
+            'vendor_id', 'vendor', 'target_sierraId',
+            'inhouse_dups', 'mixed', 'other']]
 
-    df_rep = df_rep[
-        df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
-    df_rep.columns = ['vendor', 'vendor_id', 'target_id', dups, 'mixed', other]
+        df_rep = df_rep[
+            df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
+        df_rep.columns = ['vendor', 'vendor_id', 'target_id', dups, 'mixed', other]
+    else:
+        # bpl stats
+        df_rep = df[[
+            'vendor_id', 'vendor', 'target_sierraId',
+            'inhouse_dups']]
+
+        df_rep = df_rep[
+            df_rep['inhouse_dups'].notnull()].sort_index()
+        df_rep.columns = ['vendor', 'vendor_id', 'target_id', 'duplicate bibs']
+
     return df_rep
 
 
@@ -119,6 +141,7 @@ def report_callNo_issues(df):
 
 
 def report_details(system, library, df):
+    df = df.sort_index()
     if system == 'nypl':
         if library == 'branches':
             other = 'research bibs'
@@ -126,15 +149,26 @@ def report_details(system, library, df):
             other = 'branches bibs'
         dups = '{} dups'.format(library)
 
-    df = df.sort_index()
-    df = df[[
-        'vendor', 'vendor_id', 'action', 'target_sierraId',
-        'updated_by_vendor',
-        'callNo_match', 'vendor_callNo', 'target_callNo',
-        'inhouse_dups', 'mixed', 'other']]
-    df.columns = [
-        'vendor', 'vendor_id', 'action', 'target_id',
-        'updated',
-        'callNo_match', 'vendor_callNo', 'target_callNo',
-        dups, 'mixed bibs', other]
+        df = df[[
+            'vendor', 'vendor_id', 'action', 'target_sierraId',
+            'updated_by_vendor',
+            'callNo_match', 'vendor_callNo', 'target_callNo',
+            'inhouse_dups', 'mixed', 'other']]
+        df.columns = [
+            'vendor', 'vendor_id', 'action', 'target_id',
+            'updated',
+            'callNo_match', 'vendor_callNo', 'target_callNo',
+            dups, 'mixed bibs', other]
+    else:
+        # bpl stats
+        df = df[[
+            'vendor', 'vendor_id', 'action', 'target_sierraId',
+            'updated_by_vendor',
+            'callNo_match', 'vendor_callNo', 'target_callNo',
+            'inhouse_dups']]
+        df.columns = [
+            'vendor', 'vendor_id', 'action', 'target_id',
+            'updated',
+            'callNo_match', 'vendor_callNo', 'target_callNo',
+            'duplicate bibs']
     return df
