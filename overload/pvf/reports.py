@@ -5,7 +5,7 @@ import numpy as np
 import shelve
 
 
-def generate_processing_summary(system, library, agent, batch_meta):
+def generate_processing_summary(batch_meta):
     """
     creates a summary for processed batch
     args:
@@ -19,7 +19,9 @@ def generate_processing_summary(system, library, agent, batch_meta):
     summary = []
     summary.append(
         'system: {}, library: {}, user: {}\n'.format(
-            system.upper(), library, agent.upper()))
+            meta['system'].upper(),
+            meta['library'],
+            meta['agent'].upper()))
     summary.append(
         'total processed files: {}  '.format(
             meta['processed_files']))
