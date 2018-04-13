@@ -45,7 +45,6 @@ class Test_Reports(unittest.TestCase):
         stats_shelf.clear()
         stats_shelf.close()
 
-
     def test_shelf2dataframe(self):
         df = reports.shelf2dataframe('temp')
         self.assertIsInstance(
@@ -64,10 +63,10 @@ class Test_Reports(unittest.TestCase):
         df = reports.shelf2dataframe('temp')
         stats = reports.create_stats(df)
         self.assertEqual(
-            stats.shape, (2, 5))
+            stats.shape, (2, 7))
         self.assertEqual(
             stats.columns.tolist(),
-            ['vendor', 'attach', 'insert', 'update', 'total'])
+            ['vendor', 'attach', 'insert', 'update', 'total', 'mixed', 'other'])
         self.assertEqual(
             stats.iloc[0]['attach'], 1)
         self.assertEqual(
@@ -79,6 +78,10 @@ class Test_Reports(unittest.TestCase):
         self.assertEqual(
             stats.iloc[0]['total'], 1)
         self.assertEqual(
+            stats.iloc[0]['mixed'], 1)
+        self.assertEqual(
+            stats.iloc[0]['other'], 1)
+        self.assertEqual(
             stats.iloc[1]['attach'], 0)
         self.assertEqual(
             stats.iloc[1]['vendor'], 'TEST VENDOR2')
@@ -88,6 +91,10 @@ class Test_Reports(unittest.TestCase):
             stats.iloc[1]['update'], 1)
         self.assertEqual(
             stats.iloc[1]['total'], 1)
+        self.assertEqual(
+            stats.iloc[1]['mixed'], 0)
+        self.assertEqual(
+            stats.iloc[1]['other'], 0)
 
     def test_report_dups(self):
         df = reports.shelf2dataframe('temp')

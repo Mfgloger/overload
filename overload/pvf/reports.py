@@ -42,14 +42,19 @@ def shelf2dataframe(batch_stats):
     frames = []
     list2str = ['inhouse_dups', 'mixed', 'other']
     for key, value in stats.iteritems():
+        if value['target_sierraId'] is not None:
+            value['target_sierraId'] = 'b{}a'.format(
+                value['target_sierraId'])
+
         for cat in list2str:
             if value[cat] == []:
-                value[cat] = ''
+                value[cat] = None
             else:
-                value[cat] = ','.join(['b{}a'.format(bid) for bid in value[cat]])
+                value[cat] = ','.join(
+                    ['b{}a'.format(bid) for bid in value[cat]])
         frames.append(pd.DataFrame(value, index=[int(key)]))
     try:
-        df = pd.concat(frames).replace('', np.NaN)
+        df = pd.concat(frames)
     except ValueError:
         df = None
     stats.close()
@@ -57,30 +62,33 @@ def shelf2dataframe(batch_stats):
 
 
 def create_stats(df):
-    if df is not None:
-        frames = []
-        n = 0
-        for vendor, data in df.groupby('vendor'):
-            n += 1
-            attach = data[
-                data['action'] == 'attach']['action'].count()
-            insert = data[
-                data['action'] == 'insert']['action'].count()
-            update = data[
-                data['action'] == 'overlay']['action'].count()
-            frames.append(pd.DataFrame(
-                data={
-                    'vendor': vendor,
-                    'attach': attach,
-                    'insert': insert,
-                    'update': update,
-                    'total': attach + insert + update},
-                columns=['vendor', 'attach', 'insert', 'update', 'total'],
-                index=[n]))
-        df_rep = pd.concat(frames)
-        return df_rep
-    else:
-        return None
+    frames = []
+    n = 0
+    for vendor, data in df.groupby('vendor'):
+        n += 1
+        attach = data[
+            data['action'] == 'attach']['action'].count()
+        insert = data[
+            data['action'] == 'insert']['action'].count()
+        update = data[
+            data['action'] == 'overlay']['action'].count()
+        mixed = data[
+            data['mixed'].notnull()]['mixed'].count()
+        other = data[
+            data['other'].notnull()]['other'].count()
+        frames.append(pd.DataFrame(
+            data={
+                'vendor': vendor,
+                'attach': attach,
+                'insert': insert,
+                'update': update,
+                'total': attach + insert + update,
+                'mixed': mixed,
+                'other': other},
+            columns=['vendor', 'attach', 'insert', 'update', 'total', 'mixed', 'other'],
+            index=[n]))
+    df_rep = pd.concat(frames)
+    return df_rep
 
 
 def report_dups(system, library, df):
@@ -96,9 +104,8 @@ def report_dups(system, library, df):
         'inhouse_dups', 'mixed', 'other']]
 
     df_rep = df_rep[
-        df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].replace(np.NaN, '')
+        df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
     df_rep.columns = ['vendor', 'vendor_id', 'target_id', dups, 'mixed', other]
-
     return df_rep
 
 
@@ -106,7 +113,7 @@ def report_callNo_issues(df):
     df_call = df[~df['callNo_match']].sort_index()
     df_call = df_call[
         ['vendor', 'vendor_id', 'target_sierraId',
-         'vendor_callNo', 'target_callNo', 'inhouse_dups']].replace(np.NaN, '')
+         'vendor_callNo', 'target_callNo', 'inhouse_dups']]
     df_call.columns = ['vendor', 'vendor_id', 'target_id', 'vendor_callNo', 'target_callNo', 'duplicate bibs']
     return df_call
 
@@ -130,5 +137,4 @@ def report_details(system, library, df):
         'updated',
         'callNo_match', 'vendor_callNo', 'target_callNo',
         dups, 'mixed bibs', other]
-    df = df.replace(np.NaN, '')
     return df
