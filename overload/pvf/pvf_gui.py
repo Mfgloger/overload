@@ -25,12 +25,13 @@ from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, MVAL_REP, \
 import reports
 
 
-overload_logger = logging.getLogger('main')
+overload_logger = logging.getLogger('tests')
 
 
 class ProcessVendorFiles(tk.Frame):
     """
-    GUI to processing vendor files being imported into Sierra
+    GUI to processing vendor files module which preprocesses records
+    for Sierra import
     """
 
     def __init__(self, parent, controller, **app_data):
@@ -43,8 +44,8 @@ class ProcessVendorFiles(tk.Frame):
         self.cur_manager = BusyManager(self)
 
         # widget variables
-        self.database = tk.StringVar()
-        self.target_name = tk.StringVar()
+        # self.database = tk.StringVar()
+        self.query_target = tk.StringVar()
         self.target = None
         self.file_count = tk.StringVar()
         self.marcVal = tk.IntVar()
@@ -52,196 +53,249 @@ class ProcessVendorFiles(tk.Frame):
         self.processed = tk.StringVar()
         self.archived = tk.StringVar()
         self.validated = tk.StringVar()
-        # self.statDetails = tk.StringVar()  # clean-up later
         self.last_directory_check = tk.IntVar()
         self.last_directory = None
         self.files = None
-        # self.df = None
-        self.system = 'nypl'
-        self.library = 'branches'
-        self.agent = 'cat'
+        self.system = tk.StringVar()
+        self.library = tk.StringVar()
+        self.agent = tk.StringVar()
+        self.template = tk.StringVar()
 
-        # layout
+        # layout of the main frame
+        self.rowconfigure(0, minsize=5)
+        self.columnconfigure(0, minsize=5)
+        self.columnconfigure(2, minsize=10)
+        self.columnconfigure(4, minsize=5)
 
-        self.rowconfigure(0, minsize=25)
-        self.rowconfigure(2, minsize=10)
-        self.rowconfigure(20, minsize=25)
-        self.columnconfigure(0, minsize=25)
-        self.columnconfigure(2, minsize=20)
-        self.columnconfigure(4, minsize=20)
-        self.columnconfigure(10, minsize=50)
-
+        # layout of the base frame
         self.baseFrm = ttk.LabelFrame(
             self,
             text='process vendor file')
         self.baseFrm.grid(
             row=1, column=1, rowspan=6, sticky='snew')
         self.baseFrm.rowconfigure(0, minsize=10)
-        self.baseFrm.rowconfigure(2, minsize=20)
+        self.baseFrm.rowconfigure(2, minsize=5)
         self.baseFrm.rowconfigure(4, minsize=5)
-        self.baseFrm.rowconfigure(6, minsize=5)
-        self.baseFrm.rowconfigure(8, minsize=5)
-        self.baseFrm.rowconfigure(10, minsize=5)
-        self.baseFrm.rowconfigure(12, minsize=5)
-        self.baseFrm.rowconfigure(14, minsize=5)
-        self.baseFrm.rowconfigure(16, minsize=5)
-        self.baseFrm.rowconfigure(18, minsize=5)
-        self.baseFrm.rowconfigure(20, minsize=5)
-        self.baseFrm.rowconfigure(22, minsize=5)
-        self.baseFrm.rowconfigure(24, minsize=20)
+        self.baseFrm.rowconfigure(7, minsize=5)
+        # self.baseFrm.rowconfigure(8, minsize=5)
+        # self.baseFrm.rowconfigure(10, minsize=5)
+        # self.baseFrm.rowconfigure(12, minsize=5)
+        # self.baseFrm.rowconfigure(14, minsize=5)
+        # self.baseFrm.rowconfigure(16, minsize=5)
+        # self.baseFrm.rowconfigure(18, minsize=5)
+        # self.baseFrm.rowconfigure(20, minsize=5)
+        # self.baseFrm.rowconfigure(22, minsize=5)
+        self.baseFrm.rowconfigure(24, minsize=10)
         self.baseFrm.columnconfigure(0, minsize=10)
-        self.baseFrm.columnconfigure(2, minsize=10)
-        self.baseFrm.columnconfigure(3, minsize=200)
-        self.baseFrm.columnconfigure(6, minsize=20)
+        # self.baseFrm.columnconfigure(2, minsize=10)
+        # self.baseFrm.columnconfigure(5, minsize=10)
+        self.baseFrm.columnconfigure(7, minsize=10)
 
         # widgets
+
+        # targets frame
         self.targetFrm = ttk.Frame(
             self.baseFrm)
         self.targetFrm.grid(
             row=1, column=1, columnspan=6, sticky='snew')
-        self.targetLbl = ttk.Label(
+
+        # system drop down menu
+        self.systemLbl = ttk.Label(
             self.targetFrm,
-            text='target:')
-        self.targetLbl.grid(
-            row=0, column=0, sticky='snw', padx=5)
-
-        self.targetLbl = ttk.Label(
+            text='system:')
+        self.systemLbl.grid(
+            row=0, column=0, sticky='snew')
+        self.systemCbx = ttk.Combobox(
             self.targetFrm,
-            style='Bold.TLabel',
-            textvariable=self.target_name)
-        self.targetLbl.grid(
-            row=0, column=1, columnspan=3, sticky='snew')
-        self.createToolTip(
-            self.targetLbl,
-            'target database and query method')
+            textvariable=self.system,
+            width=10)
+        self.systemCbx.grid(
+            row=0, column=1, sticky='nsw', padx=5, pady=10)
 
-        self.changeBtn = ttk.Button(
-            self.baseFrm,
-            text='change',
-            command=self.changeTarget,
-            cursor='hand2',
-            width=12)
-        self.changeBtn.grid(
-            row=1, column=5, sticky='new')
+        # destination library drop down menu
+        self.libraryLbl = ttk.Label(
+            self.targetFrm,
+            text='destination:')
+        self.libraryLbl.grid(
+            row=0, column=2, sticky='snew')
+        self.libraryCbx = ttk.Combobox(
+            self.targetFrm,
+            textvariable=self.library,
+            width=10)
+        self.libraryCbx.grid(
+            row=0, column=3, sticky='nsw', padx=5, pady=10)
 
+        # department drop down menu
+        self.agentLbl = ttk.Label(
+            self.targetFrm,
+            text='department:')
+        self.agentLbl.grid(
+            row=0, column=4, sticky='snew')
+        self.agentCbx = ttk.Combobox(
+            self.targetFrm,
+            textvariable=self.agent)
+        self.agentCbx.grid(
+            row=0, column=5, columnspan=2, sticky='snew', padx=5, pady=10)
+
+        # query method/database
+        self.query_targetLbl = ttk.Label(
+            self.targetFrm,
+            text='query database/method:')
+        self.query_targetLbl.grid(
+            row=1, column=0, columnspan=2, sticky='snew')
+        self.query_targetCbx = ttk.Combobox(
+            self.targetFrm,
+            textvariable=self.query_target)
+        self.query_targetCbx.grid(
+            row=1, column=2, columnspan=5, sticky='snew', padx=5, pady=10)
+
+        # templates to be applied
+        self.templateLbl = ttk.Label(
+            self.targetFrm,
+            text='apply template:')
+        self.templateLbl.grid(
+            row=3, column=0, columnspan=2, sticky='snew')
+        self.templateCbx = ttk.Combobox(
+            self.targetFrm,
+            textvariable=self.template)
+        self.templateCbx.grid(
+            row=3, column=2, columnspan=5, sticky='snew', padx=5, pady=10)
+
+        # browse & ftp buttons
         self.selectBtn = ttk.Button(
             self.baseFrm,
-            text='select files',
+            text='browse files',
             command=self.select,
             cursor='hand2',
             width=12)
         self.selectBtn.grid(
-            row=3, column=1, sticky='nw')
-
-        self.selectedLbl = ttk.Label(
+            row=3, column=1, sticky='nw', padx=5, pady=10)
+        self.ftpBtn = ttk.Button(
             self.baseFrm,
-            textvariable=self.file_count)
-        self.selectedLbl.grid(
-            row=3, column=3, columnspan=3, sticky='nw')
+            text='get via FTP',
+            command=self.ftp,
+            cursor='hand2',
+            width=12)
+        self.ftpBtn.grid(
+            row=3, column=2, sticky='nw', padx=5, pady=10)
 
-        self.selected_filesEnt = ttk.Entry(
-            self.baseFrm,
-            style='Flat.TEntry',
-            state='readonly')
-        self.selected_filesEnt.grid(
-            row=5, column=1, columnspan=5, sticky='nwe')
-
+        # default output directory
         self.default_directoryCbtn = ttk.Checkbutton(
             self.baseFrm,
             cursor='hand2',
             text='previous output directory',
             variable=self.last_directory_check)
         self.default_directoryCbtn.grid(
-            row=7, column=1, columnspan=2, sticky='snew')
+            row=3, column=3, columnspan=5, sticky='snew')
 
-        self.marcEditValCbtn = ttk.Checkbutton(
+        # selected files
+        self.selectedLbl = ttk.Label(
             self.baseFrm,
-            cursor='hand2',
-            text='MARCEdit validation',
-            variable=self.marcVal).grid(
-            row=9, column=1, columnspan=2, sticky='snew')
-        self.localValCbtn = ttk.Checkbutton(
-            self.baseFrm,
-            cursor='hand2',
-            text='local specs validation',
-            variable=self.locVal).grid(
-            row=9, column=3, columnspan=2, sticky='snew', padx=15)
+            textvariable=self.file_count)
+        self.selectedLbl.grid(
+            row=5, column=1, columnspan=2, sticky='nw')
 
-        self.processBtn = ttk.Button(
+        self.selected_filesEnt = ttk.Entry(
             self.baseFrm,
-            text='process',
-            command=None,
-            cursor='hand2',
-            width=12)
-        self.processBtn.grid(
-            row=13, column=1, sticky='nw')
+            style='Flat.TEntry',
+            state='readonly')
+        self.selected_filesEnt.grid(
+            row=6, column=1, columnspan=6, sticky='nwe')
 
-        self.progbar = ttk.Progressbar(
+        # validation area
+        self.validateLbl = ttk.Label(
             self.baseFrm,
-            mode='determinate',
-            orient=tk.HORIZONTAL)
-        self.progbar.grid(
-            row=15, column=1, sticky='snew')
+            text='check to perform:')
+        self.validateLbl.grid(
+            row=8, column=1, sticky='nw')
+        # self.marcEditValCbtn = ttk.Checkbutton(
+        #     self.baseFrm,
+        #     cursor='hand2',
+        #     text='MARCEdit validation',
+        #     variable=self.marcVal).grid(
+        #     row=8, column=3, columnspan=2, sticky='snew')
+        # self.localValCbtn = ttk.Checkbutton(
+        #     self.baseFrm,
+        #     cursor='hand2',
+        #     text='local specs validation',
+        #     variable=self.locVal).grid(
+        #     row=8, column=5, columnspan=2, sticky='snew', padx=15)
 
-        self.errorsBtn = ttk.Button(
-            self.baseFrm,
-            text='error report',
-            command=self.errors,
-            cursor='hand2',
-            width=12)
-        self.errorsBtn.grid(
-            row=17, column=1, sticky='nw')
-        self.createToolTip(
-            self.errorsBtn,
-            'display validation reports')
+        # self.processBtn = ttk.Button(
+        #     self.baseFrm,
+        #     text='process',
+        #     command=None,
+        #     cursor='hand2',
+        #     width=12)
+        # self.processBtn.grid(
+        #     row=13, column=1, sticky='nw')
 
-        self.archiveBtn = ttk.Button(
-            self.baseFrm,
-            text='archive',
-            command=self.archive,
-            cursor='hand2',
-            width=12)
-        self.archiveBtn.grid(
-            row=21, column=1, sticky='nw')
-        self.createToolTip(
-            self.archiveBtn,
-            'save statistics and archive output MARC files')
+        # self.progbar = ttk.Progressbar(
+        #     self.baseFrm,
+        #     mode='determinate',
+        #     orient=tk.HORIZONTAL)
+        # self.progbar.grid(
+        #     row=15, column=1, sticky='snew')
 
-        self.statsBtn = ttk.Button(
-            self.baseFrm,
-            text='stats',
-            command=self.batch_summary,
-            cursor='hand2',
-            width=12)
-        self.statsBtn.grid(
-            row=19, column=1, sticky='nw')
-        self.createToolTip(
-            self.statsBtn,
-            'display statistics of your last processing')
+        # self.errorsBtn = ttk.Button(
+        #     self.baseFrm,
+        #     text='error report',
+        #     command=self.errors,
+        #     cursor='hand2',
+        #     width=12)
+        # self.errorsBtn.grid(
+        #     row=17, column=1, sticky='nw')
+        # self.createToolTip(
+        #     self.errorsBtn,
+        #     'display validation reports')
 
-        self.processedLbl = ttk.Label(
-            self.baseFrm,
-            textvariable=self.processed)
-        self.processedLbl.grid(
-            row=13, column=3, columnspan=3, sticky='nw')
+        # self.archiveBtn = ttk.Button(
+        #     self.baseFrm,
+        #     text='archive',
+        #     command=self.archive,
+        #     cursor='hand2',
+        #     width=12)
+        # self.archiveBtn.grid(
+        #     row=21, column=1, sticky='nw')
+        # self.createToolTip(
+        #     self.archiveBtn,
+        #     'save statistics and archive output MARC files')
 
-        self.progbarLbl = ttk.Label(
-            self.baseFrm,
-            text='catalog query progress')
-        self.progbarLbl.grid(
-            row=15, column=3, columnspan=3, sticky='nw')
+        # self.statsBtn = ttk.Button(
+        #     self.baseFrm,
+        #     text='stats',
+        #     command=self.batch_summary,
+        #     cursor='hand2',
+        #     width=12)
+        # self.statsBtn.grid(
+        #     row=19, column=1, sticky='nw')
+        # self.createToolTip(
+        #     self.statsBtn,
+        #     'display statistics of your last processing')
 
-        self.validatedLbl = ttk.Label(
-            self.baseFrm,
-            textvariable=self.validated)
-        self.validatedLbl.grid(
-            row=17, column=3, columnspan=3, sticky='nw')
+        # self.processedLbl = ttk.Label(
+        #     self.baseFrm,
+        #     textvariable=self.processed)
+        # self.processedLbl.grid(
+        #     row=13, column=3, columnspan=3, sticky='nw')
 
-        self.archivedLbl = ttk.Label(
-            self.baseFrm,
-            textvariable=self.archived)
-        self.archivedLbl.grid(
-            row=21, column=3, columnspan=3, sticky='nw')
+        # self.progbarLbl = ttk.Label(
+        #     self.baseFrm,
+        #     text='catalog query progress')
+        # self.progbarLbl.grid(
+        #     row=15, column=3, columnspan=3, sticky='nw')
+
+        # self.validatedLbl = ttk.Label(
+        #     self.baseFrm,
+        #     textvariable=self.validated)
+        # self.validatedLbl.grid(
+        #     row=17, column=3, columnspan=3, sticky='nw')
+
+        # self.archivedLbl = ttk.Label(
+        #     self.baseFrm,
+        #     textvariable=self.archived)
+        # self.archivedLbl.grid(
+        #     row=21, column=3, columnspan=3, sticky='nw')
 
         # navigation buttons
 
@@ -251,7 +305,7 @@ class ProcessVendorFiles(tk.Frame):
         # prevent image to be garbage collected by Python
         self.logoDsp.image = logo
         self.logoDsp.grid(
-            row=1, column=3, sticky='nw')
+            row=1, column=8, sticky='nw')
 
         self.helpBtn = ttk.Button(
             self,
@@ -260,7 +314,7 @@ class ProcessVendorFiles(tk.Frame):
             cursor='hand2',
             width=15)
         self.helpBtn.grid(
-            row=5, column=3, sticky='sw')
+            row=5, column=8, sticky='sw')
 
         self.closeBtn = ttk.Button(
             self,
@@ -269,7 +323,7 @@ class ProcessVendorFiles(tk.Frame):
             cursor='hand2',
             width=15)
         self.closeBtn.grid(
-            row=6, column=3, sticky='sw')
+            row=6, column=8, sticky='sw')
 
     def createToolTip(self, widget, text):
         toolTip = ToolTip(widget)
@@ -285,7 +339,7 @@ class ProcessVendorFiles(tk.Frame):
 
     def select(self):
         # reset processed label
-        self.reset()
+        # self.reset()
 
         # determine last used directory
         user_data = shelve.open(USER_DATA)
@@ -320,15 +374,9 @@ class ProcessVendorFiles(tk.Frame):
             user_data['paths'] = paths
             user_data.close()
 
-    def reset(self):
-        self.processed.set('')
-        self.processedLbl.update()
-        self.validated.set('')
-        self.validatedLbl.update()
-        self.archived.set('')
-        self.archivedLbl.update()
-        self.progbar['value'] = 0
-
+    def ftp(self):
+        print 'ftp pop-up here'
+    
     def process(self):
 
         self.reset()
@@ -878,7 +926,6 @@ class ProcessVendorFiles(tk.Frame):
         # generate report
         self.create_detailed_report()
 
-
     def create_validation_report(self):
         # reset report
         self.reportVTxt.delete(1.0, tk.END)
@@ -896,8 +943,7 @@ class ProcessVendorFiles(tk.Frame):
         self.reportDTxt.delete(1.0, tk.END)
         # generate summary
         try:
-            summary = reports.generate_processing_summary(
-                self.system, self.library, self.agent, BATCH_META)
+            summary = reports.generate_processing_summary(BATCH_MET)
             for line in summary:
                 self.reportDTxt.insert(tk.END, line)
         except KeyError:
@@ -913,7 +959,7 @@ class ProcessVendorFiles(tk.Frame):
         # generate vendor stats
         self.reportDTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
         if df is not None:
-            stats = reports.create_stats(df)
+            stats = reports.create_stats(self.system, df)
             self.reportDTxt.insert(tk.END, stats.to_string())
             self.reportDTxt.insert(
                 tk.END, '\n' + ('-' * 60) + '\n')
@@ -989,7 +1035,7 @@ class ProcessVendorFiles(tk.Frame):
                     cursor='hand2',
                     text=conn + method,
                     value=conn + method,
-                    variable=self.target_name).grid(
+                    variable=self.query_target).grid(
                     row=n, column=0, columnspan=4,
                     sticky='snew', padx=10, pady=5)
 
@@ -1016,13 +1062,13 @@ class ProcessVendorFiles(tk.Frame):
             tkMessageBox.showwarning('Query targets', m)
 
     def selectTarget(self):
-        self.target_name.set(self.target_name.get())
+        self.query_target.set(self.query_target.get())
         user_data = shelve.open(USER_DATA)
-        if 'Z3950' in self.target_name.get():
+        if 'Z3950' in self.query_target.get():
             method = 'Z3950'
-        elif 'API' in self.target_name.get():
+        elif 'API' in self.query_target.get():
             method = 'API'
-        target = self.target_name.get()[:self.target_name.get().index(' (')]
+        target = self.query_target.get()[:self.query_target.get().index(' (')]
         user_data['ProcessVendorFiles_default_target'] = {
             'target': target,
             'method': method}
@@ -1053,18 +1099,51 @@ class ProcessVendorFiles(tk.Frame):
             helpTxt.insert(tk.END, line)
         helpTxt['state'] = tk.DISABLED
 
+    def reset(self):
+        self.processed.set('')
+        self.processedLbl.update()
+        self.validated.set('')
+        self.validatedLbl.update()
+        self.archived.set('')
+        self.archivedLbl.update()
+        self.file_count.set('0 file(s) selected:')
+        self.progbar['value'] = 0
+
     def observer(self, *args):
         if self.activeW.get() == 'ProcessVendorFiles':
             # reset values
-            self.file_count.set('')
+            self.file_count.set('0 files(s) selected:')
             self.processed.set('')
             self.validated.set('')
             self.archived.set('')
             self.selected_filesEnt['state'] = '!readonly'
             self.selected_filesEnt.delete(0, tk.END)
             self.selected_filesEnt['state'] = 'readonly'
+            self.systemCbx['values'] = ['BPL', 'NYPL']
+            self.systemCbx['state'] = 'readonly'
+            self.libraryCbx['values'] = ['branches', 'research']
+            self.libraryCbx['state'] = 'readonly'
+            self.agentCbx['values'] = [
+                'cataloging', 'selection', 'acquisition']
+            self.agentCbx['state'] = 'readonly'
 
+            # query database/method
+            conns_list = []
             user_data = shelve.open(USER_DATA)
+            conns = dict()
+            if 'Z3950s' in user_data:
+                conns.update(user_data['Z3950s'])
+            if 'SierraAPIs' in user_data:
+                conns.update(user_data['SierraAPIs'])
+            if 'PlatformAPIs' in user_data:
+                conns.update(user_data['PlatformAPIs'])
+            for conn, params in sorted(conns.iteritems()):
+                method = ' (' + params['method'] + ')'
+                conns_list.append(conn + method)
+            self.query_targetCbx['values'] = conns_list
+            self.query_targetCbx['state'] = 'readonly'
+
+
             if 'ProcessVendorFiles_default_target' in user_data:
                 if user_data[
                         'ProcessVendorFiles_default_target'][
@@ -1072,7 +1151,7 @@ class ProcessVendorFiles(tk.Frame):
                     self.target = user_data[
                         'Z3950s'][user_data[
                             'ProcessVendorFiles_default_target']['target']]
-                    self.target_name.set(user_data[
+                    self.query_target.set(user_data[
                         'ProcessVendorFiles_default_target']['target'] + ' (' +
                         user_data[
                         'ProcessVendorFiles_default_target']['method'] + ')')
@@ -1082,12 +1161,12 @@ class ProcessVendorFiles(tk.Frame):
                     self.target = user_data[
                         'APIs'][user_data[
                             'ProcessVendorFiles_default_target']['target']]
-                    self.target_name.set(user_data[
+                    self.query_target.set(user_data[
                         'ProcessVendorFiles_default_target']['target'] + ' (' +
                         user_data[
                         'ProcessVendorFiles_default_target']['method'] + ')')
             else:
-                self.target_name.set('NONE')
+                self.query_target.set('NONE')
 
             # set default validation
             if 'ProcessVendorFiles_marcVal' in user_data:
