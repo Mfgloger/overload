@@ -21,7 +21,7 @@ class PVR_Batch(Base):
     system = Column(String, nullable=False)
     library = Column(String, nullable=False)
     agent = Column(String, nullable=False)
-    file_qty = Column(Integer)
+    file_qty = Column(Integer, default=0)
 
     files = relationship('PVR_File', cascade='all, delete-orphan')
 
@@ -43,11 +43,11 @@ class PVR_File(Base):
     fid = Column(Integer, primary_key=True)
     bid = Column(Integer, ForeignKey('pvr_batch.bid'), nullable=False)
     vid = Column(Integer, ForeignKey('vendor.vid'), nullable=False)
-    new = Column(Integer)
-    dups = Column(Integer)
-    updated = Column(Integer)
-    mixed = Column(Integer)
-    other = Column(Integer)
+    new = Column(Integer, default=0)
+    dups = Column(Integer, default=0)
+    updated = Column(Integer, default=0)
+    mixed = Column(Integer, default=0)
+    other = Column(Integer, default=0)
 
     def __repr__(self):
         return "<PVR_File(file_id='%s', batch_id='%s', vendor_id='%s', " \
