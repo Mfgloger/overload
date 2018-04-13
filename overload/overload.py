@@ -1163,7 +1163,9 @@ class PlatformAPIs(tk.Frame):
                 host=self.host.get(),
                 client_id=client_id,
                 client_secret=client_secret,
-                last_token=None)
+                last_token=None,
+                method='Platform API',
+                library='NYPL')
 
             user_data = shelve.open(USER_DATA, writeback=True)
             if 'PlatformAPIs' in user_data:
