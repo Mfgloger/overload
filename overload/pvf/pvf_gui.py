@@ -45,24 +45,27 @@ class ProcessVendorFiles(tk.Frame):
 
         # widget variables
         # self.database = tk.StringVar()
-        self.query_target = tk.StringVar()
+        self.target_name = tk.StringVar()
         self.target = None
         self.file_count = tk.StringVar()
         self.marcVal = tk.IntVar()
         self.locVal = tk.IntVar()
         self.processed = tk.StringVar()
+        self.issues = tk.StringVar()
         self.archived = tk.StringVar()
         self.validated = tk.StringVar()
         self.last_directory_check = tk.IntVar()
         self.last_directory = None
         self.files = None
         self.system = tk.StringVar()
+        self.system.trace('w', self.system_observer)
         self.library = tk.StringVar()
         self.agent = tk.StringVar()
         self.template = tk.StringVar()
 
         # layout of the main frame
         self.rowconfigure(0, minsize=5)
+        self.rowconfigure(8, minsize=10)
         self.columnconfigure(0, minsize=5)
         self.columnconfigure(2, minsize=10)
         self.columnconfigure(4, minsize=5)
@@ -77,25 +80,17 @@ class ProcessVendorFiles(tk.Frame):
         self.baseFrm.rowconfigure(2, minsize=5)
         self.baseFrm.rowconfigure(4, minsize=5)
         self.baseFrm.rowconfigure(7, minsize=5)
-        # self.baseFrm.rowconfigure(8, minsize=5)
-        # self.baseFrm.rowconfigure(10, minsize=5)
-        # self.baseFrm.rowconfigure(12, minsize=5)
-        # self.baseFrm.rowconfigure(14, minsize=5)
-        # self.baseFrm.rowconfigure(16, minsize=5)
-        # self.baseFrm.rowconfigure(18, minsize=5)
-        # self.baseFrm.rowconfigure(20, minsize=5)
-        # self.baseFrm.rowconfigure(22, minsize=5)
-        self.baseFrm.rowconfigure(24, minsize=10)
+        self.baseFrm.rowconfigure(9, minsize=5)
+        self.baseFrm.rowconfigure(14, minsize=10)
+        self.baseFrm.rowconfigure(16, minsize=10)
         self.baseFrm.columnconfigure(0, minsize=10)
-        # self.baseFrm.columnconfigure(2, minsize=10)
-        # self.baseFrm.columnconfigure(5, minsize=10)
         self.baseFrm.columnconfigure(7, minsize=10)
 
-        # widgets
-
-        # targets frame
+        # layout of target parameters
         self.targetFrm = ttk.Frame(
-            self.baseFrm)
+            self.baseFrm,
+            borderwidth=2,
+            relief='ridge')
         self.targetFrm.grid(
             row=1, column=1, columnspan=6, sticky='snew')
 
@@ -145,7 +140,7 @@ class ProcessVendorFiles(tk.Frame):
             row=1, column=0, columnspan=2, sticky='snew')
         self.query_targetCbx = ttk.Combobox(
             self.targetFrm,
-            textvariable=self.query_target)
+            textvariable=self.target_name)
         self.query_targetCbx.grid(
             row=1, column=2, columnspan=5, sticky='snew', padx=5, pady=10)
 
@@ -154,12 +149,12 @@ class ProcessVendorFiles(tk.Frame):
             self.targetFrm,
             text='apply template:')
         self.templateLbl.grid(
-            row=3, column=0, columnspan=2, sticky='snew')
+            row=2, column=0, columnspan=2, sticky='snew')
         self.templateCbx = ttk.Combobox(
             self.targetFrm,
             textvariable=self.template)
         self.templateCbx.grid(
-            row=3, column=2, columnspan=5, sticky='snew', padx=5, pady=10)
+            row=2, column=2, columnspan=5, sticky='snew', padx=5, pady=10)
 
         # browse & ftp buttons
         self.selectBtn = ttk.Button(
@@ -186,7 +181,7 @@ class ProcessVendorFiles(tk.Frame):
             text='previous output directory',
             variable=self.last_directory_check)
         self.default_directoryCbtn.grid(
-            row=3, column=3, columnspan=5, sticky='snew')
+            row=3, column=3, sticky='snew')
 
         # selected files
         self.selectedLbl = ttk.Label(
@@ -205,101 +200,117 @@ class ProcessVendorFiles(tk.Frame):
         # validation area
         self.validateLbl = ttk.Label(
             self.baseFrm,
-            text='check to perform:')
+            text='validation:')
         self.validateLbl.grid(
             row=8, column=1, sticky='nw')
-        # self.marcEditValCbtn = ttk.Checkbutton(
-        #     self.baseFrm,
-        #     cursor='hand2',
-        #     text='MARCEdit validation',
-        #     variable=self.marcVal).grid(
-        #     row=8, column=3, columnspan=2, sticky='snew')
-        # self.localValCbtn = ttk.Checkbutton(
-        #     self.baseFrm,
-        #     cursor='hand2',
-        #     text='local specs validation',
-        #     variable=self.locVal).grid(
-        #     row=8, column=5, columnspan=2, sticky='snew', padx=15)
+        self.marcEditValCbtn = ttk.Checkbutton(
+            self.baseFrm,
+            cursor='hand2',
+            text='MARCEdit validation',
+            variable=self.marcVal).grid(
+            row=8, column=2, sticky='snw')
+        self.localValCbtn = ttk.Checkbutton(
+            self.baseFrm,
+            cursor='hand2',
+            text='local specs validation',
+            variable=self.locVal).grid(
+            row=8, column=3, columnspan=2, sticky='snw', padx=15)
 
-        # self.processBtn = ttk.Button(
-        #     self.baseFrm,
-        #     text='process',
-        #     command=None,
-        #     cursor='hand2',
-        #     width=12)
-        # self.processBtn.grid(
-        #     row=13, column=1, sticky='nw')
+        self.processBtn = ttk.Button(
+            self.baseFrm,
+            text='process',
+            command=self.process,
+            cursor='hand2',
+            width=12)
+        self.processBtn.grid(
+            row=13, column=1, sticky='nw')
 
-        # self.progbar = ttk.Progressbar(
-        #     self.baseFrm,
-        #     mode='determinate',
-        #     orient=tk.HORIZONTAL)
-        # self.progbar.grid(
-        #     row=15, column=1, sticky='snew')
+        self.progbar = ttk.Progressbar(
+            self.baseFrm,
+            mode='determinate',
+            orient=tk.HORIZONTAL,)
+        self.progbar.grid(
+            row=13, column=2, sticky='snew', pady=10)
 
-        # self.errorsBtn = ttk.Button(
-        #     self.baseFrm,
-        #     text='error report',
-        #     command=self.errors,
-        #     cursor='hand2',
-        #     width=12)
-        # self.errorsBtn.grid(
-        #     row=17, column=1, sticky='nw')
-        # self.createToolTip(
-        #     self.errorsBtn,
-        #     'display validation reports')
+        # report layout
+        self.reportFrm = ttk.Frame(
+            self.baseFrm,
+            borderwidth=2,
+            relief='ridge')
+        self.reportFrm.grid(
+            row=15, column=1, columnspan=6, sticky='snew')
 
-        # self.archiveBtn = ttk.Button(
-        #     self.baseFrm,
-        #     text='archive',
-        #     command=self.archive,
-        #     cursor='hand2',
-        #     width=12)
-        # self.archiveBtn.grid(
-        #     row=21, column=1, sticky='nw')
-        # self.createToolTip(
-        #     self.archiveBtn,
-        #     'save statistics and archive output MARC files')
+        self.reportFrm.rowconfigure(0, minsize=5)
+        self.reportFrm.rowconfigure(5, minsize=5)
+        self.reportFrm.rowconfigure(7, minsize=5)
+        self.reportFrm.columnconfigure(0, minsize=2)
+        self.reportFrm.columnconfigure(2, minsize=2)
+        self.reportFrm.columnconfigure(4, minsize=2)
+        self.reportFrm.columnconfigure(5, minsize=2)
 
-        # self.statsBtn = ttk.Button(
-        #     self.baseFrm,
-        #     text='stats',
-        #     command=self.batch_summary,
-        #     cursor='hand2',
-        #     width=12)
-        # self.statsBtn.grid(
-        #     row=19, column=1, sticky='nw')
-        # self.createToolTip(
-        #     self.statsBtn,
-        #     'display statistics of your last processing')
+        self.validatedLbl = ttk.Label(
+            self.reportFrm,
+            textvariable=self.validated)
+        self.validatedLbl.grid(
+            row=1, column=1, columnspan=4, sticky='nw')
 
-        # self.processedLbl = ttk.Label(
-        #     self.baseFrm,
-        #     textvariable=self.processed)
-        # self.processedLbl.grid(
-        #     row=13, column=3, columnspan=3, sticky='nw')
+        self.processedLbl = ttk.Label(
+            self.reportFrm,
+            textvariable=self.processed)
+        self.processedLbl.grid(
+            row=2, column=1, columnspan=4, sticky='nw')
 
-        # self.progbarLbl = ttk.Label(
-        #     self.baseFrm,
-        #     text='catalog query progress')
-        # self.progbarLbl.grid(
-        #     row=15, column=3, columnspan=3, sticky='nw')
+        self.issuesLbl = ttk.Label(
+            self.reportFrm,
+            textvariable=self.issues)
+        self.issuesLbl.grid(
+            row=3, column=1, columnspan=4, sticky='nw')
 
-        # self.validatedLbl = ttk.Label(
-        #     self.baseFrm,
-        #     textvariable=self.validated)
-        # self.validatedLbl.grid(
-        #     row=17, column=3, columnspan=3, sticky='nw')
+        self.archivedLbl = ttk.Label(
+            self.reportFrm,
+            textvariable=self.archived)
+        self.archivedLbl.grid(
+            row=4, column=1, columnspan=4, sticky='nw')
 
-        # self.archivedLbl = ttk.Label(
-        #     self.baseFrm,
-        #     textvariable=self.archived)
-        # self.archivedLbl.grid(
-        #     row=21, column=3, columnspan=3, sticky='nw')
+        self.valid_reportBtn = ttk.Button(
+            self.reportFrm,
+            text='validation',
+            command=self.errors,
+            cursor='hand2',
+            width=10)
+        self.valid_reportBtn.grid(
+            row=6, column=1, sticky='sw')
+        self.createToolTip(
+            self.valid_reportBtn,
+            'display validation reports')
+
+        self.statsBtn = ttk.Button(
+            self.reportFrm,
+            text='stats',
+            command=self.batch_summary,
+            cursor='hand2',
+            width=10)
+        self.statsBtn.grid(
+            row=6, column=3, sticky='sw')
+        self.createToolTip(
+            self.statsBtn,
+            'display statistics of your last processing')
+
+        self.archiveBtn = ttk.Button(
+            self.reportFrm,
+            text='archive',
+            command=self.archive,
+            cursor='hand2',
+            width=10)
+        self.archiveBtn.grid(
+            row=6, column=5, sticky='sw')
+        self.createToolTip(
+            self.archiveBtn,
+            'save statistics and archive output MARC files')
 
         # navigation buttons
 
-        logo = tk.PhotoImage(file='./icons/ProcessVendorFilesLarge.gif')
+        logo = tk.PhotoImage(file='./icons/PVRlarge.gif')
         self.logoDsp = ttk.Label(
             self, image=logo)
         # prevent image to be garbage collected by Python
@@ -344,8 +355,8 @@ class ProcessVendorFiles(tk.Frame):
         # determine last used directory
         user_data = shelve.open(USER_DATA)
         paths = user_data['paths']
-        if 'ProcessVendorFiles_last_open_dir' in paths:
-            last_open_dir = paths['ProcessVendorFiles_last_open_dir']
+        if 'pvr_last_open_dir' in paths:
+            last_open_dir = paths['pvr_last_open_dir']
         else:
             last_open_dir = MY_DOCS
 
@@ -357,7 +368,7 @@ class ProcessVendorFiles(tk.Frame):
 
         if len(self.files) > 0:
             # update selected qty
-            self.file_count.set('{} file(s) selected'.format(len(self.files)))
+            self.file_count.set('{} file(s) selected:'.format(len(self.files)))
             names = []
             for file in self.files:
                 name = file.split('/')[-1]
@@ -370,13 +381,13 @@ class ProcessVendorFiles(tk.Frame):
             # save accessed directory for the future
             last_open_dir = '/'.join(self.files[-1].split('/')[:-1])
             paths = user_data['paths']
-            paths['ProcessVendorFiles_last_open_dir'] = last_open_dir
+            paths['pvr_last_open_dir'] = last_open_dir
             user_data['paths'] = paths
             user_data.close()
 
     def ftp(self):
         print 'ftp pop-up here'
-    
+
     def process(self):
 
         self.reset()
@@ -394,7 +405,7 @@ class ProcessVendorFiles(tk.Frame):
             if d != '':
                 self.last_directory = d
                 paths = user_data['paths']
-                paths['ProcessVendorFiles_default_save_directory'] = d
+                paths['pvr_default_save_dir'] = d
                 user_data['paths'] = paths
                 # update tooltip displaying the folder
                 self.createToolTip(
@@ -405,17 +416,17 @@ class ProcessVendorFiles(tk.Frame):
                     'output MARC files to procceed.'
                 tkMessageBox.showwarning('Missing Destination Folder', m)
         else:
-            if 'ProcessVendorFiles_default_save_directory' in user_data[
+            if 'pvr_default_save_dir' in user_data[
                     'paths']:
                 self.last_directory = user_data[
-                    'paths']['ProcessVendorFiles_default_save_directory']
+                    'paths']['pvr_default_save_dir']
             else:
                 dir_opt['initialdir'] = MY_DOCS
                 d = tkFileDialog.askdirectory(**dir_opt)
                 if d != '':
                     self.last_directory = d
                     paths = user_data['paths']
-                    paths['ProcessVendorFiles_default_save_directory'] = d
+                    paths['pvr_default_save_dir'] = d
                     user_data['paths'] = paths
                     # update tooltip displaying the folder
                     self.createToolTip(
@@ -425,6 +436,10 @@ class ProcessVendorFiles(tk.Frame):
                     m = 'Please select a destination folder for ' \
                         'output MARC files to procceed.'
                     tkMessageBox.showwarning('Missing Destination Folder', m)
+
+        user_data['pvr_system'] = self.system.get()
+        user_data['pvr_library'] = self.library.get()
+        user_data['pver_agent'] = self.library.get()
         user_data.close()
 
         if self.target is None:
@@ -435,171 +450,171 @@ class ProcessVendorFiles(tk.Frame):
             m = 'Please select files for processing.'
             tkMessageBox.showwarning('Select Files', m)
 
-        else:
-            self.cur_manager.busy()
-            s = datetime.datetime.now()
-            self.df = None
-            user_data = shelve.open(USER_DATA)
+        # else:
+        #     self.cur_manager.busy()
+        #     s = datetime.datetime.now()
+        #     self.df = None
+        #     user_data = shelve.open(USER_DATA)
 
-            # set validation choices as default
-            user_data['ProcessVendorFiles_marcVal'] = self.marcVal.get()
-            user_data['ProcessVendorFiles_locVal'] = self.locVal.get()
+        #     # set validation choices as default
+        #     user_data['ProcessVendorFiles_marcVal'] = self.marcVal.get()
+        #     user_data['ProcessVendorFiles_locVal'] = self.locVal.get()
 
-            # calculate time needed to process
-            valid_files = True
-            total_bib_count = 0
-            for file in self.files:
-                bib_count = bibs.count_bibs(file)
-                if bib_count is None:
-                    # file is not a MARC file
-                    valid_files = False
-                else:
-                    total_bib_count += bib_count
+        #     # calculate time needed to process
+        #     valid_files = True
+        #     total_bib_count = 0
+        #     for file in self.files:
+        #         bib_count = bibs.count_bibs(file)
+        #         if bib_count is None:
+        #             # file is not a MARC file
+        #             valid_files = False
+        #         else:
+        #             total_bib_count += bib_count
 
-            self.progbar['maximum'] = total_bib_count
+        #     self.progbar['maximum'] = total_bib_count
 
-            # run validation if requested
-            validation_report = {}
+        #     # run validation if requested
+        #     validation_report = {}
 
-            if self.marcVal.get() == 1:
-                # make sure MARCEdit is installed on the machine
-                val_engine = MARCEdit.get_engine()
-                if val_engine is None:
-                    # display error message
-                    m = 'Could not locate cmarcedit.exe and/or \n' \
-                        'marcrules.txt files to complete validation.\n' \
-                        'Please uncheck MARCEdit validation or \n' \
-                        'point to a folders contaning these files in Settings'
-                    tkMessageBox.showerror('Validation Error', m)
-                else:
-                    cme = val_engine[0]
-                    rules = val_engine[1]
-                    report_q = MVAL_REP
-                    overwrite = True
-                    # print cme, rules, report_q
-                    for file in self.files:
-                        file_q = file
-                        success_process = MARCEdit.validate(
-                            cme, file_q, report_q, rules, overwrite)
-                        overwrite = False
-                        if success_process:
-                            result = MARCEdit.validation_check(MVAL_REP)
-                            if not result[0]:
-                                valid_files = False
-                            validation_report[file] = result[1]
-                        else:
-                            valid_files = False
-                            validation_report[file] = \
-                                'Problem with the file \n. ' \
-                                'Not able to validate in MARCEdit'
+        #     if self.marcVal.get() == 1:
+        #         # make sure MARCEdit is installed on the machine
+        #         val_engine = MARCEdit.get_engine()
+        #         if val_engine is None:
+        #             # display error message
+        #             m = 'Could not locate cmarcedit.exe and/or \n' \
+        #                 'marcrules.txt files to complete validation.\n' \
+        #                 'Please uncheck MARCEdit validation or \n' \
+        #                 'point to a folders contaning these files in Settings'
+        #             tkMessageBox.showerror('Validation Error', m)
+        #         else:
+        #             cme = val_engine[0]
+        #             rules = val_engine[1]
+        #             report_q = MVAL_REP
+        #             overwrite = True
+        #             # print cme, rules, report_q
+        #             for file in self.files:
+        #                 file_q = file
+        #                 success_process = MARCEdit.validate(
+        #                     cme, file_q, report_q, rules, overwrite)
+        #                 overwrite = False
+        #                 if success_process:
+        #                     result = MARCEdit.validation_check(MVAL_REP)
+        #                     if not result[0]:
+        #                         valid_files = False
+        #                     validation_report[file] = result[1]
+        #                 else:
+        #                     valid_files = False
+        #                     validation_report[file] = \
+        #                         'Problem with the file \n. ' \
+        #                         'Not able to validate in MARCEdit'
 
-            if not valid_files:
-                self.validated.set('!validation errors found!')
-                self.processed.set('processing not completed')
-                m = 'Some of the records in selected file(s) \n' \
-                    'do not validate in MARCEdit.\n' \
-                    'Please see error report for details.'
-                tkMessageBox.showerror('MARCEdit validation', m)
+        #     if not valid_files:
+        #         self.validated.set('!validation errors found!')
+        #         self.processed.set('processing not completed')
+        #         m = 'Some of the records in selected file(s) \n' \
+        #             'do not validate in MARCEdit.\n' \
+        #             'Please see error report for details.'
+        #         tkMessageBox.showerror('MARCEdit validation', m)
 
-            # remove after completing local validation routine
-            if self.locVal.get() == 1:
-                m = 'Local Specs Validation is still being developed.\n' \
-                    'Uncheck the box to not display this warning'
-                tkMessageBox.showwarning('Under construction', m)
+        #     # remove after completing local validation routine
+        #     if self.locVal.get() == 1:
+        #         m = 'Local Specs Validation is still being developed.\n' \
+        #             'Uncheck the box to not display this warning'
+        #         tkMessageBox.showwarning('Under construction', m)
 
-            if valid_files:
-                if self.marcVal.get() == 1:
-                    self.validated.set('records are A-OK!')
-                    self.validatedLbl.update()
-                else:
-                    self.validated.set('skipped...')
-                    self.validatedLbl.update()
+        #     if valid_files:
+        #         if self.marcVal.get() == 1:
+        #             self.validated.set('records are A-OK!')
+        #             self.validatedLbl.update()
+        #         else:
+        #             self.validated.set('skipped...')
+        #             self.validatedLbl.update()
 
-                new_report = True
-                bib_counter = 0
+        #         new_report = True
+        #         bib_counter = 0
 
-                if self.target['method'] == 'Z3950':
-                    for fh in self.files:
-                        vbibs = bibs.read_from_marc_file(fh)
-                        for vbib in vbibs:
-                            proc.pvf_z3950_flow(
-                                new_report,
-                                fh,
-                                vbib,
-                                self.target,
-                                self.last_directory)
-                            new_report = False
-                            bib_counter += 1
-                            self.progbar['value'] = bib_counter
-                            self.progbar.update()
+        #         if self.target['method'] == 'Z3950':
+        #             for fh in self.files:
+        #                 vbibs = bibs.read_from_marc_file(fh)
+        #                 for vbib in vbibs:
+        #                     proc.pvf_z3950_flow(
+        #                         new_report,
+        #                         fh,
+        #                         vbib,
+        #                         self.target,
+        #                         self.last_directory)
+        #                     new_report = False
+        #                     bib_counter += 1
+        #                     self.progbar['value'] = bib_counter
+        #                     self.progbar.update()
 
-                elif self.target['method'] == 'API':
-                    # optain and decode stored client id and client secret
-                    client_id = base64.b64decode(self.target['client_id'])
-                    client_secret = base64.b64decode(
-                        self.target['client_secret'])
+        #         elif self.target['method'] == 'API':
+        #             # optain and decode stored client id and client secret
+        #             client_id = base64.b64decode(self.target['client_id'])
+        #             client_secret = base64.b64decode(
+        #                 self.target['client_secret'])
 
-                    # initiate Sierra API connection
-                    try:
-                        conn = SierraSession(
-                            client_id, client_secret, self.target['host'])
-                    except APISettingsError as e:
-                        tkMessageBox.showerror('API error', e)
-                    except ConnectTimeout as e:
-                        tkMessageBox.showerror('API error', e)
-                    except ReadTimeout as e:
-                        tkMessageBox.showerror('API error: {}'.format(e))
-                    except UnhandledException as e:
-                        tkMessageBox.showerror('Unexpected error', e)
-                    else:
-                            # loop over files and bibs and request data
-                            try:
-                                for fh in self.files:
-                                    vbibs = bibs.read_from_marc_file(fh)
-                                    for vbib in vbibs:
+        #             # initiate Sierra API connection
+        #             try:
+        #                 conn = SierraSession(
+        #                     client_id, client_secret, self.target['host'])
+        #             except APISettingsError as e:
+        #                 tkMessageBox.showerror('API error', e)
+        #             except ConnectTimeout as e:
+        #                 tkMessageBox.showerror('API error', e)
+        #             except ReadTimeout as e:
+        #                 tkMessageBox.showerror('API error: {}'.format(e))
+        #             except UnhandledException as e:
+        #                 tkMessageBox.showerror('Unexpected error', e)
+        #             else:
+        #                     # loop over files and bibs and request data
+        #                     try:
+        #                         for fh in self.files:
+        #                             vbibs = bibs.read_from_marc_file(fh)
+        #                             for vbib in vbibs:
 
-                                        proc.pvf_api_flow(
-                                            conn,
-                                            new_report,
-                                            fh,
-                                            vbib,
-                                            self.target['library'],
-                                            self.last_directory)
-                                        new_report = False
-                                        bib_counter += 1
-                                        self.progbar['value'] = bib_counter
-                                        self.progbar.update()
-                            except APISettingsError as e:
-                                tkMessageBox.showerror('API error', e)
-                            except ConnectTimeout as e:
-                                tkMessageBox.showerror('API error', e)
-                            except ReadTimeout as e:
-                                tkMessageBox.showerror('API error: {}'.format(e))
-                            except UnhandledException as e:
-                                tkMessageBox.showerror('Unexpected error', e)
+        #                                 proc.pvf_api_flow(
+        #                                     conn,
+        #                                     new_report,
+        #                                     fh,
+        #                                     vbib,
+        #                                     self.target['library'],
+        #                                     self.last_directory)
+        #                                 new_report = False
+        #                                 bib_counter += 1
+        #                                 self.progbar['value'] = bib_counter
+        #                                 self.progbar.update()
+        #                     except APISettingsError as e:
+        #                         tkMessageBox.showerror('API error', e)
+        #                     except ConnectTimeout as e:
+        #                         tkMessageBox.showerror('API error', e)
+        #                     except ReadTimeout as e:
+        #                         tkMessageBox.showerror('API error: {}'.format(e))
+        #                     except UnhandledException as e:
+        #                         tkMessageBox.showerror('Unexpected error', e)
 
-                else:
-                    overload_logger.error(
-                        'Query target error: '
-                        'name=%s, method=%s, host=%s' % (
-                            self.target['name'],
-                            self.target['method'],
-                            self.target['host']))
-                    m = 'Encountered unexpected query target error'
-                    tk.MessageBox.showerror('Target error', m)
+        #         else:
+        #             overload_logger.error(
+        #                 'Query target error: '
+        #                 'name=%s, method=%s, host=%s' % (
+        #                     self.target['name'],
+        #                     self.target['method'],
+        #                     self.target['host']))
+        #             m = 'Encountered unexpected query target error'
+        #             tk.MessageBox.showerror('Target error', m)
 
-                e = datetime.datetime.now()
-                processing_time = e - s
-                report = shelve.open(BATCH_STATS)
-                report['processing_time'] = processing_time
-                report.close()
+        #         e = datetime.datetime.now()
+        #         processing_time = e - s
+        #         report = shelve.open(BATCH_STATS)
+        #         report['processing_time'] = processing_time
+        #         report.close()
 
-                # confirm files have been processed
-                self.processed.set(
-                    '{} file(s) processed'.format(len(self.files)))
+        #         # confirm files have been processed
+        #         self.processed.set(
+        #             '{} file(s) processed'.format(len(self.files)))
 
-            user_data.close()
-            self.cur_manager.notbusy()
+        #     user_data.close()
+        #     self.cur_manager.notbusy()
 
     def archive(self):
         overload_logger.debug('PVF-Archive: Initiate process...')
@@ -1012,73 +1027,6 @@ class ProcessVendorFiles(tk.Frame):
         # prevent edits
         self.reportBTxt['state'] = tk.DISABLED
 
-    def changeTarget(self):
-        user_data = shelve.open(USER_DATA)
-        conns = dict()
-
-        if 'Z3950s' in user_data:
-            conns.update(user_data['Z3950s'])
-        if 'APIs' in user_data:
-            conns.update(user_data['APIs'])
-
-        user_data.close()
-
-        if len(conns.keys()) > 0:
-            self.targetSelectFrm = tk.Toplevel(background='white')
-            self.targetSelectFrm.iconbitmap('./icons/ProcessVendorFiles.ico')
-            n = 0
-            for conn, params in sorted(conns.iteritems()):
-                n += 1
-                method = ' (' + params['method'] + ')'
-                ttk.Radiobutton(
-                    self.targetSelectFrm,
-                    cursor='hand2',
-                    text=conn + method,
-                    value=conn + method,
-                    variable=self.query_target).grid(
-                    row=n, column=0, columnspan=4,
-                    sticky='snew', padx=10, pady=5)
-
-            self.targetSelectBtn = ttk.Button(
-                self.targetSelectFrm,
-                text='select',
-                cursor='hand2',
-                command=self.selectTarget,
-                width=12)
-            self.targetSelectBtn.grid(
-                row=n + 1, column=1, sticky='sw', padx=10, pady=10)
-
-            self.targetSelectCloseBtn = ttk.Button(
-                self.targetSelectFrm,
-                text='close',
-                cursor='hand2',
-                command=self.targetSelectFrm.destroy,
-                width=12)
-            self.targetSelectCloseBtn.grid(
-                row=n + 1, column=2, sticky='ew', padx=10, pady=10)
-        else:
-            m = 'Query targets were not found.\n' \
-                'Please set up Z3950 or Sierra API targets in Settings.'
-            tkMessageBox.showwarning('Query targets', m)
-
-    def selectTarget(self):
-        self.query_target.set(self.query_target.get())
-        user_data = shelve.open(USER_DATA)
-        if 'Z3950' in self.query_target.get():
-            method = 'Z3950'
-        elif 'API' in self.query_target.get():
-            method = 'API'
-        target = self.query_target.get()[:self.query_target.get().index(' (')]
-        user_data['ProcessVendorFiles_default_target'] = {
-            'target': target,
-            'method': method}
-        if method == 'Z3950':
-            self.target = user_data['Z3950s'][target]
-        elif method == 'API':
-            self.target = user_data['APIs'][target]
-        user_data.close()
-        self.targetSelectFrm.destroy()
-
     def help(self):
         # add scrollbar
         help = overload_help.open_help('process_vendor_help.txt')
@@ -1100,22 +1048,69 @@ class ProcessVendorFiles(tk.Frame):
         helpTxt['state'] = tk.DISABLED
 
     def reset(self):
-        self.processed.set('')
-        self.processedLbl.update()
-        self.validated.set('')
+        self.issues.set('issues:')
+        self.issuesLbl.update()
+        self.validated.set('validation:')
         self.validatedLbl.update()
-        self.archived.set('')
+        self.archived.set('archived:')
         self.archivedLbl.update()
         self.file_count.set('0 file(s) selected:')
         self.progbar['value'] = 0
+
+    def system_observer(self, *args):
+        user_data = shelve.open(USER_DATA)
+        conns_display = []
+        self.target_name.set('')
+        if self.system.get() == 'BPL':
+            # display only relevant connections
+            if 'Z3950s' in user_data:
+                for conn, params in user_data['Z3950s'].iteritems():
+                    if params['library'] == 'BPL':
+                        conns_display.append(
+                            conn + ' (' + params['method'] + ')')
+            if 'SierraAPIs' in user_data:
+                for conn, params in user_data['SierraAPIs'].iteritems():
+                    if params['library'] == 'BPL':
+                        conns_display.append(
+                            conn + ' (' + params['method'] + ')')
+
+            # disable unwanted widgets
+            self.library.set('')
+            self.libraryCbx['state'] = 'disabled'
+            self.agent.set('cataloging')
+            self.agentCbx['state'] = 'disabled'
+        elif self.system.get() == 'NYPL':
+            # display only relevant connections
+            if 'Z3950s' in user_data:
+                for conn, params in user_data['Z3950s'].iteritems():
+                    if params['library'] == 'NYPL':
+                        conns_display.append(
+                            conn + ' (' + params['method'] + ')')
+            if 'SierraAPIs' in user_data:
+                for conn, params in user_data['SierraAPIs'].iteritems():
+                    if params['library'] == 'NYPL':
+                        conns_display.append(
+                            conn + ' (' + params['method'] + ')')
+            if 'PlatformAPIs' in user_data:
+                for conn, params in user_data['PlatformAPIs'].iteritems():
+                    conns_display.append(
+                        conn + ' (' + params['method'] + ')')
+            self.libraryCbx['state'] = '!disabled'
+            self.libraryCbx['state'] = 'readonly'
+            self.agentCbx['state'] = '!disabled'
+            self.agentCbx['state'] = 'readonly'
+        self.query_targetCbx['values'] = conns_display
+        self.query_targetCbx['state'] = 'readonly'
+        user_data.close()
 
     def observer(self, *args):
         if self.activeW.get() == 'ProcessVendorFiles':
             # reset values
             self.file_count.set('0 files(s) selected:')
-            self.processed.set('')
-            self.validated.set('')
-            self.archived.set('')
+            self.validated.set('validation:')
+            self.processed.set('processed: 0 files')
+            self.issues.set('issues:')
+            self.archived.set('archived:')
             self.selected_filesEnt['state'] = '!readonly'
             self.selected_filesEnt.delete(0, tk.END)
             self.selected_filesEnt['state'] = 'readonly'
@@ -1127,58 +1122,63 @@ class ProcessVendorFiles(tk.Frame):
                 'cataloging', 'selection', 'acquisition']
             self.agentCbx['state'] = 'readonly'
 
-            # query database/method
-            conns_list = []
+            # default database target
             user_data = shelve.open(USER_DATA)
-            conns = dict()
-            if 'Z3950s' in user_data:
-                conns.update(user_data['Z3950s'])
-            if 'SierraAPIs' in user_data:
-                conns.update(user_data['SierraAPIs'])
-            if 'PlatformAPIs' in user_data:
-                conns.update(user_data['PlatformAPIs'])
-            for conn, params in sorted(conns.iteritems()):
-                method = ' (' + params['method'] + ')'
-                conns_list.append(conn + method)
-            self.query_targetCbx['values'] = conns_list
-            self.query_targetCbx['state'] = 'readonly'
 
-
-            if 'ProcessVendorFiles_default_target' in user_data:
+            if 'pvr_default_target' in user_data:
                 if user_data[
-                        'ProcessVendorFiles_default_target'][
+                        'pvr_default_target'][
                         'method'] == 'Z3950':
                     self.target = user_data[
                         'Z3950s'][user_data[
-                            'ProcessVendorFiles_default_target']['target']]
-                    self.query_target.set(user_data[
-                        'ProcessVendorFiles_default_target']['target'] + ' (' +
+                            'pvr_default_target']['target']]
+                    self.target_name.set(user_data[
+                        'pvr_default_target']['target'] + ' (' +
                         user_data[
-                        'ProcessVendorFiles_default_target']['method'] + ')')
+                        'pvr_default_target']['method'] + ')')
                 elif user_data[
-                        'ProcessVendorFiles_default_target'][
-                        'method'] == 'API':
+                        'pvr_default_target'][
+                        'method'] == 'SierraAPI':
                     self.target = user_data[
-                        'APIs'][user_data[
-                            'ProcessVendorFiles_default_target']['target']]
-                    self.query_target.set(user_data[
-                        'ProcessVendorFiles_default_target']['target'] + ' (' +
+                        'SierraAPIs'][user_data[
+                            'pvr_default_target']['target']]
+                    self.target_name.set(user_data[
+                        'pvr_default_target']['target'] + ' (' +
                         user_data[
-                        'ProcessVendorFiles_default_target']['method'] + ')')
+                        'pvr_default_target']['method'] + ')')
+                elif user_data[
+                        'pvr_default_target']['method'] == 'PlatformAPIs':
+                    self.target = user_data[
+                        'PlatformAPIs'][user_data[
+                            'pvr_default_target']['target']]
+                    self.target_name.set(
+                        user_data['PlatformAPIs'][user_data[
+                            'pvr_default_target']['target'] + ' (' +
+                            user_data[
+                            'prv_default_target']['method'] + ')'])
             else:
-                self.query_target.set('NONE')
+                self.target_name.set('NONE')
 
             # set default validation
-            if 'ProcessVendorFiles_marcVal' in user_data:
-                self.marcVal.set(user_data['ProcessVendorFiles_marcVal'])
-            if 'ProcessVendorFiles_locVal' in user_data:
-                self.locVal.set(user_data['ProcessVendorFiles_locVal'])
-            if 'ProcessVendorFiles_default_save_directory' in user_data[
+            if 'pvr_marcval' in user_data:
+                self.marcVal.set(user_data['pvr_marcval'])
+            if 'pvr_locval' in user_data:
+                self.locVal.set(user_data['pvr_locval'])
+            if 'pvr_default_save_dir' in user_data[
                     'paths']:
                 self.last_directory = user_data[
-                    'paths']['ProcessVendorFiles_default_save_directory']
+                    'paths']['pvr_default_save_dir']
                 self.createToolTip(
                     self.default_directoryCbtn,
                     self.last_directory)
                 self.last_directory_check.set(1)
+
+            if 'pvr_system' in user_data:
+                self.system.set(user_data['pvr_system'])
+            if 'pvr_library' in user_data:
+                self.library.set(user_data['pvr_library'])
+            if 'pvr_agent' in user_data:
+                self.agent.set(user_data['pvr_agent'])
+            if 'pvr_template' in user_data:
+                self.template.set(user_data['pvr_template'])
             user_data.close()
