@@ -2,10 +2,10 @@
 
 import unittest
 from pymarc import Record, Field, MARCReader, JSONReader
+from pymarc.exceptions import RecordLengthInvalid
 import os
 
 from context import bibs
-from context import errors
 
 
 class TestUtils(unittest.TestCase):
@@ -128,7 +128,7 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertIs(type(reader), MARCReader)
 
     def test_count_bibs_when_not_marc_file(self):
-        with self.assertRaises(errors.Error):
+        with self.assertRaises(RecordLengthInvalid):
             reader = bibs.count_bibs('test.mrk')
 
     def test_read_from_json_retuns_pymarc_reader(self):

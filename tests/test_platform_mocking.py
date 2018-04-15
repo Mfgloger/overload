@@ -9,7 +9,6 @@ from requests.exceptions import ConnectionError, Timeout
 
 from context import errors
 from context import AuthorizeAccess, PlatformSession
-from context import setup_dirs
 
 
 class TestAuthorizeAccessLogic(unittest.TestCase):

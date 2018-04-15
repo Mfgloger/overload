@@ -12,4 +12,4 @@ from overload.bibs import bibs, crosswalks
 from overload.pvf import vendors
 from overload.pvf.analyzer import PVRReport, PVR_NYPLReport
 from overload.pvf import reports
-from overload.connectors import errors
+from overload import errors

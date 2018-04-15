@@ -1,7 +1,7 @@
 # runs MarcEdit and local validation
 
 from validators import marcedit
-from pvf.exceptions import Error
+from errors import OverloadError
 from setup_dirs import MVAL_REP
 
 
@@ -12,7 +12,7 @@ def validate_files(files, marcval=False, locval=False):
         val_engine = marcedit.get_engine()
         if val_engine is None:
             # display error message
-            raise Error(
+            raise OverloadError(
                 'Failed to locate cmarcedit.exe or marcrules.txt\n'
                 'files of MARCEdit program. Unable to complete\n'
                 'MARC validation. Please uncheck the box if you\n'
@@ -33,14 +33,14 @@ def validate_files(files, marcval=False, locval=False):
                         valid_files = False
                 else:
                     valid_files = False
-                    raise Error(
+                    raise OverloadError(
                         'Encounted a problem with the file:\n'
                         '{}.\nNot able to validate in MARCEdit'.format(
                             file))
     if locval:
         # placeholder; replace when local validation is developed
-        raise Error(
+        raise OverloadError(
             'Local specs validation is still being developed.\n'
             'Uncheck the box to not display this warning')
-
+        print trigger
     return valid_files

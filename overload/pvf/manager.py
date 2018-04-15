@@ -16,7 +16,7 @@ from analyzer import PVR_NYPLReport
 from connectors import platform
 from setup_dirs import USER_DATA, BATCH_STATS, BATCH_META
 from connectors.platform import PlatformSession
-from connectors.errors import APITokenExpiredError, APITokenError, Error
+from errors import OverloadError, APITokenExpiredError, APITokenError
 from datastore import session_scope, insert_or_ignore, Vendor, \
     PVR_Batch, PVR_File
 
@@ -34,10 +34,10 @@ def run_platform_queries(api_name, session, meta, matchpoint):
             api_name, session, meta, matchpoint)
     except ConnectionError as e:
         session.close()
-        raise Error(e)
+        raise OverloadError(e)
     except Timeout as e:
         session.close()
-        raise Error(e)
+        raise OverloadError(e)
 
 
 def open_platform_session(api_name=None):
@@ -81,13 +81,13 @@ def open_platform_session(api_name=None):
                 token = auth.get_token()
             except APITokenError as e:
                 # log
-                raise Error(e)
+                raise OverloadError(e)
             except ConnectionError as e:
                 # log
-                raise Error(e)
+                raise OverloadError(e)
             except Timeout as e:
                 # log
-                raise Error(e)
+                raise OverloadError(e)
 
         # save token for reuse
         if not reusing_token:
@@ -107,15 +107,15 @@ def open_platform_session(api_name=None):
 
 def run_processing(
     files, system, library, agent, api_type, api_name,
-        output_directory):
+        output_directory, progbar):
     # tokens and sessions are opened on this level
 
     # determine destination API
-    if api_type == 'PlatformAPIs':
+    if api_type == 'Platform API':
         session = open_platform_session(api_name)
-    elif api_type == 'Z3950s':
+    elif api_type == 'Z3950':
         print 'parsing Z3950 settings'
-    elif api_type == 'SierraAPIs':
+    elif api_type == 'Sierra API':
         print 'parsing SierraAPI settings'
 
     # clean-up batch metadata & stats
@@ -150,7 +150,7 @@ def run_processing(
             # on this level I should know if the bib should be requeried
             # result must be evaluated in queries module, here action on
             # the evaluation
-            if api_type == 'PlatformAPIs':
+            if api_type == 'Platform API':
                 print 'sending request to Platform'
                 matchpoint = query_matchpoints['primary'][1]
                 print 'primary matchpoint'
@@ -171,9 +171,9 @@ def run_processing(
                         if result[0] == 'hit':
                             meta_out = platform2meta(result[1])
                         elif result[0] == 'error':
-                            raise Error('Platform server error')
+                            raise OverloadError('Platform server error')
                 elif result[0] == 'error':
-                    raise Error('Platform server error')
+                    raise OverloadError('Platform server error')
 
             elif 'api_type' == 'Z3950s':
                 print 'sending reuqest to Z3950'
@@ -213,6 +213,10 @@ def run_processing(
             else:
                 write_marc21(fh_new, bib)
 
+            # update progbar
+            progbar['value'] = n
+            progbar.update()
+
     batch['processing_time'] = datetime.now() - batch['timestamp']
     batch['processed_files'] = f
     batch['processed_bibs'] = n
@@ -221,7 +225,7 @@ def run_processing(
 
     # clean-up
     # close any open session if Platform or Sierra API has been used
-    if api_type in ('PlatformAPIs', 'SierraAPIs') and session is not None:
+    if api_type in ('Platform API', 'Sierra API') and session is not None:
         session.close()
         print 'session closed'
 
