@@ -1,6 +1,7 @@
 # general tools to read, parse, and write MARC files
 
 from pymarc import MARCReader, JSONReader, MARCWriter, Field
+from pymarc.exceptions import RecordLengthInvalid
 import re
 from datetime import datetime
 
@@ -84,6 +85,17 @@ def check_sierra_id_presence(system, bib):
         if '907' in bib:
             found = True
     return found
+
+
+def count_bibs(file):
+    reader = read_marc21(file)
+    bib_count = 0
+    try:
+        for bib in reader:
+            bib_count += 1
+        return bib_count
+    except RecordLengthInvalid:
+        raise
 
 
 class BibMeta:

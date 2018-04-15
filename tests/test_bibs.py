@@ -5,6 +5,7 @@ from pymarc import Record, Field, MARCReader, JSONReader
 import os
 
 from context import bibs
+from context import errors
 
 
 class TestUtils(unittest.TestCase):
@@ -125,6 +126,10 @@ class TestBibsUtilities(unittest.TestCase):
         # should return an instance of pymarc reader
         reader = bibs.read_marc21('test.mrc')
         self.assertIs(type(reader), MARCReader)
+
+    def test_count_bibs_when_not_marc_file(self):
+        with self.assertRaises(errors.Error):
+            reader = bibs.count_bibs('test.mrk')
 
     def test_read_from_json_retuns_pymarc_reader(self):
         reader = JSONReader('test.json')
