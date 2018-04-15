@@ -67,7 +67,7 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
             print '001 matchpoint'
             if bibmeta.t001 is not None:
                 print 'keywords: {}'.format(bibmeta.t001)
-                response = session.query_bibControlNo(keywords=bibmeta.t001)
+                response = session.query_bibControlNo(keywords=[bibmeta.t001])
             else:
                 response = None
         else:
