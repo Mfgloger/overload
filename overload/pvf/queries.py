@@ -38,7 +38,7 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
     return:
         list of InhouseBibMeta instances
     """
-    if request_dst == 'PlatformAPIs':
+    if request_dst == 'Platform API':
         # exceptions raised again?
         if matchpoint == '020':
             print '020 matchpoint'
@@ -80,9 +80,9 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
         if response is not None:
             response = response.json()
         return (status, response)
-    elif request_dst == 'SierraAPIs':
+    elif request_dst == 'Sierra API':
         pass
-    elif request_dst == 'Z3950s':
+    elif request_dst == 'Z3950':
         pass
     else:
         raise ValueError('invalid query destionation provided')
