@@ -42,7 +42,7 @@ class MainApplication(tk.Tk):
         for F in (
                 Main, ProcessVendorFiles, UpgradeBib, Reports,
                 Settings, DefaultDirs, SierraAPIs, PlatformAPIs,
-                Z3950s, Log, About):
+                Z3950s, About):
             page_name = F.__name__
             frame = F(parent=container, controller=self,
                       **self.app_data)
@@ -92,6 +92,7 @@ class MainApplication(tk.Tk):
         if 'update_dir' in user_data['paths']:
             update_dir = user_data['paths']['update_dir']
             print 'found update dir: {}'.format(update_dir)
+            # print 'opsutils update_dir'
             if os.path.isfile(update_dir + r'\version.txt'):
                 up_fh = update_dir + r'\version.txt'
                 print 'found version.txt on S drive: {}'.format(fh)
@@ -228,8 +229,7 @@ class Main(tk.Frame):
             row=3, column=1, sticky='snew')
         self.createToolTip(
             self.reportsBtn,
-            'user monthly reports and \n'
-            'cumulative stats for all clients')
+            'user monthly reports')
 
         settingsICO = tk.PhotoImage(file='./icons/settings.gif')
         self.settingsBtn = ttk.Button(
@@ -242,18 +242,6 @@ class Main(tk.Frame):
         self.settingsBtn.image = settingsICO
         self.settingsBtn.grid(
             row=3, column=3, sticky='snew')
-
-        logICO = tk.PhotoImage(file='./icons/log.gif')
-        self.logBtn = ttk.Button(
-            self, image=logICO,
-            text='utils log',
-            compound=tk.TOP,
-            cursor='hand2',
-            width=15,
-            command=lambda: controller.show_frame('Log'))
-        self.logBtn.image = logICO
-        self.logBtn.grid(
-            row=3, column=5, sticky='snew')
 
     def createToolTip(self, widget, text):
         toolTip = ToolTip(widget)
@@ -553,75 +541,6 @@ class Reports(tk.Frame):
                 self.err_dateAReportCbx['state'] = 'readonly'
                 self.err_dateBReportCbx['values'] = dates
                 self.err_dateBReportCbx['state'] = 'readonly'
-
-
-class Log(tk.Frame):
-    """displays application log"""
-
-    def __init__(self, parent, controller, **app_data):
-        self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
-        self.controller = controller
-        self.activeW = app_data['activeW']
-        self.activeW.trace('w', self.observer)
-
-        # layout
-        self.columnconfigure(9, minsize=600)
-
-        # local variable
-        self.logFileName = tk.StringVar()
-        self.logText = tk.StringVar()
-
-        # initite widgets
-        self.fileLbl = ttk.Label(
-            self,
-            textvariable=self.logFileName)
-        self.fileLbl.grid(
-            row=0, column=1, columnspan=5, sticky='sw', padx=10, pady=10)
-
-        # scrollable canvas to display content of the log
-        self.yscrollbar = tk.Scrollbar(self, orient=tk.VERTICAL)
-        self.yscrollbar.grid(
-            row=1, column=0, rowspan=10, sticky='nsw', padx=2)
-        self.xscrollbar = tk.Scrollbar(self, orient=tk.HORIZONTAL)
-        self.xscrollbar.grid(
-            row=11, column=0, columnspan=10, sticky='nwe', padx=2)
-        self.logTxt = tk.Text(
-            self,
-            borderwidth=0,
-            wrap=tk.NONE,
-            xscrollcommand=self.xscrollbar.set,
-            yscrollcommand=self.yscrollbar.set)
-
-        self.yscrollbar.config(command=self.logTxt.yview)
-        self.xscrollbar.config(command=self.logTxt.xview)
-        self.logTxt.grid(
-            row=1, column=1, columnspan=10, rowspan=10, sticky='snew', padx=5)
-
-        ttk.Button(
-            self,
-            text='close',
-            command=lambda: controller.show_frame('Main'),
-            cursor='hand2',
-            width=15).grid(
-                row=12, column=1, columnspan=3, sticky='nw', pady=5)
-
-    def resetLog(self):
-        self.logText.set('')
-        self.logTxt.delete(0.0, tk.END)
-
-    def observer(self, *args):
-        if self.activeW.get() == 'Log':
-            self.resetLog()
-            log = []
-            self.logFileName.set(
-                'log file name: {}'.format(
-                    os.path.basename(LOG_FILENAME)))
-            with open(LOG_FILENAME) as file:
-                for line in file:
-                    log.append(line)
-            self.logText.set(''.join(log))
-            self.logTxt.insert(0.0, self.logText.get())
 
 
 class Settings(tk.Frame):
