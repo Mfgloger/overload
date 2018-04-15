@@ -121,6 +121,11 @@ class TestParseIdentificationMethod(unittest.TestCase):
             vendors.parse_identification_method(
                 '901a', 'standard'), ('901', 'a'))
 
+    def test_unknown_vendor(self):
+        self.assertEqual(
+            vendors.parse_identification_method(
+                '', 'missing'), (None, None))
+
 
 class TestIdentifyVendor(unittest.TestCase):
     def setUp(self):

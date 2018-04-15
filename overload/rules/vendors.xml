@@ -83,6 +83,10 @@
 
 <data>
 	<system name = "nypl" agent='cat'>
+		<vendor name = "UNKNOWN">
+			<vendor_tag type = "missing" tag = "" operator = "main"></vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+		</vendor>
 		<vendor name = "BT SERIES">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTSERIES</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>

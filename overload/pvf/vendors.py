@@ -103,6 +103,9 @@ def parse_identification_method(tag, type):
     elif type == 'control_field':
         tag_to_check = tag
         subfield = None
+    elif type == 'missing':
+        tag_to_check = None
+        subfield = None
     return (tag_to_check, subfield)
 
 
