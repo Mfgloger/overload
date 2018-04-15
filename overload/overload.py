@@ -33,7 +33,7 @@ class MainApplication(tk.Tk):
         container = ttk.Frame(self)
         container.grid()
 
-        # bind shared data betweeen windows
+        # bind shared data between windows
         self.activeW = tk.StringVar()
         self.app_data = {'activeW': self.activeW}
 
@@ -92,7 +92,6 @@ class MainApplication(tk.Tk):
         if 'update_dir' in user_data['paths']:
             update_dir = user_data['paths']['update_dir']
             print 'found update dir: {}'.format(update_dir)
-            # print 'opsutils update_dir'
             if os.path.isfile(update_dir + r'\version.txt'):
                 up_fh = update_dir + r'\version.txt'
                 print 'found version.txt on S drive: {}'.format(fh)
@@ -300,10 +299,10 @@ class Reports(tk.Frame):
 
         # configure layout
         self.rowconfigure(0, minsize=10)
-        self.columnconfigure(0, minsize=10)
         self.rowconfigure(6, minsize=10)
-        self.columnconfigure(6, minsize=10)
         self.rowconfigure(8, minsize=10)
+        self.columnconfigure(0, minsize=10)
+        self.columnconfigure(6, minsize=10)
 
         self.helpBtn = ttk.Button(
             self,
@@ -1845,7 +1844,6 @@ if __name__ == "__main__":
     app = MainApplication()
     cur_manager = BusyManager(app)
     app.iconbitmap('./icons/SledgeHammer.ico')
-
     app.title('Overload version {}'.format(version))
     s = ttk.Style()
     s.theme_use('clam')
