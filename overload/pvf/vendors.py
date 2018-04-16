@@ -32,22 +32,20 @@ def vendor_index(vendor_fh, library, agent):
                             'value': vid.text}
 
                 # load applicable templates
-                templates_dict = dict()
+                tlist = []
                 templates = vendor.findall('template')
                 for template in templates:
                     # define bibliographic record template to be applied
-                    fields = []
                     for field in template.findall('field'):
                         subfields_dict = dict()
                         for subfield in field.findall('subfield'):
                             subfields_dict[
                                 subfield.attrib['code']] = subfield.text
-                        fields.append({
+                        tlist.append({
                             'tag': field.find('tag').text,
                             'ind1': field.find('ind1').text,
                             'ind2': field.find('ind2').text,
                             'subfields': subfields_dict})
-                    templates_dict[template.attrib['type']] = fields
 
                 # parse query points
                 query_dict = dict()
@@ -60,7 +58,7 @@ def vendor_index(vendor_fh, library, agent):
                 ven_index[vendor.attrib['name']] = dict(dict(
                     identification=vids_dict),
                     query=query_dict,
-                    template=templates_dict)
+                    bib_template=tlist)
 
     return ven_index
 
@@ -80,7 +78,7 @@ def find_matches(bib, conditions):
         for field in fields:
             if condition[1] is not None:
                 for subfield in field.get_subfields(condition[1]):
-                    if condition[2] == subfield:
+                    if condition[2].lower() in subfield.lower():
                         matches_found += 1
             else:
                 if condition[2] == field.data:
