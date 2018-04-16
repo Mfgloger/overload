@@ -1,8 +1,10 @@
 import os
 import sys
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+p = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, p + '\\' + p.split('\\')[-1])
+sys.path.insert(0, p)
+
 
 from overload import setup_dirs
 from overload.connectors.sierra_z3950 import z3950_query
@@ -12,4 +14,4 @@ from overload.bibs import bibs, crosswalks
 from overload.pvf import vendors
 from overload.pvf.analyzer import PVRReport, PVR_NYPLReport
 from overload.pvf import reports
-from overload import errors
+from overload.errors import OverloadError, APITokenError, APITokenExpiredError

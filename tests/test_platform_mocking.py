@@ -2,12 +2,14 @@
 
 import unittest
 from datetime import datetime, timedelta
-from mock import MagicMock, patch
+from mock import patch
+import requests_mock
+
 import json
 import requests
 from requests.exceptions import ConnectionError, Timeout
 
-from context import errors
+from context import APITokenError, APITokenExpiredError
 from context import AuthorizeAccess, PlatformSession
 
 
@@ -51,13 +53,13 @@ class TestAuthorizeAccessLogic(unittest.TestCase):
             seconds=self.r['expires_in'] - 1)
         self.assertEqual(token.get('expires_on'), expires_on)
 
-    @patch('overload.connectors.platform.requests.post')
-    def test_get_token_token_error(self, mock_post):
-        mock_post = MagicMock(
-            spec=['status_code'],
-            return_value=json.dumps({'error': 'error_type'}),
-            status_code=401)
-        with self.assertRaises(errors.APITokenError):
+    # can't get it work for some reason, investigate
+    @requests_mock.Mocker()
+    def test_get_token_token_error(self, m):
+        m.post(
+            'https://isso.nypl.org/oauth/token', status_code=599,
+            json=json.dumps({'error': 'error_type'}))
+        with self.assertRaises(APITokenError):
             self.auth.get_token()
 
     @patch('overload.connectors.platform.requests.post')
@@ -76,11 +78,12 @@ class TestAuthorizeAccessLogic(unittest.TestCase):
         with self.assertRaises(ValueError):
             PlatformSession()
 
+    # can't make it work for some reason, investigate
     def test_validate_token_exception(self):
         expires_on = datetime.now() - timedelta(
             seconds=1)
         token = {'expires_on': expires_on, 'id': 'abc1234'}
-        with self.assertRaises(errors.APITokenExpiredError):
+        with self.assertRaises(APITokenExpiredError):
             PlatformSession(
                 self.base_url, token)
 

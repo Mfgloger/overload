@@ -21,7 +21,7 @@ class TestPlatformMethodsOnDev(unittest.TestCase):
         self.assertTrue(response.ok)
 
         user_data = shelve.open(setup_dirs.USER_DATA)
-        api_params = user_data['PlatformAPIs']['Platform DEV']
+        api_params = user_data['PlatformAPIs']['NYPL TEST']
         self.client_id = base64.b64decode(api_params['client_id'])
         self.client_secret = base64.b64decode(api_params['client_secret'])
         self.oauth_server = 'https://isso.nypl.org'
@@ -52,7 +52,7 @@ class TestPlatformMethodsOnDev(unittest.TestCase):
     def test_bibItems_data_structure(self):
         endpoint = self.base_url + '/bibs/sierra-nypl/17746307/items'
         res = self.sess.get(endpoint)
-        self.assertEqual(sorted(res.json().keys()), sorted(['count', 'debugInfo', 'data', 'statusCode']))
+        self.assertEqual(sorted(res.json().keys()), sorted(['count', 'debugInfo', 'data', 'statusCode', 'totalCount']))
         self.assertEqual(sorted(res.json()['data'][0].keys()), sorted([u'deletedDate', u'status', u'nyplSource', u'varFields', u'itemType', u'fixedFields', u'nyplType', u'deleted', u'barcode', u'bibIds', u'callNumber', u'updatedDate', u'location', u'createdDate', u'id']))
         self.assertEqual(sorted(res.json()['data'][0]['location'].keys()), sorted([u'code', u'name']))
         self.assertEqual(res.json()['data'][0]['varFields'][0].keys(), [u'marcTag', u'ind1', u'ind2', u'content', u'fieldTag', u'subfields'])
