@@ -1,8 +1,10 @@
 # creates pvr statistical reports
 
 import pandas as pd
-import numpy as np
 import shelve
+from sqlalchemy import func
+
+from datastore import PVR_Batch, PVR_File, Vendor, session_scope
 
 
 def generate_processing_summary(batch_meta):
@@ -174,3 +176,40 @@ def report_details(system, library, df):
             'callNo_match', 'vendor_callNo', 'target_callNo',
             'duplicate bibs']
     return df
+
+
+def cumulative_nypl_stats(start_date, end_date):
+    with session_scope() as session:
+        query = session.query(
+            PVR_Batch.system,
+            PVR_Batch.library,
+            func.sum(PVR_File.new),
+            func.sum(PVR_File.dups),
+            func.sum(PVR_File.updated),
+            func.sum(PVR_File.mixed),
+            func.sum(PVR_File.other),
+            Vendor.name)
+        query = query.join(PVR_File).join(Vendor)
+        nypl_results = query.filter(
+            PVR_Batch.timestamp >= start_date,
+            PVR_Batch.timestamp < end_date,
+            PVR_Batch.system == 'nypl').group_by(Vendor.name).all()
+
+    nypl_labels = [
+        'system', 'library', 'new',
+        'dups', 'updated', 'mixed',
+        'other', 'vendor']
+    df = pd.DataFrame.from_records(nypl_results, columns=nypl_labels)
+    bdf = df[df['library'] == 'branches']
+    bdf = bdf[['vendor', 'new', 'dups', 'updated', 'mixed', 'other']]
+    bdf['total loaded'] = bdf['new'] + bdf['dups'] + bdf['updated']
+    bdf.columns = [
+        'vendor', 'new', 'duplicates',
+        'updated', 'mixed dups', 'research dups', 'total loaded']
+    rdf = df[df['library'] == 'research']
+    rdf = rdf[['vendor', 'new', 'dups', 'updated', 'mixed', 'other']]
+    rdf['total loaded'] = rdf['new'] + rdf['dups'] + rdf['updated']
+    rdf.columns = [
+        'vendor', 'new', 'duplicates',
+        'updated', 'mixed dups', 'branches dups', 'total loaded']
+    return (bdf, rdf)
