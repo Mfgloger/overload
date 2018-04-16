@@ -142,3 +142,10 @@ def validation_check(report):
                 elif 'No errors were reported' in line:
                     passed = True
         return passed, result
+
+
+def delete_validation_report():
+    try:
+        os.remove(CVAL_REP)
+    except OSError:
+        pass
