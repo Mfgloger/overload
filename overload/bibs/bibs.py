@@ -41,7 +41,9 @@ def parse_sierra_id(field):
 
 
 def read_marc21(file):
-    reader = MARCReader(open(file, 'r'), hide_utf8_warnings=True)
+    reader = MARCReader(
+        open(file, 'r'),
+        to_unicode=True, hide_utf8_warnings=True)
     return reader
 
 
@@ -62,7 +64,9 @@ def read_marc_in_json(data):
 
 def create_target_id_field(system, bNumber):
     if len(bNumber) != 8:
-        raise ValueError('incorrect Sierra bib number')
+        raise ValueError(
+            'incorrect Sierra bib number encountered '
+            'while creating target id field')
     bNumber = '.b{}a'.format(bNumber)
     if system == 'bpl':
         return Field(
@@ -85,6 +89,42 @@ def check_sierra_id_presence(system, bib):
         if '907' in bib:
             found = True
     return found
+
+
+def check_sierra_format_tag_presence(bib):
+    found = False
+    try:
+        if '949' in bib:
+            for field in bib.get_fields('949'):
+                if field.indicators == [' ', ' '] \
+                        and 'a' in field and \
+                        field['a'][0] == '*':
+                    found = True
+                    break
+    except IndexError:
+        raise IndexError('Encountered IndexError in vendor 949$a')
+    return found
+
+
+def create_fields_from_template(templates):
+    new_fields = []
+    for t in templates:
+        if t['ind1'] is None:
+            ind1 = ' '
+        else:
+            ind1 = t['ind1']
+        if t['ind2'] is None:
+            ind2 = ' '
+        else:
+            ind2 = t['ind2']
+        subfields = []
+        [subfields.extend([k, v]) for k, v in t['subfields'].items()]
+        new_fields.append(
+            Field(
+                tag=t['tag'],
+                indicators=[ind1, ind2],
+                subfields=subfields))
+    return new_fields
 
 
 def count_bibs(file):
