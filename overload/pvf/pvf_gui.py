@@ -15,13 +15,14 @@ from pymarc.exceptions import RecordLengthInvalid
 
 from bibs import bibs
 from validation import validate_files
+from validators.marcedit import delete_validation_report
 from gui_utils import ToolTip, BusyManager
 import overload_help
-from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
-    BATCH_META, BATCH_STATS
 import reports
 from errors import OverloadError
-from manager import run_processing
+from manager import run_processing, save_stats
+from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
+    BATCH_META, BATCH_STATS
 
 
 overload_logger = logging.getLogger('tests')
@@ -382,6 +383,7 @@ class ProcessVendorFiles(tk.Frame):
 
     def process(self):
         self.reset()
+        delete_validation_report()
 
         # ask for folder for output marc files
         dir_opt = {}
@@ -556,85 +558,13 @@ class ProcessVendorFiles(tk.Frame):
             self.cur_manager.notbusy()
 
     def archive(self):
-        overload_logger.debug('PVF-Archive: Initiate process...')
-        if self.df is None:
-            overload_logger.debug(
-                "PVF-Archive: self.df doesn't existis, compiling dataframe...")
-            s = shelve.open(BATCH_STATS)
-            data = dict(s)
-            s.close()
-            frames = []
-            for file, bibs_meta in data['files'].iteritems():
-                frames.append(pd.DataFrame.from_dict(bibs_meta))
-            self.df = pd.concat(frames, ignore_index=True)
-
-        checksum = md5(self.df.to_string(header=False))
-        overload_logger.debug(
-            "PVF-Archive: calculated checksum for data being added: {}".format(
-                checksum))
-        if os.path.isfile(USER_STATS):
-            overload_logger.debug(
-                'PVF-Archive: begin adding new data to existing user '
-                'stats...')
-            archive_df = pd.read_csv(
-                USER_STATS,
-                index_col=0)
-
-            if checksum in archive_df['checksum'].unique():
-                # batch work already saved
-                overload_logger.debug(
-                    'PVF-Archive: checksum found in existing user stats '
-                    '(data already beging added), new data not added')
-                m = 'Batch has already been saved and archived'
-                tkMessageBox.showwarning('Info', m)
-            else:
-                overload_logger.debug(
-                    'PVF-Archive: checksum not present in existing '
-                    'user stats - adding new data...')
-                self.df['checksum'] = checksum
-                self.df['report date'] = datetime.date.today()
-                try:
-                    with open(USER_STATS, 'a') as f:
-                        self.df.to_csv(f, header=False, encoding='utf-8')
-                except:
-                    overload_logger.error(
-                        'PVF-Archive: NOT ABLE to add data to USER STATS')
-                try:
-                    with open(VENDOR_STATS, 'a') as f:
-                        self.df.to_csv(f, header=False, encoding='utf-8')
-                    self.archived.set('stats saved')
-                    overload_logger.debug(
-                        "PVF-Archive: Data added succesfully...")
-                except:
-                    overload_logger.error(
-                        'PVF-Archive: NOT ABLE to add data to VENDOR STATS')
-        else:
-            overload_logger.debug(
-                "PVF-Archive: USER_STATS does not exisist, "
-                "creating new file...")
-            self.df['checksum'] = checksum
-            self.df['report date'] = datetime.date.today()
-            try:
-                overload_logger.debug(
-                    "PVF-Archive: Writing data to new USER_STATS file...")
-                self.df.to_csv(USER_STATS, encoding='utf-8')
-            except:
-                overload_logger.error(
-                    "PVF-Archive: NOT ABLE create USER_STATS")
-            try:
-                self.df.to_csv(VENDOR_STATS, encoding='utf-8')
-                self.archived.set('stats saved')
-                overload_logger.debug(
-                    "PVF-Archive: Writing completed...")
-            except:
-                overload_logger.error(
-                    'PVF-Archive: NOT ABLE to create VENDOR STATS')
+        save_stats()
 
         # move created files to the archive
         archive_files = []
         for file in os.listdir(self.last_directory):
             if file.endswith('.mrc') and (
-                    '_DUP-' in file or '_NEW-' in file):
+                    '.DUP-' in file or '.NEW-' in file):
                 archive_files.append(file)
         if len(archive_files) > 0:
             self.topA = tk.Toplevel(self, background='white')
@@ -678,10 +608,10 @@ class ProcessVendorFiles(tk.Frame):
     def move_files(self):
         user_data = shelve.open(USER_DATA)
         paths = user_data['paths']
-        if self.target['library'] == 'BPL' and \
+        if self.system.get() == 'BPL' and \
                 'bpl_archive_dir' in paths:
             archive_dir = paths['bpl_archive_dir']
-        elif self.target['library'] == 'NYPL' and \
+        elif self.system.get() == 'NYPL' and \
                 'nyp_archive_dir' in paths:
             archive_dir = paths['nyp_archive_dir']
         else:
@@ -722,6 +652,7 @@ class ProcessVendorFiles(tk.Frame):
                         tkMessageBox.showerror('Archiving error', m)
                         self.topA.destroy()
             if all_archived:
+                self.archived.set('archived: completed')
                 m = 'Your MARC files have been added to the archive'
                 tkMessageBox.showinfo('Archiving message', m)
                 self.topA.destroy()
