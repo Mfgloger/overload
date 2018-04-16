@@ -160,6 +160,10 @@
 		</vendor>
 	</system>
 	<system name = "bpl" agent = 'cat'>
+		<vendor name = "UNKNOWN">
+			<vendor_tag type = "missing" tag = "" operator = "main"></vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+		</vendor>
 		<vendor name = "BT SERIES">
 			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T SERIES</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T SERIES</vendor_tag>
