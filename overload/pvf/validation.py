@@ -42,5 +42,4 @@ def validate_files(files, marcval=False, locval=False):
         raise OverloadError(
             'Local specs validation is still being developed.\n'
             'Uncheck the box to not display this warning')
-        print trigger
     return valid_files
