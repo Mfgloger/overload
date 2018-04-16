@@ -7,7 +7,8 @@ from requests.exceptions import ConnectionError, Timeout
 
 
 from bibs.bibs import VendorBibMeta, read_marc21, \
-    create_target_id_field, write_marc21, check_sierra_id_presence
+    create_target_id_field, write_marc21, check_sierra_id_presence, \
+    create_fields_from_template
 from bibs.crosswalks import platform2meta
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import queries
@@ -140,11 +141,13 @@ def run_processing(
 
         rules = './rules/vendors.xml'
         vx = vendor_index(rules, system, agent)
-        # print 'vendor_index:', vx
 
         for bib in reader:
             n += 1
-            vendor = identify_vendor(bib, vx)  # in SEL or ACQ scenario vendor provided via GUI
+            if agent == 'cat':
+                vendor = identify_vendor(bib, vx)  # in SEL or ACQ scenario vendor provided via GUI
+            else:
+                print 'sel & acq will identify vendor by selecting a template'
             meta_in = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
             query_matchpoints = get_query_matchpoint(vendor, vx)
 
@@ -200,13 +203,25 @@ def run_processing(
 
             # output processed records according to analysis
             # add Sierra bib id if matched
+            bib.leader = bib.leader[:9] + 'a' + bib.leader[10:]
             sierra_id_present = check_sierra_id_presence(
                 system, bib)
             if not sierra_id_present and \
                     analysis['target_sierraId'] is not None:
-                bib.add_field(
-                    create_target_id_field(
-                        system, analysis['target_sierraId']))
+                try:
+                    bib.add_field(
+                        create_target_id_field(
+                            system, analysis['target_sierraId']))
+                except ValueError as e:
+                    raise OverloadError(e)
+
+            # add fields form bib & order templates
+            if agent == 'cat':
+                templates = vx[vendor].get('bib_template')
+                if len(templates) > 0:
+                    new_fields = create_fields_from_template(templates)
+                    for field in new_fields:
+                        bib.add_field(field)
 
             # append to appropirate output file
             if analysis['action'] == 'attach':
@@ -281,8 +296,3 @@ def save_stats():
                         new=row[1]['insert'],
                         dups=row[1]['attach'],
                         updated=row[1]['update'])
-
-
-def create_reports_index():
-    """creates list of statistics by month and year"""
-    

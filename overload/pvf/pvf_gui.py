@@ -821,7 +821,8 @@ class ProcessVendorFiles(tk.Frame):
         self.reportVTxt.delete(1.0, tk.END)
 
         # create new MARCEdit validation report
-        self.reportVTxt.insert(tk.END, 'MARCEdit validation report(s):\n\n', 'red')
+        self.reportVTxt.insert(
+            tk.END, 'MARCEdit validation report(s):\n\n', 'red')
         mReport = open(CVAL_REP, 'r')
         for line in mReport:
             self.reportVTxt.insert(tk.END, line)
