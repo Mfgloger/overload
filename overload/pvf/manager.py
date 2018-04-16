@@ -17,8 +17,9 @@ from connectors import platform
 from setup_dirs import USER_DATA, BATCH_STATS, BATCH_META
 from connectors.platform import PlatformSession
 from errors import OverloadError, APITokenExpiredError, APITokenError
-from datastore import session_scope, insert_or_ignore, Vendor, \
+from datastore import session_scope, Vendor, \
     PVR_Batch, PVR_File
+from db_worker import insert_or_ignore
 
 
 def run_platform_queries(api_name, session, meta, matchpoint):
@@ -230,7 +231,7 @@ def run_processing(
         print 'session closed'
 
 
-def archive():
+def save_stats():
     batch = shelve.open(BATCH_META)
     timestamp = batch['timestamp']
     system = batch['system']
@@ -280,3 +281,8 @@ def archive():
                         new=row[1]['insert'],
                         dups=row[1]['attach'],
                         updated=row[1]['update'])
+
+
+def create_reports_index():
+    """creates list of statistics by month and year"""
+    
