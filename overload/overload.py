@@ -472,13 +472,16 @@ class Reports(tk.Frame):
             end_date = start_date + datetime.timedelta(days=days_in_month)
             nypl_stats = cumulative_nypl_stats(start_date, end_date)
             nypl_branch_stats = nypl_stats[0]
-            nypl_research_stats= nypl_stats[1]
+            nypl_research_stats = nypl_stats[1]
             self.reportTxt.insert(
                 tk.END, 'NYPL\n', 'red')
-            self.reportTxt.insert(tk.END, 'Branches vendor breakdown:\n', 'blue')
+            self.reportTxt.insert(
+                tk.END, 'Branches vendor breakdown:\n', 'blue')
             self.reportTxt.insert(tk.END, nypl_branch_stats.to_string() + '\n')
-            self.reportTxt.insert(tk.END, 'Branches vendor breakdown:\n', 'blue')
-            self.reportTxt.insert(tk.END, nypl_research_stats.to_string() + '\n')
+            self.reportTxt.insert(
+                tk.END, 'Branches vendor breakdown:\n', 'blue')
+            self.reportTxt.insert(
+                tk.END, nypl_research_stats.to_string() + '\n')
             self.reportTxt.insert(tk.END, '\n' + ('-' * 60) + '\n')
             self.reportTxt.insert(
                 tk.END, 'BPL\n', 'red')
