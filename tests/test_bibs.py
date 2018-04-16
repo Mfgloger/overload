@@ -129,7 +129,7 @@ class TestBibsUtilities(unittest.TestCase):
 
     def test_count_bibs_when_not_marc_file(self):
         with self.assertRaises(RecordLengthInvalid):
-            reader = bibs.count_bibs('test.mrk')
+            reader = bibs.count_bibs('test.json')
 
     def test_read_from_json_retuns_pymarc_reader(self):
         reader = JSONReader('test.json')
@@ -184,6 +184,40 @@ class TestBibsUtilities(unittest.TestCase):
                 subfields=['a', '.b01234567a']))
         self.assertTrue(
             bibs.check_sierra_id_presence('bpl', self.marc_bib))
+
+    def test_check_sierra_format_tag_presence_False(self):
+        self.assertFalse(
+            bibs.check_sierra_format_tag_presence(self.marc_bib))
+        self.marc_bib.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', '1'],
+                subfields=['a', "*b2=a;"]))
+        self.marc_bib.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', ' '],
+                subfields=['b', "*b2=a;"]))
+        self.assertFalse(
+            bibs.check_sierra_format_tag_presence(self.marc_bib))
+
+    def test_check_sierra_format_tag_presence_True(self):
+        self.marc_bib.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', ' '],
+                subfields=['a', "*b2=a;"]))
+        self.assertTrue(
+            bibs.check_sierra_format_tag_presence(self.marc_bib))
+
+    def test_check_sierra_format_tag_presence_exception(self):
+        self.marc_bib.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', ' '],
+                subfields=['a', '']))
+        with self.assertRaises(IndexError):
+            bibs.check_sierra_format_tag_presence(self.marc_bib)
 
     def test_bibmeta_object(self):
         meta = bibs.BibMeta(self.marc_bib, sierraId='12345678')
