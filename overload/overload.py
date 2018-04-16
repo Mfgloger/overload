@@ -15,16 +15,15 @@ import re
 import base64
 import datetime
 import calendar
-import pandas as pd
-from sqlalchemy import func
 
 
 from gui_utils import BusyManager, ToolTip
 from setup_dirs import *
 from logging_setup import LOGGING
 from pvf.pvf_gui import ProcessVendorFiles
-from datastore import session_scope, PVR_Batch, PVR_File, Vendor
+from datastore import session_scope, PVR_Batch
 from db_worker import retrieve_values
+from pvf.reports import cumulative_nypl_stats
 
 
 class MainApplication(tk.Tk):
@@ -471,47 +470,19 @@ class Reports(tk.Frame):
             days_in_month = calendar.monthrange(
                 start_date.year, start_date.month)[1]
             end_date = start_date + datetime.timedelta(days=days_in_month)
-            with session_scope() as session:
-                query = session.query(
-                    PVR_Batch.system,
-                    func.sum(PVR_File.new), PVR_File.dups, PVR_File.updated, PVR_File.mixed, PVR_File.other,
-                    Vendor.name)
-                query = query.join(PVR_File).join(Vendor)
-                results = query.filter(
-                    PVR_Batch.timestamp >= start_date,
-                    PVR_Batch.timestamp < end_date).group_by(Vendor.name).all()
-                print results
-                df = pd.DataFrame(data=results)
-                print df.head()
-        #     df = self.pvfU_df[(self.pvfU_df['report date'] >= start_date) & (
-        #         self.pvfU_df['report date'] < end_date)]
-        #     bpl_stats = df[df['library'] == 'BPL']
-        #     nypl_stats = df[df['library'] == 'NYPL']
-
-        #     self.reportTxt.insert(
-        #         tk.END, 'BPL\n', 'red')
-        #     self.reportTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
-        #     self.reportTxt.insert(tk.END, 'vendor\t\t\tnew\tdup\ttotal\n')
-        #     for vendor, data in bpl_stats.groupby('vendor'):
-        #         new = data[
-        #             data['overlay'] == True]['overlay'].count()
-        #         dup = data[data['overlay'] == False]['overlay'].count()
-        #         self.reportTxt.insert(
-        #             tk.END, '{}\t\t\t{}\t{}\t{}\n'.format(
-        #                 vendor, new, dup, new + dup))
-        #     self.reportTxt.insert(
-        #         tk.END, '\n\n')
-        #     self.reportTxt.insert(
-        #         tk.END, 'NYPL\n', 'red')
-        #     self.reportTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
-        #     self.reportTxt.insert(tk.END, 'vendor\t\t\tnew\tdup\ttotal\n')
-        #     for vendor, data in nypl_stats.groupby('vendor'):
-        #         new = data[
-        #             data['overlay'] == True]['overlay'].count()
-        #         dup = data[data['overlay'] == False]['overlay'].count()
-        #         self.reportTxt.insert(
-        #             tk.END, '{}\t\t\t{}\t{}\t{}\n'.format(
-        #                 vendor, new, dup, new + dup))
+            nypl_stats = cumulative_nypl_stats(start_date, end_date)
+            nypl_branch_stats = nypl_stats[0]
+            nypl_research_stats= nypl_stats[1]
+            self.reportTxt.insert(
+                tk.END, 'NYPL\n', 'red')
+            self.reportTxt.insert(tk.END, 'Branches vendor breakdown:\n', 'blue')
+            self.reportTxt.insert(tk.END, nypl_branch_stats.to_string() + '\n')
+            self.reportTxt.insert(tk.END, 'Branches vendor breakdown:\n', 'blue')
+            self.reportTxt.insert(tk.END, nypl_research_stats.to_string() + '\n')
+            self.reportTxt.insert(tk.END, '\n' + ('-' * 60) + '\n')
+            self.reportTxt.insert(
+                tk.END, 'BPL\n', 'red')
+            self.reportTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
 
     def pvf_vendor_report(self):
         m = 'Functionality not ready yet. Vendor reports are being developed'
@@ -543,6 +514,7 @@ class Reports(tk.Frame):
             values = list(set([record.timestamp[:7] for record in records]))
             self.userReportCbx['values'] = values
             self.userReportCbx['state'] = 'readonly'
+
 
 class Settings(tk.Frame):
     """sets default folders, Z3950 settings, and OCLC API credentials"""

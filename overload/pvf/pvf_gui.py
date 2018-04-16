@@ -385,13 +385,38 @@ class ProcessVendorFiles(tk.Frame):
         self.reset()
         delete_validation_report()
 
+        user_data = shelve.open(USER_DATA)
+
+        # store parameters for the next time
+        user_data['pvr_system'] = self.system.get()
+        user_data['pvr_library'] = self.library.get()
+        user_data['pvr_agent'] = self.agent.get()
+        user_data['pvr_locval'] = self.locVal.get()
+        user_data['pvr_marcval'] = self.marcVal.get()
+        user_data['pvr_template'] = self.template.get()
+
+        # record used connection target
+        if 'Z3950' in self.target_name.get():
+            name = self.target_name.get().split(' (')[0]
+            method = 'Z3950'
+        elif 'Sierra API' in self.target_name.get():
+            name = self.target_name.get().split(' (')[0]
+            method = 'Sierra API'
+        elif 'Platform API' in self.target_name.get():
+            name = self.target_name.get().split(' (')[0]
+            method = 'Platform API'
+        else:
+            name = None
+            method = None
+        self.target = {'target': name, 'method': method}
+        user_data['pvr_default_target'] = self.target
+
         # ask for folder for output marc files
         dir_opt = {}
         dir_opt['mustexist'] = False
         dir_opt['parent'] = self
         dir_opt['title'] = 'Please select directory for output files'
 
-        user_data = shelve.open(USER_DATA)
         if self.last_directory_check.get() == 0:
             dir_opt['initialdir'] = MY_DOCS
             d = tkFileDialog.askdirectory(**dir_opt)
@@ -429,30 +454,6 @@ class ProcessVendorFiles(tk.Frame):
                     m = 'Please select a destination folder for ' \
                         'output MARC files to procceed.'
                     tkMessageBox.showwarning('Missing Destination Folder', m)
-
-        # store parameters for the next time
-        user_data['pvr_system'] = self.system.get()
-        user_data['pvr_library'] = self.library.get()
-        user_data['pvr_agent'] = self.agent.get()
-        user_data['pvr_locval'] = self.locVal.get()
-        user_data['pvr_marcval'] = self.marcVal.get()
-        user_data['pvr_template'] = self.template.get()
-
-        # record used connection target
-        if 'Z3950' in self.target_name.get():
-            name = self.target_name.get().split(' (')[0]
-            method = 'Z3950'
-        elif 'Sierra API' in self.target_name.get():
-            name = self.target_name.get().split(' (')[0]
-            method = 'Sierra API'
-        elif 'Platform API' in self.target_name.get():
-            name = self.target_name.get().split(' (')[0]
-            method = 'Platform API'
-        else:
-            name = None
-            method = None
-        self.target = {'target': name, 'method': method}
-        user_data['pvr_default_target'] = self.target
         user_data.close()
 
         # verify all paramaters are present
@@ -474,6 +475,10 @@ class ProcessVendorFiles(tk.Frame):
         if self.files is None:
             required_params = False
             missing_params.append('Please select files for processing.')
+        if self.last_directory is None:
+            required_params = False
+            missing_params.append(
+                'Please select a directory to output processed files')
 
         if not required_params:
             tkMessageBox.showwarning(
