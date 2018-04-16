@@ -196,20 +196,20 @@ def cumulative_nypl_stats(start_date, end_date):
             PVR_Batch.system == 'nypl').group_by(Vendor.name).all()
 
     nypl_labels = [
-        'system', 'library', 'new',
-        'dups', 'updated', 'mixed',
+        'system', 'library', 'insert',
+        'attach', 'overlay', 'mixed',
         'other', 'vendor']
     df = pd.DataFrame.from_records(nypl_results, columns=nypl_labels)
     bdf = df[df['library'] == 'branches']
-    bdf = bdf[['vendor', 'new', 'dups', 'updated', 'mixed', 'other']]
-    bdf['total loaded'] = bdf['new'] + bdf['dups'] + bdf['updated']
+    bdf = bdf[['vendor', 'insert', 'attach', 'overlay', 'mixed', 'other']]
+    bdf['total loaded'] = bdf['insert'] + bdf['attach'] + bdf['overlay']
     bdf.columns = [
-        'vendor', 'new', 'duplicates',
-        'updated', 'mixed dups', 'research dups', 'total loaded']
+        'vendor', 'insert', 'attach',
+        'overlay', 'mixed dups', 'research dups', 'total loaded']
     rdf = df[df['library'] == 'research']
-    rdf = rdf[['vendor', 'new', 'dups', 'updated', 'mixed', 'other']]
-    rdf['total loaded'] = rdf['new'] + rdf['dups'] + rdf['updated']
+    rdf = rdf[['vendor', 'insert', 'attach', 'overlay', 'mixed', 'other']]
+    rdf['total loaded'] = rdf['insert'] + rdf['attach'] + rdf['overlay']
     rdf.columns = [
-        'vendor', 'new', 'duplicates',
-        'updated', 'mixed dups', 'branches dups', 'total loaded']
+        'vendor', 'insert', 'attach',
+        'overlay', 'mixed dups', 'branches dups', 'total loaded']
     return (bdf, rdf)
