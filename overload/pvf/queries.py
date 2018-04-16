@@ -57,10 +57,10 @@ def query_manager(request_dst, session, bibmeta, matchpoint):
                 response = None
         elif matchpoint == 'sierra_id':
             print 'sierraID matchpoint'
-            if bibmeta.sierraID is not None:
-                print 'keywords: {}'.format(bibmeta.sierraID)
+            if bibmeta.sierraId is not None:
+                print 'keywords: {}'.format(bibmeta.sierraId)
                 # sierraID must be passed as a list to query_bibId
-                response = session.query_bibId(keywords=[bibmeta.sierraID])
+                response = session.query_bibId(keywords=[bibmeta.sierraId])
             else:
                 response = None
         elif matchpoint == '001':
