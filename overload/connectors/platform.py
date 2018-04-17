@@ -24,7 +24,7 @@ class AuthorizeAccess:
         for value in self.__dict__.values():
             if value is None:
                 raise ValueError(
-                    'Required Platform settings parameter is missing')
+                    'Required Platform authorization settings parameter is missing')
 
     def get_token(self):
         """
