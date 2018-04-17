@@ -93,12 +93,25 @@ class TestAuthorizeAccessLogic(unittest.TestCase):
         token = {'expires_on': expires_on, 'id': 'abc1234'}
         sess = PlatformSession(
             self.base_url, token)
-        sess.headers.update({'user-agent': 'overload/TESTS'})
+        sess.headers.update({'User-Agent': 'Overload/TESTS'})
         self.assertIsInstance(sess, requests.Session)
         self.assertEqual(
             sess.headers,
-            {'user-agent': 'overload/TESTS',
+            {'Authorization': 'Bearer abc1234',
+             'Connection': 'keep-alive',
+             'Accept-Encoding': 'gzip, deflate',
+             'Accept': '*/*',
+             'User-Agent': 'Overload/TESTS',
              'Authorization': 'Bearer ' + token.get('id')})
+
+    def test_methods_in_platform_session(self):
+        expires_on = datetime.now() + timedelta(
+            seconds=5)
+        token = {'expires_on': expires_on, 'id': 'abc1234'}
+        sess = PlatformSession(self.base_url, token)
+        self.assertEquals(
+            dir(sess),
+            ['__attrs__', '__class__', '__delattr__', '__dict__', '__doc__', '__enter__', '__exit__', '__format__', '__getattribute__', '__getstate__', '__hash__', '__init__', '__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__setstate__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_validate_token', 'adapters', 'auth', 'base_url', 'cert', 'close', 'cookies', 'delete', 'get', 'get_adapter', 'get_bibItems', 'get_item', 'get_redirect_target', 'head', 'headers', 'hooks', 'max_redirects', 'merge_environment_settings', 'mount', 'options', 'params', 'patch', 'post', 'prepare_request', 'proxies', 'put', 'query_bibControlNo', 'query_bibCreatedDate', 'query_bibId', 'query_bibStandardNo', 'query_bibUpdatedDate', 'query_itemBarcode', 'query_itemBibId', 'query_itemCreatedDate', 'query_itemId', 'query_itemUpdateddDate', 'rebuild_auth', 'rebuild_method', 'rebuild_proxies', 'request', 'resolve_redirects', 'send', 'stream', 'timeout', 'token', 'trust_env', 'verify'])
 
     @patch('overload.connectors.platform.PlatformSession.query_bibStandardNo')
     def test_query_bibStandardNo(self, mock_query):

@@ -24,7 +24,8 @@ class AuthorizeAccess:
         for value in self.__dict__.values():
             if value is None:
                 raise ValueError(
-                    'Required Platform authorization settings parameter is missing')
+                    'One of required Platform authorization '
+                    'settings parameter is missing')
 
     def get_token(self):
         """
@@ -79,9 +80,9 @@ class PlatformSession(requests.Session):
             raise ValueError(
                 'Required Platform setting parameter is missing')
 
-        self.headers = {
-            'user-agent': 'overload/0.1.0',
-            'Authorization': 'Bearer ' + self.token.get('id')}
+        self.headers.update({
+            'User-Agent': 'BookOps-Overload/0.1.0',
+            'Authorization': 'Bearer ' + self.token.get('id')})
 
         self._validate_token()
 
@@ -232,6 +233,9 @@ class PlatformSession(requests.Session):
             raise Timeout(
                 'request timed out while trying to connect '
                 'to Platform endpoint ({})'.format(endpoint))
+        except ConnectionError:
+            raise ConnectionError(
+                'unable to connect to Platform')
 
     def get_bibItems(self, keyword, source='sierra-nypl'):
         """
