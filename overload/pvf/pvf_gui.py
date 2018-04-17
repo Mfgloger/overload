@@ -3,11 +3,8 @@ import ttk
 import tkMessageBox
 import tkFileDialog
 import shelve
-import datetime
 import os.path
 import shutil
-import pandas as pd
-from utils import md5
 import logging
 import os
 from pymarc.exceptions import RecordLengthInvalid
@@ -25,7 +22,7 @@ from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
     BATCH_META, BATCH_STATS
 
 
-overload_logger = logging.getLogger('tests')
+module_logger = logging.getLogger('overload_console.pvr_gui')
 
 
 class ProcessVendorFiles(tk.Frame):
@@ -469,7 +466,7 @@ class ProcessVendorFiles(tk.Frame):
             if self.agent.get() == '':
                 required_params = False
                 missing_params.append('Please select department')
-        if self.target is None:
+        if self.target_name.get() == '':
             required_params = False
             missing_params.append('Please select query target')
         if self.files is None:

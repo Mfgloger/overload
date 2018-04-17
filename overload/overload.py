@@ -1537,7 +1537,6 @@ class DefaultDirs(tk.Frame):
         self.rowconfigure(2, minsize=10)
         self.rowconfigure(8, minsize=25)
         self.columnconfigure(0, minsize=20)
-        # self.columnconfigure(2, minsize=20)
         self.columnconfigure(4, minsize=10)
 
         # settings frame
@@ -1712,12 +1711,13 @@ if __name__ == "__main__":
     if not os.path.isdir(TEMP_DIR):
         os.mkdir(TEMP_DIR)
 
-    p = re.compile(r'.*\\Users\\(.*)\\AppData.*')
-    m = p.search(APP_DIR)
-    if m:
-        user = str(m.group(1))
-    else:
-        user = 'UNKNOWN'
+    # # capture user?
+    # p = re.compile(r'.*\\Users\\(.*)\\AppData.*')
+    # m = p.search(APP_DIR)
+    # if m:
+    #     user = str(m.group(1))
+    # else:
+    #     user = 'UNKNOWN'
 
     # configure local settings
     user_data = shelve.open(USER_DATA)
@@ -1731,9 +1731,9 @@ if __name__ == "__main__":
     version = about['__version__']
 
     # set up app logger
-    # don't forget to add Loggly token!
+    # don't forget to add Loggly token in prod!
     logging.config.dictConfig(LOGGING)
-    overload_logger = logging.getLogger('main')
+    overload_logger = logging.getLogger('overload_console')
 
     # launch application
     app = MainApplication()
@@ -1749,6 +1749,5 @@ if __name__ == "__main__":
     s.configure('Flat.TEntry', borderwidth=0)
     s.configure('Bold.TLabel', font=('Helvetica', 12, 'bold'))
     s.configure('Small.TLabel', font=('Helvetica', 8))
-    # s.configure('TLabelframe.Label', font=('Helvetica', 'blue'))
 
     app.mainloop()

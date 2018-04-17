@@ -3,6 +3,7 @@
 from datetime import datetime, date
 import base64
 import shelve
+import logging
 from requests.exceptions import ConnectionError, Timeout
 
 
@@ -23,18 +24,24 @@ from datastore import session_scope, Vendor, \
 from db_worker import insert_or_ignore
 
 
+module_logger = logging.getLogger('overload_console.pvr_manager')
+
+
 def run_platform_queries(api_name, session, meta, matchpoint):
+    module_logger.info('Running platform query.') 
     try:
         result = queries.query_manager(
             api_name, session, meta, matchpoint)
         return result
     except APITokenExpiredError:
         # close current session and start over (silently)
+        module_logger.debug('Expired token. Requesting new one.')
         session.close()
         session = open_platform_session(api_name)
         result = queries.query_manager(
             api_name, session, meta, matchpoint)
     except ConnectionError as e:
+        module_logger.error('ConnectionError')
         session.close()
         raise OverloadError(e)
     except Timeout as e:
@@ -52,8 +59,11 @@ def open_platform_session(api_name=None):
         session obj
     """
     reusing_token = False
+    module_logger.info('Opening platform session')
+
     try:
         ud = shelve.open(USER_DATA, writeback=True)
+
         # retrieve specified Platform authorization
         conn_data = ud['PlatformAPIs'][api_name]
         client_id = base64.b64decode(conn_data['client_id'])
@@ -61,50 +71,74 @@ def open_platform_session(api_name=None):
             conn_data['client_secret'])
         auth_server = conn_data['oauth_server']
         base_url = conn_data['host']
-        last_token = conn_data['last_token']  # should it be encrypted
+        last_token = conn_data['last_token']  # encrypt?
 
         # check if valid token exists and reuse if can
         if last_token is not None:
             if last_token.get('expires_on') < datetime.now():
                 # token expired, request new one
-                print 'requesting new token'
+                module_logger.info(
+                    'Platform token expired. Requesting new one.')
                 auth = platform.AuthorizeAccess(
                     client_id, client_secret, auth_server)
                 token = auth.get_token()
             else:
-                print 'reusing token'
+                module_logger.info(
+                    'Last Platform token still valid. Re-using.')
                 reusing_token = True
                 token = last_token
         else:
-            print 'requesting token for the first time'
+            module_logger.info('Requesting Platform access token.')
             auth = platform.AuthorizeAccess(
                 client_id, client_secret, auth_server)
-            try:
-                token = auth.get_token()
-            except APITokenError as e:
-                # log
-                raise OverloadError(e)
-            except ConnectionError as e:
-                # log
-                raise OverloadError(e)
-            except Timeout as e:
-                # log
-                raise OverloadError(e)
+            token = auth.get_token()
 
         # save token for reuse
         if not reusing_token:
+            module_logger.debug('Saving Platform token for reuse')
             print 'saving token to shelf'
             ud['PlatformAPIs'][api_name]['last_token'] = token
 
-    except KeyError:
-        raise ValueError(
-            'Provided Platform connection setting does not exist')
+    except KeyError as e:
+        module_logger.critical(
+            'KeyError in user_data: api name: {}. Error msg:{}'.format(
+                api_name, e))
+        raise OverloadError(
+            'Error parsing user_data while retrieving connection info')
+
+    except ValueError as e:
+        module_logger.critical(
+            e)
+
+    except APITokenError as e:
+        module_logger.error(
+            'Unable to obtain Platform access token. Error: {}'.format(
+                e))
+        raise OverloadError(e)
+    except ConnectionError as e:
+        module_logger.critical(
+            'Unable to obtain Platform access token. Error: {}'.format(
+                e))
+        raise OverloadError(e)
+    except Timeout as e:
+        module_logger.error(
+            'Unable to obtain Platform access token. Error: {}'.format(
+                e))
+        raise OverloadError(e)
+
+    finally:
+        ud.close()
 
     # open Platform session
-    session = PlatformSession(base_url, token)
-
-    ud.close()
-    return session
+    try:
+        session = PlatformSession(base_url, token)
+        return session
+    except ValueError as e:
+        module_logger.error(e)
+        raise OverloadError(e)
+    except APITokenExpiredError:
+        module_logger.critical(e)
+        raise OverloadError(e)
 
 
 def run_processing(
@@ -112,8 +146,10 @@ def run_processing(
         output_directory, progbar):
     # tokens and sessions are opened on this level
 
+    module_logger.info('PVR process launched.')
     # determine destination API
     if api_type == 'Platform API':
+        module_logger.debug('Connecting to Platform API')
         session = open_platform_session(api_name)
     elif api_type == 'Z3950':
         print 'parsing Z3950 settings'
@@ -181,8 +217,10 @@ def run_processing(
 
             elif 'api_type' == 'Z3950s':
                 print 'sending reuqest to Z3950'
-            elif 'api_type' == 'SierraAPIs':
+            elif 'api_type' == 'Sierra APIs':
                 print 'sending request to SierraAPI'
+            else:
+                module_logger.error('Invalid api_type')
 
             if system == 'nypl':
                 analysis = PVR_NYPLReport(agent, meta_in, meta_out)
