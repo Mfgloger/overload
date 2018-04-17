@@ -23,12 +23,12 @@ LOGGING = {
         },
     },
     'loggers': {
-        'main': {
+        'overload_main': {
             'handlers': ['loggly'],
             'level': 'INFO',
             'propagate': True
         },
-        'tests': {
+        'overload_console': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True
