@@ -1,23 +1,20 @@
 # handles and oversees processing of vendor records (top level below gui)
 # logging and passing exception to gui happens here
 from datetime import datetime, date
-import base64
 import shelve
 import logging
-from requests.exceptions import ConnectionError, Timeout
+# from requests.exceptions import ConnectionError, Timeout
 
 
 from bibs.bibs import VendorBibMeta, read_marc21, \
     create_target_id_field, write_marc21, check_sierra_id_presence, \
     create_fields_from_template
 from bibs.crosswalks import platform2meta
+from platform_comms import open_platform_session, platform_queries_manager
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
-from pvf import queries
 from pvf import reports
 from analyzer import PVR_NYPLReport
-from connectors import platform
-from setup_dirs import USER_DATA, BATCH_STATS, BATCH_META
-from connectors.platform import PlatformSession
+from setup_dirs import BATCH_STATS, BATCH_META
 from errors import OverloadError, APITokenExpiredError, APITokenError
 from datastore import session_scope, Vendor, \
     PVR_Batch, PVR_File
@@ -27,200 +24,177 @@ from db_worker import insert_or_ignore
 module_logger = logging.getLogger('overload_console.pvr_manager')
 
 
-def run_platform_queries(api_name, session, meta, matchpoint):
-    module_logger.info('Running platform query.') 
+def run_platform_queries(api_type, session, meta_in, matchpoint):
     try:
-        result = queries.query_manager(
-            api_name, session, meta, matchpoint)
-        return result
-    except APITokenExpiredError:
-        # close current session and start over (silently)
-        module_logger.debug('Expired token. Requesting new one.')
-        session.close()
-        session = open_platform_session(api_name)
-        result = queries.query_manager(
-            api_name, session, meta, matchpoint)
-    except ConnectionError as e:
-        module_logger.error('ConnectionError')
-        session.close()
-        raise OverloadError(e)
-    except Timeout as e:
-        session.close()
-        raise OverloadError(e)
-
-
-def open_platform_session(api_name=None):
-    """
-    wrapper around platform authorization and platform session obj
-    args:
-        api_type str
-        api_name str
-    return:
-        session obj
-    """
-    reusing_token = False
-    module_logger.info('Opening platform session')
-
-    try:
-        ud = shelve.open(USER_DATA, writeback=True)
-
-        # retrieve specified Platform authorization
-        conn_data = ud['PlatformAPIs'][api_name]
-        client_id = base64.b64decode(conn_data['client_id'])
-        client_secret = base64.b64decode(
-            conn_data['client_secret'])
-        auth_server = conn_data['oauth_server']
-        base_url = conn_data['host']
-        last_token = conn_data['last_token']  # encrypt?
-
-        # check if valid token exists and reuse if can
-        if last_token is not None:
-            if last_token.get('expires_on') < datetime.now():
-                # token expired, request new one
-                module_logger.info(
-                    'Platform token expired. Requesting new one.')
-                auth = platform.AuthorizeAccess(
-                    client_id, client_secret, auth_server)
-                token = auth.get_token()
-            else:
-                module_logger.info(
-                    'Last Platform token still valid. Re-using.')
-                reusing_token = True
-                token = last_token
-        else:
-            module_logger.info('Requesting Platform access token.')
-            auth = platform.AuthorizeAccess(
-                client_id, client_secret, auth_server)
-            token = auth.get_token()
-
-        # save token for reuse
-        if not reusing_token:
-            module_logger.debug('Saving Platform token for reuse')
-            print 'saving token to shelf'
-            ud['PlatformAPIs'][api_name]['last_token'] = token
-
-    except KeyError as e:
-        module_logger.critical(
-            'KeyError in user_data: api name: {}. Error msg:{}'.format(
-                api_name, e))
-        raise OverloadError(
-            'Error parsing user_data while retrieving connection info')
-
-    except ValueError as e:
-        module_logger.critical(
-            e)
-
-    except APITokenError as e:
-        module_logger.error(
-            'Unable to obtain Platform access token. Error: {}'.format(
-                e))
-        raise OverloadError(e)
-    except ConnectionError as e:
-        module_logger.critical(
-            'Unable to obtain Platform access token. Error: {}'.format(
-                e))
-        raise OverloadError(e)
-    except Timeout as e:
-        module_logger.error(
-            'Unable to obtain Platform access token. Error: {}'.format(
-                e))
-        raise OverloadError(e)
-
-    finally:
-        ud.close()
-
-    # open Platform session
-    try:
-        session = PlatformSession(base_url, token)
-        return session
-    except ValueError as e:
-        module_logger.error(e)
-        raise OverloadError(e)
-    except APITokenExpiredError:
-        module_logger.critical(e)
-        raise OverloadError(e)
+        results = platform_queries_manager(
+            api_type, session, meta_in, matchpoint)
+        return results
+    except OverloadError:
+        raise
 
 
 def run_processing(
     files, system, library, agent, api_type, api_name,
         output_directory, progbar):
-    # tokens and sessions are opened on this level
 
     module_logger.info('PVR process launched.')
+
+    # tokens and sessions are opened on this level
+
     # determine destination API
     if api_type == 'Platform API':
-        module_logger.debug('Connecting to Platform API')
-        session = open_platform_session(api_name)
+        module_logger.info('Connecting Platform API session.')
+        try:
+            session = open_platform_session(api_name)
+        except OverloadError:
+            raise
     elif api_type == 'Z3950':
-        print 'parsing Z3950 settings'
+        module_logger.info('Connecting to Z3950')
     elif api_type == 'Sierra API':
-        print 'parsing SierraAPI settings'
+        module_logger.info('Connecting to Sierra API')
 
     # clean-up batch metadata & stats
+    module_logger.debug('Opening BATCH_META')
     batch = shelve.open(BATCH_META, writeback=True)
     batch.clear()
-    batch['timestamp'] = datetime.now()
+    module_logger.debug(
+        'BATCH_META has been emptied from previous content.')
+    timestamp = datetime.now()
+    batch['timestamp'] = timestamp
     batch['system'] = system
     batch['library'] = library
     batch['agent'] = agent
     batch['file_names'] = files
+    module_logger.debug(
+        'BATCH_META new data: {}, {}, {}, {}, {}'.format(
+            timestamp, system, library, agent, files))
 
     stats = shelve.open(BATCH_STATS, writeback=True)
     stats.clear()
+    module_logger.debug(
+        'BATCH_STATS has been emptied from previous content.')
+
+    # create reference index
+    module_logger.debug(
+        'Creatig vendor index data for {}-{}'.format(
+            system, agent))
+    rules = './rules/vendors.xml'
+    vx = vendor_index(rules, system, agent)  # wrap in exception?
 
     # run queries and results analysis for each bib in each file
     n = 0
     f = 0
     for file in files:
         f += 1
+        module_logger.debug(
+            'Opening new MARC reader for file: {}'.format(
+                file))
         reader = read_marc21(file)
-
-        rules = './rules/vendors.xml'
-        vx = vendor_index(rules, system, agent)
 
         for bib in reader:
             n += 1
             if agent == 'cat':
-                vendor = identify_vendor(bib, vx)  # in SEL or ACQ scenario vendor provided via GUI
+                vendor = identify_vendor(bib, vx)
+                try:
+                    query_matchpoints = get_query_matchpoint(vendor, vx)
+                    module_logger.debug(
+                        'Vendor index: has following query matchpoints: '
+                        '{}'.format(query_matchpoints))
+                except KeyError:
+                    module_logger.critical(
+                        'Unable to match vendor {} with data '
+                        'in cat vendor index'.format(
+                            vendor))
             else:
-                print 'sel & acq will identify vendor by selecting a template'
+                # sel & acq workflows
+                # data pulled from db instead
+                # rules xml file used only to seed db with basic info
+                module_logger.warning(
+                    'SEL & ACQ workflows for vendor identification '
+                    'has not been implemented yet.')
+                raise OverloadError(
+                    'Selection & Acquisition workflows not implemented yet.')
+
+            module_logger.debug(
+                'Vendor has been identified as: {}'.format(
+                    vendor))
+            if vendor == 'UNKNOWN':
+                module_logger.warning(
+                    'Encounted unidentified vendor in record # : {} '
+                    'in file {}'.format(n, file))
+
+            # determine vendor bib meta
             meta_in = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
-            query_matchpoints = get_query_matchpoint(vendor, vx)
+            module_logger.debug('Vendor bib meta: {}'.format(str(meta_in)))
 
-            # on this level I should know if the bib should be requeried
-            # result must be evaluated in queries module, here action on
-            # the evaluation
+            # Platform API workflow
             if api_type == 'Platform API':
-                print 'sending request to Platform'
                 matchpoint = query_matchpoints['primary'][1]
-                print 'primary matchpoint'
-                result = run_platform_queries(
-                    api_type, session, meta_in, matchpoint)
+                module_logger.debug(
+                    'Using primary marchpoint: {}'.format(
+                        matchpoint))
+                try:
+                    result = run_platform_queries(
+                        api_type, session, meta_in, matchpoint)
 
-                # query_manager returns tuple (status, response in json)
+                except APITokenExpiredError:
+                    module_logger.info(
+                        'Requesting new Platform token. Opening new session.')
+                    session = open_platform_session(api_name)
+                    result = platform_queries_manager(
+                        api_type, session, meta_in, matchpoint)
+
+                # run_patform_queries returns tuple (status, response in json)
                 meta_out = []
+
                 if result[0] == 'hit':
                     meta_out = platform2meta(result[1])
+
                 elif result[0] == 'nohit':
                     # requery with alternative matchpoint
                     if 'secondary' in query_matchpoints:
-                        print 'secondary matchpoint'
+                        module_logger.debug(
+                            'Using primary marchpoint: {}'.format(
+                                matchpoint))
                         matchpoint = query_matchpoints['secondary'][1]
-                        result = run_platform_queries(
-                            api_type, session, meta_in, matchpoint)
+
+                        # run platform request for the secondary matchpoint
+                        try:
+                            result = run_platform_queries(
+                                api_type, session, meta_in, matchpoint)
+
+                        except APITokenExpiredError:
+                            module_logger.info(
+                                'Requesting new Platform token. '
+                                'Opening new session.')
+
+                            session = open_platform_session(api_name)
+                            result = run_platform_queries(
+                                api_type, session, meta_in, matchpoint)
+                            # other exceptions raised in run_platform_queries
+
                         if result[0] == 'hit':
                             meta_out = platform2meta(result[1])
                         elif result[0] == 'error':
                             raise OverloadError('Platform server error')
+                    else:
+                        module_logger.debug(
+                            'No secondary matchpoint specified. '
+                            'Ending queries.')
                 elif result[0] == 'error':
                     raise OverloadError('Platform server error')
 
+            # queries performed via Z3950
             elif 'api_type' == 'Z3950s':
-                print 'sending reuqest to Z3950'
-            elif 'api_type' == 'Sierra APIs':
-                print 'sending request to SierraAPI'
+                module_logger.error('Z3950 is not yet implemented.')
+                raise OverloadError('Z3950 is not yet implemented.')
+            # queries performed via Sierra API
+            elif 'api_type' == 'Sierra API':
+                module_logger.error('Sierra API is not implemented yet.')
+                raise OverloadError('Sierra API is not implemented yet.')
             else:
                 module_logger.error('Invalid api_type')
+                raise OverloadError('Invalid api_type encountered.')
 
             if system == 'nypl':
                 analysis = PVR_NYPLReport(agent, meta_in, meta_out)
