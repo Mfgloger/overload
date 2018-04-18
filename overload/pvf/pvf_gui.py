@@ -545,22 +545,27 @@ class ProcessVendorFiles(tk.Frame):
                         self.target['method'], self.target['target'],
                         self.last_directory,
                         self.progbar)
+
+                    # confirm files have been processed
+                    self.processed.set(
+                        'processed: {} file(s) including {} record(s)'.format(
+                            len(self.files), total_bib_count))
+
+                    # launch processing report
+                    self.batch_summary_window()
+
                 except OverloadError as e:
                     self.cur_manager.notbusy()
                     tkMessageBox.showerror(
                         'Processing Error', e)
-
-                # confirm files have been processed
-                self.processed.set(
-                    'processed: {} file(s) including {} record(s)'.format(
-                        len(self.files), total_bib_count))
-                # launch processing report
-                self.batch_summary_window()
-
-            self.cur_manager.notbusy()
+                finally:
+                    self.cur_manager.notbusy()
 
     def archive(self):
-        save_stats()
+        try:
+            save_stats()
+        except OverloadError as e:
+            tkMessageBox.showerror(e)
 
         # move created files to the archive
         archive_files = []
