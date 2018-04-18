@@ -100,6 +100,18 @@
 				</field>
 			</template>
 		</vendor>
+		<vendor name = "BT PARADE">
+			<vendor_tag type = "standard" tag = "901a" operator = "main">PARADE</vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<template type = 'bib'>
+				<field>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</template>
+		</vendor>
 		<vendor name = "SULAIMAN">
 			<vendor_tag type = "control_field" tag = "003" operator = "main">LB-BrSB</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
