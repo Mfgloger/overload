@@ -91,7 +91,7 @@ def open_platform_session(api_name=None):
 
     # open Platform session
     try:
-        module_logger.info('Auth obtained. Opening Platform session')
+        module_logger.info('Auth obtained. Opening Platform session.')
         session = PlatformSession(base_url, token)
         return session
 

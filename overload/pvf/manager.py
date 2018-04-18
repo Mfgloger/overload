@@ -54,7 +54,7 @@ def run_processing(
         module_logger.info('Connecting to Sierra API')
 
     # clean-up batch metadata & stats
-    module_logger.debug('Opening BATCH_META')
+    module_logger.debug('Opening BATCH_META.')
     batch = shelve.open(BATCH_META, writeback=True)
     batch.clear()
     module_logger.debug(
@@ -93,13 +93,17 @@ def run_processing(
 
         for bib in reader:
             n += 1
+
             if agent == 'cat':
                 vendor = identify_vendor(bib, vx)
+
                 try:
                     query_matchpoints = get_query_matchpoint(vendor, vx)
                     module_logger.debug(
-                        'Vendor index: has following query matchpoints: '
-                        '{}'.format(query_matchpoints))
+                        'Cat vendor index has following query matchpoints: '
+                        '{} for vendor {}.'.format(
+                            query_matchpoints, vendor))
+
                 except KeyError:
                     module_logger.critical(
                         'Unable to match vendor {} with data '
@@ -115,9 +119,6 @@ def run_processing(
                 raise OverloadError(
                     'Selection & Acquisition workflows not implemented yet.')
 
-            module_logger.debug(
-                'Vendor has been identified as: {}'.format(
-                    vendor))
             if vendor == 'UNKNOWN':
                 module_logger.warning(
                     'Encounted unidentified vendor in record # : {} '
@@ -203,6 +204,7 @@ def run_processing(
                 pass
 
             # save analysis to shelf
+            module_logger.info('Analyzing query results and vendor bib')
             analysis = analysis.to_dict()
             stats[str(n)] = analysis
 
@@ -215,19 +217,35 @@ def run_processing(
 
             # output processed records according to analysis
             # add Sierra bib id if matched
+
+            # enforce utf-8 encoding in MARC leader
             bib.leader = bib.leader[:9] + 'a' + bib.leader[10:]
+
             sierra_id_present = check_sierra_id_presence(
                 system, bib)
+            module_logger.debug(
+                'Checking if vendor bib has Sierra ID provided: '
+                '{}'.format(sierra_id_present))
+
             if not sierra_id_present and \
                     analysis['target_sierraId'] is not None:
+
                 try:
+                    module_logger.info(
+                        'Adding MARC field with target Sierra id '
+                        'to vendor record: {}.'.format(
+                            analysis['target_sierraId']))
                     bib.add_field(
                         create_target_id_field(
                             system, analysis['target_sierraId']))
+
                 except ValueError as e:
+                    module_logger.error(e)
                     raise OverloadError(e)
 
             # add fields form bib & order templates
+            module_logger.info(
+                'Adding template field(s) to the vendor record.')
             if agent == 'cat':
                 templates = vx[vendor].get('bib_template')
                 if len(templates) > 0:
@@ -237,15 +255,24 @@ def run_processing(
 
             # append to appropirate output file
             if analysis['action'] == 'attach':
+                module_logger.info(
+                    'Appending vendor record to the dup file.')
                 write_marc21(fh_dups, bib)
             else:
+                module_logger.info(
+                    'Appending vendor record to the new file.')
                 write_marc21(fh_new, bib)
 
             # update progbar
             progbar['value'] = n
             progbar.update()
 
-    batch['processing_time'] = datetime.now() - batch['timestamp']
+    processing_time = datetime.now() - batch['timestamp']
+    module_logger.info(
+        'Batch stats: {} files, {} records, '
+        'processing time: {}'.format(
+            f, n, processing_time))
+    batch['processing_time'] = processing_time
     batch['processed_files'] = f
     batch['processed_bibs'] = n
     batch.close()
@@ -255,10 +282,11 @@ def run_processing(
     # close any open session if Platform or Sierra API has been used
     if api_type in ('Platform API', 'Sierra API') and session is not None:
         session.close()
-        print 'session closed'
+        module_logger.info('Closing API session.')
 
 
 def save_stats():
+    module_logger.info('Saving batch stats.')
     batch = shelve.open(BATCH_META)
     timestamp = batch['timestamp']
     system = batch['system']
@@ -308,3 +336,8 @@ def save_stats():
                         new=row[1]['insert'],
                         dups=row[1]['attach'],
                         updated=row[1]['update'])
+    else:
+        module_logger.warning(
+            'Unable to created dataframe from the BATCH_STATS.')
+        raise OverloadError(
+            'Encountered problems while trying to save statistics.')
