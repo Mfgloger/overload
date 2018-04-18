@@ -852,7 +852,7 @@ class ProcessVendorFiles(tk.Frame):
         # generate vendor stats
         self.reportDTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
         if df is not None:
-            stats = reports.create_stats(self.system, df)
+            stats = reports.create_stats(self.system.get(), df)
             self.reportDTxt.insert(tk.END, stats.to_string())
             self.reportDTxt.insert(
                 tk.END, '\n' + ('-' * 60) + '\n')
@@ -863,7 +863,7 @@ class ProcessVendorFiles(tk.Frame):
         self.reportDTxt.insert(tk.END, 'Duplicates report:\n', 'blue')
         if df is not None:
             dups = reports.report_dups(
-                self.system, self.library, df)
+                self.system.get(), self.library.get(), df)
             if dups.size == 0:
                 self.reportDTxt.insert(tk.END, 'All clear\n')
             else:

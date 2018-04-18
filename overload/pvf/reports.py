@@ -66,6 +66,7 @@ def shelf2dataframe(batch_stats):
 
 
 def create_stats(system, df):
+    print 'REPORT: {}'.format(system)
     frames = []
     n = 0
     for vendor, data in df.groupby('vendor'):
@@ -76,7 +77,7 @@ def create_stats(system, df):
             data['action'] == 'insert']['action'].count()
         update = data[
             data['action'] == 'overlay']['action'].count()
-        if system == 'nypl':
+        if system == 'NYPL':
             mixed = data[
                 data['mixed'].notnull()]['mixed'].count()
             other = data[
@@ -108,7 +109,7 @@ def create_stats(system, df):
 
 
 def report_dups(system, library, df):
-    if system == 'nypl':
+    if system == 'NYPL':
         if library == 'branches':
             other = 'research'
         else:
