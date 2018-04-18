@@ -154,10 +154,10 @@ def run_processing(
                 elif result[0] == 'nohit':
                     # requery with alternative matchpoint
                     if 'secondary' in query_matchpoints:
-                        module_logger.debug(
-                            'Using primary marchpoint: {}'.format(
-                                matchpoint))
                         matchpoint = query_matchpoints['secondary'][1]
+                        module_logger.debug(
+                            'Using secondary marchpoint: {}'.format(
+                                matchpoint))
 
                         # run platform request for the secondary matchpoint
                         try:
