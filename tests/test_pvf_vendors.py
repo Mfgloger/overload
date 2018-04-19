@@ -31,19 +31,27 @@ class TestPVFvendorIndex(unittest.TestCase):
             self.assertIn('identification', data)
             self.assertIn('primary', data['query'])
             self.assertIn('bib_template', data)
+
             for key, value in data['identification'].iteritems():
                 self.assertIn('operator', value)
                 self.assertIn('type', value)
                 self.assertIn('value', value)
 
             for preference, details in data['query'].iteritems():
+                self.assertIn(preference, ('primary', 'secondary'))
                 self.assertIsInstance(
                     details, tuple)
+                self.assertIn(
+                    details[0], ('tag', 'id'))
+                self.assertIs(type(details[1]), str)
 
             # test templates
             self.assertIs(type(data['bib_template']), list)
             # bib templates can be emapty strings
             for tdata in data['bib_template']:
+                self.assertIn('option', tdata)
+                self.assertIs(type(tdata['option']), str)
+                self.assertIn(tdata['option'], ('skip', 'add'))
                 self.assertIs(type(tdata), dict)
                 self.assertIn('subfields', tdata)
                 self.assertIn('tag', tdata)

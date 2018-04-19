@@ -9,10 +9,12 @@
 <!-- enter tag_value to be match for identificaiton-->
 <!--provide query_tag attribute type ("primary", "secondary") and marc tag number to be used for the query-->
 <!--########################################-->
-<!--bib record template:
+<!--bib record template (optional):
 
-<template type = 'bib'>
-	<field>
+bib_template option: 'skip' - skip if present, 'add' - always add
+
+<bib_template>
+	<field option = 'skip'>
 		<tag>949</tag>
 		<ind1></ind1>
 		<ind2></ind2>
@@ -25,7 +27,7 @@
 		<subfield code = 'a'>tak</subfield>
 		<subfield code = 'n'>CATBL</subfield>
 	</field>
-</template>
+</bib_template>
 
 -->
 <!--#########################################-->
@@ -91,76 +93,76 @@
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTSERIES</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
-			<template type = 'bib'>
-				<field>
+			<bib_template>>
+				<field option = 'skip'>
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
 				</field>
-			</template>
+			</bib_template>
 		</vendor>
 		<vendor name = "BT PARADE">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">PARADE</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
-			<template type = 'bib'>
-				<field>
+			<bib_template>
+				<field option = 'skip'>
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
 				</field>
-			</template>
+			</bib_template>
 		</vendor>
 		<vendor name = "SULAIMAN">
 			<vendor_tag type = "control_field" tag = "003" operator = "main">LB-BrSB</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
-			<template type = 'bib'>
-				<field>
+			<bib_template>
+				<field option = 'skip'>
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
 				</field>
-			</template>
+			</bib_template>
 		</vendor>
 		<vendor name = "BT ROMANCE">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">ROMANCE</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
-			<template type = 'bib'>
-				<field>
+			<bib_template>
+				<field option = 'skip'>
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
 				</field>
-			</template>
+			</bib_template>
 		</vendor>
 		<vendor name = "BT ODC">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTODC</vendor_tag>
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
-			<template type = 'bib'>
-				<field>
+			<bib_template>
+				<field option = 'skip'>
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
 				</field>
-			</template>
+			</bib_template>
 		</vendor>
 		<vendor name = "BT LEASED">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">LEASED</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
-			<template type = 'bib'>
-				<field>
+			<bib_template>
+				<field option = 'skip'>
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
 				</field>
-			</template>
+			</bib_template>
 		</vendor>
 	</system>
 	<system name = "nypl" agent = 'sel'>
@@ -187,28 +189,28 @@
 			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T SERIES</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T SERIES</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
-			<template type = 'bib'>
-				<field>
+			<bib_template>
+				<field option = 'skip'>
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
 				</field>
-			</template>
+			</bib_template>
 		</vendor>
 		<vendor name = "BT ROMANCE">
 			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T ROMANCE</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T ROMANCE</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
-			<template type = 'bib'>
-				<field>
+			<bib_template>
+				<field option = 'skip'>
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
 				</field>
-			</template>
+			</bib_template>
 		</vendor>
 	</system>
 </data>
