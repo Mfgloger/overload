@@ -106,25 +106,22 @@ def check_sierra_format_tag_presence(bib):
     return found
 
 
-def create_fields_from_template(templates):
-    new_fields = []
-    for t in templates:
-        if t['ind1'] is None:
-            ind1 = ' '
-        else:
-            ind1 = t['ind1']
-        if t['ind2'] is None:
-            ind2 = ' '
-        else:
-            ind2 = t['ind2']
-        subfields = []
-        [subfields.extend([k, v]) for k, v in t['subfields'].items()]
-        new_fields.append(
-            Field(
-                tag=t['tag'],
-                indicators=[ind1, ind2],
-                subfields=subfields))
-    return new_fields
+def create_field_from_template(template):
+    if template['ind1'] is None:
+        ind1 = ' '
+    else:
+        ind1 = template['ind1']
+    if template['ind2'] is None:
+        ind2 = ' '
+    else:
+        ind2 = template['ind2']
+    subfields = []
+    [subfields.extend([k, v]) for k, v in template['subfields'].items()]
+    field = Field(
+        tag=template['tag'],
+        indicators=[ind1, ind2],
+        subfields=subfields)
+    return field
 
 
 def count_bibs(file):
