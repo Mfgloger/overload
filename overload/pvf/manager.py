@@ -8,7 +8,7 @@ import logging
 
 from bibs.bibs import VendorBibMeta, read_marc21, \
     create_target_id_field, write_marc21, check_sierra_id_presence, \
-    create_fields_from_template
+    create_field_from_template
 from bibs.crosswalks import platform2meta
 from platform_comms import open_platform_session, platform_queries_manager
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
@@ -248,10 +248,31 @@ def run_processing(
                 'Adding template field(s) to the vendor record.')
             if agent == 'cat':
                 templates = vx[vendor].get('bib_template')
-                if len(templates) > 0:
-                    new_fields = create_fields_from_template(templates)
-                    for field in new_fields:
-                        bib.add_field(field)
+                module_logger.debug(
+                    'Selected CAT templates for {}: {}'.format(
+                        vendor, templates))
+                for template in templates:
+                    # skip if present or always add
+
+                    if template['option'] == 'skip':
+                        if template['tag'] not in bib:
+                            module_logger.debug(
+                                'Field {} not present, adding '
+                                'from template'.format(
+                                    template['tag']))
+                            new_field = create_field_from_template(template)
+                            bib.add_field(new_field)
+                        else:
+                            module_logger.debug(
+                                'Field {} found. Skipping.'.format(
+                                    template['tag']))
+                    elif template['option'] == 'add':
+                        module_logger.debug(
+                            'Field {} being added without checking '
+                            'if already present'.format(
+                                template['tag']))
+                        new_field = create_field_from_template(template)
+                        bib.add_field(new_field)
 
             # append to appropirate output file
             if analysis['action'] == 'attach':
