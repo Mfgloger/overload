@@ -219,6 +219,21 @@ class TestBibsUtilities(unittest.TestCase):
         with self.assertRaises(IndexError):
             bibs.check_sierra_format_tag_presence(self.marc_bib)
 
+    def test_create_field_from_template(self):
+        template = dict(
+            option='skip',
+            tag='949',
+            ind1=None,
+            ind2='1',
+            subfields={'a': 'foo', 'b': 'bar'}
+        )
+        field = bibs.create_field_from_template(template)
+        self.assertIsInstance(field, Field)
+        self.assertEqual(field.tag, '949')
+        self.assertEqual(field.indicators, [' ', '1'])
+        self.assertEqual(field['a'], 'foo')
+        self.assertEqual(field['b'], 'bar')
+
     def test_bibmeta_object(self):
         meta = bibs.BibMeta(self.marc_bib, sierraId='12345678')
         self.assertIsInstance(meta, bibs.BibMeta)
