@@ -66,7 +66,6 @@ def shelf2dataframe(batch_stats):
 
 
 def create_stats(system, df):
-    print 'REPORT: {}'.format(system)
     frames = []
     n = 0
     for vendor, data in df.groupby('vendor'):
@@ -77,7 +76,7 @@ def create_stats(system, df):
             data['action'] == 'insert']['action'].count()
         update = data[
             data['action'] == 'overlay']['action'].count()
-        if system == 'NYPL':
+        if system == 'nypl':
             mixed = data[
                 data['mixed'].notnull()]['mixed'].count()
             other = data[
@@ -91,7 +90,9 @@ def create_stats(system, df):
                     'total': attach + insert + update,
                     'mixed': mixed,
                     'other': other},
-                columns=['vendor', 'attach', 'insert', 'update', 'total', 'mixed', 'other'],
+                columns=[
+                    'vendor', 'attach', 'insert', 'update',
+                    'total', 'mixed', 'other'],
                 index=[n]))
         else:
             # bpl stats
@@ -122,7 +123,9 @@ def report_dups(system, library, df):
 
         df_rep = df_rep[
             df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
-        df_rep.columns = ['vendor', 'vendor_id', 'target_id', dups, 'mixed', other]
+        df_rep.columns = [
+            'vendor', 'vendor_id', 'target_id',
+            dups, 'mixed', other]
     else:
         # bpl stats
         df_rep = df[[
