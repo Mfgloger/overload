@@ -33,7 +33,7 @@ def vendor_index(vendor_fh, library, agent):
 
                 # load applicable templates
                 tlist = []
-                templates = vendor.findall('template')
+                templates = vendor.findall('bib_template')
                 for template in templates:
                     # define bibliographic record template to be applied
                     for field in template.findall('field'):
@@ -42,6 +42,7 @@ def vendor_index(vendor_fh, library, agent):
                             subfields_dict[
                                 subfield.attrib['code']] = subfield.text
                         tlist.append({
+                            'option': field.attrib['option'],
                             'tag': field.find('tag').text,
                             'ind1': field.find('ind1').text,
                             'ind2': field.find('ind2').text,
