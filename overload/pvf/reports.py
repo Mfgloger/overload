@@ -149,8 +149,9 @@ def report_callNo_issues(df):
 
 
 def report_details(system, library, df):
+    print system, library
     df = df.sort_index()
-    if system == 'nypl':
+    if system == 'NYPL':
         if library == 'branches':
             other = 'research bibs'
         else:

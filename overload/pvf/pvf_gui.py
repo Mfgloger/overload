@@ -900,7 +900,7 @@ class ProcessVendorFiles(tk.Frame):
 
         if df is not None:
             df = reports.report_details(
-                self.system, self.library, df)
+                self.system.get(), self.library.get(), df)
             self.reportBTxt.insert(tk.END, df.to_string())
         # prevent edits
         self.reportBTxt['state'] = tk.DISABLED
