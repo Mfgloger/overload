@@ -57,10 +57,7 @@ def shelf2dataframe(batch_stats):
                 value[cat] = ','.join(
                     ['b{}a'.format(bid) for bid in value[cat]])
         frames.append(pd.DataFrame(value, index=[int(key)]))
-    try:
-        df = pd.concat(frames)
-    except ValueError:
-        df = None
+    df = pd.concat(frames)
     stats.close()
     return df
 
@@ -118,7 +115,7 @@ def report_dups(system, library, df):
         dups = '{} dups'.format(library)
 
         df_rep = df[[
-            'vendor_id', 'vendor', 'target_sierraId',
+            'vendor', 'vendor_id', 'target_sierraId',
             'inhouse_dups', 'mixed', 'other']]
 
         df_rep = df_rep[
@@ -129,7 +126,7 @@ def report_dups(system, library, df):
     else:
         # bpl stats
         df_rep = df[[
-            'vendor_id', 'vendor', 'target_sierraId',
+            'vendor', 'vendor_id', 'target_sierraId',
             'inhouse_dups']]
 
         df_rep = df_rep[
@@ -149,7 +146,6 @@ def report_callNo_issues(df):
 
 
 def report_details(system, library, df):
-    print system, library
     df = df.sort_index()
     if system == 'NYPL':
         if library == 'branches':
