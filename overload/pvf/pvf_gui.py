@@ -58,9 +58,14 @@ class ProcessVendorFiles(tk.Frame):
         self.agent = tk.StringVar()
         self.template = tk.StringVar()
 
+        # logos
+        self.nyplLogo = tk.PhotoImage(file='./icons/nyplLogo.gif')
+        self.bplLogo = tk.PhotoImage(file='./icons/bplLogo.gif')
+
         # layout of the main frame
         self.rowconfigure(0, minsize=5)
-        self.rowconfigure(8, minsize=10)
+        self.rowconfigure(1, minsize=120)
+        self.rowconfigure(15, minsize=10)
         self.columnconfigure(0, minsize=5)
         self.columnconfigure(2, minsize=10)
         self.columnconfigure(4, minsize=5)
@@ -68,7 +73,7 @@ class ProcessVendorFiles(tk.Frame):
         # layout of the base frame
         self.baseFrm = ttk.LabelFrame(
             self,
-            text='process vendor file')
+            text='Process Vendor File')
         self.baseFrm.grid(
             row=1, column=1, rowspan=6, sticky='snew')
         self.baseFrm.rowconfigure(0, minsize=10)
@@ -77,7 +82,7 @@ class ProcessVendorFiles(tk.Frame):
         self.baseFrm.rowconfigure(7, minsize=5)
         self.baseFrm.rowconfigure(9, minsize=5)
         self.baseFrm.rowconfigure(14, minsize=10)
-        self.baseFrm.rowconfigure(16, minsize=10)
+        self.baseFrm.rowconfigure(18, minsize=10)
         self.baseFrm.columnconfigure(0, minsize=10)
         self.baseFrm.columnconfigure(7, minsize=10)
 
@@ -125,7 +130,7 @@ class ProcessVendorFiles(tk.Frame):
             self.targetFrm,
             textvariable=self.agent)
         self.agentCbx.grid(
-            row=0, column=5, columnspan=2, sticky='snew', padx=5, pady=10)
+            row=0, column=5, columnspan=3, sticky='snew', padx=5, pady=10)
 
         # query method/database
         self.query_targetLbl = ttk.Label(
@@ -137,7 +142,7 @@ class ProcessVendorFiles(tk.Frame):
             self.targetFrm,
             textvariable=self.target_name)
         self.query_targetCbx.grid(
-            row=1, column=2, columnspan=5, sticky='snew', padx=5, pady=10)
+            row=1, column=2, columnspan=6, sticky='snew', padx=5, pady=10)
 
         # templates to be applied
         self.templateLbl = ttk.Label(
@@ -149,7 +154,16 @@ class ProcessVendorFiles(tk.Frame):
             self.targetFrm,
             textvariable=self.template)
         self.templateCbx.grid(
-            row=2, column=2, columnspan=5, sticky='snew', padx=5, pady=10)
+            row=2, column=2, columnspan=5, sticky='sew', padx=5, pady=10)
+        # edit template button
+        edit = tk.PhotoImage(file='./icons/edit.gif')
+        self.templateBtn = ttk.Button(
+            self.targetFrm,
+            image=edit,
+            command=self.create_template)
+        self.templateBtn.grid(
+            row=2, column=7, sticky='ne', padx=5)
+        self.templateBtn.image = edit
 
         # browse & ftp buttons
         self.selectBtn = ttk.Button(
@@ -233,7 +247,7 @@ class ProcessVendorFiles(tk.Frame):
             borderwidth=2,
             relief='ridge')
         self.reportFrm.grid(
-            row=15, column=1, columnspan=6, sticky='snew')
+            row=15, column=1, rowspan=3, columnspan=6, sticky='snew')
 
         self.reportFrm.rowconfigure(0, minsize=5)
         self.reportFrm.rowconfigure(4, minsize=5)
@@ -298,33 +312,46 @@ class ProcessVendorFiles(tk.Frame):
             self.archiveBtn,
             'save statistics and archive output MARC files')
 
-        # navigation buttons
-
-        logo = tk.PhotoImage(file='./icons/PVRlarge.gif')
+        # default logo
+        logo = tk.PhotoImage(file='./icons/PVRsmall.gif')
         self.logoDsp = ttk.Label(
             self, image=logo)
         # prevent image to be garbage collected by Python
         self.logoDsp.image = logo
         self.logoDsp.grid(
-            row=1, column=8, sticky='nw')
+            row=1, column=8, columnspan=3, sticky='snew')
 
+        # default activation labels
+        self.libraryLbl = ttk.Label(
+            self, textvariable=self.library,
+            style='Bold.TLabel')
+        self.libraryLbl.grid(
+            row=2, column=9, sticky='new')
+
+        self.agentLbl = ttk.Label(
+            self, textvariable=self.agent,
+            style='Bold.TLabel')
+        self.agentLbl.grid(
+            row=3, column=9, sticky='new')
+
+        # navigation buttons
         self.helpBtn = ttk.Button(
             self,
             text='help',
             command=self.help,
             cursor='hand2',
-            width=15)
+            width=12)
         self.helpBtn.grid(
-            row=5, column=8, sticky='sw')
+            row=5, column=8, columnspan=3, sticky='sew')
 
         self.closeBtn = ttk.Button(
             self,
             text='close',
             command=lambda: controller.show_frame('Main'),
             cursor='hand2',
-            width=15)
+            width=12)
         self.closeBtn.grid(
-            row=6, column=8, sticky='sw')
+            row=6, column=8, columnspan=3, sticky='sew')
 
     def createToolTip(self, widget, text):
         toolTip = ToolTip(widget)
@@ -376,7 +403,14 @@ class ProcessVendorFiles(tk.Frame):
             self.reset()
 
     def ftp(self):
-        print 'ftp pop-up here'
+        tkMessageBox.showwarning(
+            'Under construction', 'Feature not implemented yet.\n'
+            'Stay tuned...')
+
+    def create_template(self):
+        tkMessageBox.showwarning(
+            'Under construction', 'Feature not implemented yet.\n'
+            'Stay tuned...')
 
     def process(self):
         self.reset()
@@ -834,6 +868,7 @@ class ProcessVendorFiles(tk.Frame):
     def create_processing_report(self):
         # reset report
         self.reportDTxt.delete(1.0, tk.END)
+
         # generate summary
         try:
             summary = reports.generate_processing_summary(BATCH_META)
@@ -845,21 +880,41 @@ class ProcessVendorFiles(tk.Frame):
 
         # create dataframe to be tabulated
         try:
+            module_logger.info(
+                'Mapping BATCH_STATS to dataframe for general '
+                'stats report.')
             df = reports.shelf2dataframe(BATCH_STATS)
-        except KeyError:
+        except KeyError as e:
+            module_logger.error(
+                'Unable to map BATCH_STATS to dataframe. '
+                'Error: {}'.format(e))
+            df = None
+        except ValueError as e:
+            module_logger.error(
+                'Unable to map BATCH_STATS to dataframe.'
+                'Error: {}'.format(e))
             df = None
 
         # generate vendor stats
+        module_logger.info(
+            'Generating vendor breakdown section for '
+            '{}.'.format(self.system.get()))
         self.reportDTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
         if df is not None:
-            stats = reports.create_stats(self.system.get(), df)
-            self.reportDTxt.insert(tk.END, stats.to_string())
-            self.reportDTxt.insert(
-                tk.END, '\n' + ('-' * 60) + '\n')
+            if df.size > 0:
+                stats = reports.create_stats(self.system.get(), df)
+                self.reportDTxt.insert(tk.END, stats.to_string())
+            elif df.size == 0:
+                self.reportDTxt.insert(tk.END, 'Nothing to report.')
         else:
             self.reportDTxt.insert(tk.END, 'STATS PARSING ERROR\n')
+        self.reportDTxt.insert(
+            tk.END, '\n' + ('-' * 120) + '\n')
 
         # report duplicates
+        module_logger.info(
+            'Generating duplicate reports section for {}-{}.'.format(
+                self.system.get(), self.library.get()))
         self.reportDTxt.insert(tk.END, 'Duplicates report:\n', 'blue')
         if df is not None:
             dups = reports.report_dups(
@@ -872,9 +927,11 @@ class ProcessVendorFiles(tk.Frame):
             self.reportDTxt.insert(
                 tk.END, 'DUPLICATE REPORT PARSING ERROR\n')
         self.reportDTxt.insert(
-            tk.END, '\n' + ('-' * 60) + '\n')
+            tk.END, '\n' + ('-' * 120) + '\n')
 
         # report callNo issues
+        module_logger.info(
+            'Generating call number issues section.')
         self.reportDTxt.insert(tk.END, 'Call number issues:\n', 'blue')
         if df is not None:
             callNos = reports.report_callNo_issues(df)
@@ -885,6 +942,9 @@ class ProcessVendorFiles(tk.Frame):
         else:
             self.reportDTxt.insert(
                 tk.END, 'CALL NUMBER CONFLICTS PARSING ERROR\n')
+        self.reportDTxt.insert(
+            tk.END, '\n' + ('-' * 120) + '\n')
+
         # prevent edits
         self.reportDTxt['state'] = tk.DISABLED
 
@@ -895,13 +955,27 @@ class ProcessVendorFiles(tk.Frame):
         # create dataframe to be tabulated
         try:
             df = reports.shelf2dataframe(BATCH_STATS)
-        except KeyError:
+        except KeyError as e:
+            module_logger.error(
+                'Unable to map BATCH_STATS to dataframe. '
+                'Error: {}'.format(e))
+            df = None
+        except ValueError as e:
+            module_logger.error(
+                'Unable to map BATCH_STATS to dataframe.'
+                'Error: {}'.format(e))
             df = None
 
+        module_logger.info(
+            'Generating detailed report for {}-{}'.format(
+                self.system.get(), self.library.get()))
         if df is not None:
             df = reports.report_details(
                 self.system.get(), self.library.get(), df)
             self.reportBTxt.insert(tk.END, df.to_string())
+        else:
+            self.reportBTxt.insert(tk.END, 'DETAILED REPORT PARSING ERROR')
+
         # prevent edits
         self.reportBTxt['state'] = tk.DISABLED
 
@@ -931,6 +1005,15 @@ class ProcessVendorFiles(tk.Frame):
         self.archived.set('archived:')
         self.progbar['value'] = 0
 
+    def set_logo(self):
+        # change logo
+        if self.system.get() == 'NYPL':
+            self.logoDsp.configure(image=self.nyplLogo)
+            self.logoDsp.image = self.nyplLogo
+        elif self.system.get() == 'BPL':
+            self.logoDsp.configure(image=self.bplLogo)
+            self.logoDsp.image = self.bplLogo
+
     def system_observer(self, *args):
         user_data = shelve.open(USER_DATA)
         conns_display = []
@@ -953,6 +1036,7 @@ class ProcessVendorFiles(tk.Frame):
             self.libraryCbx['state'] = 'disabled'
             self.agent.set('cataloging')
             self.agentCbx['state'] = 'disabled'
+
         elif self.system.get() == 'NYPL':
             # display only relevant connections
             if 'Z3950s' in user_data:
@@ -973,6 +1057,9 @@ class ProcessVendorFiles(tk.Frame):
             self.libraryCbx['state'] = 'readonly'
             self.agentCbx['state'] = '!disabled'
             self.agentCbx['state'] = 'readonly'
+
+        # change log
+        self.set_logo()
 
         # empty comobox selected target name if not on the list for the
         # system
