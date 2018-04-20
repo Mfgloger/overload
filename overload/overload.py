@@ -154,7 +154,7 @@ class Main(tk.Frame):
         self.columnconfigure(2, minsize=20)
         self.columnconfigure(4, minsize=20)
         self.columnconfigure(6, minsize=20)
-        self.columnconfigure(10, minsize=50)
+        self.columnconfigure(8, minsize=50)
 
         getRecNoICO = tk.PhotoImage(file='./icons/ProcessVendorFiles.gif')
         self.getRecNoBtn = ttk.Button(
@@ -322,7 +322,7 @@ class Reports(tk.Frame):
             row=0, column=10, rowspan=10, sticky='nse', padx=2)
         self.base = tk.Canvas(
             self.mainFrm, bg='white',
-            width=750,
+            width=720,
             height=400,
             yscrollcommand=self.yscrollbar.set)
         self.base.grid(
