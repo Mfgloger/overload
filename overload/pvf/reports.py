@@ -4,6 +4,7 @@ import pandas as pd
 import shelve
 from sqlalchemy import func
 
+
 from datastore import PVR_Batch, PVR_File, Vendor, session_scope
 
 
@@ -141,7 +142,9 @@ def report_callNo_issues(df):
     df_call = df_call[
         ['vendor', 'vendor_id', 'target_sierraId',
          'vendor_callNo', 'target_callNo', 'inhouse_dups']]
-    df_call.columns = ['vendor', 'vendor_id', 'target_id', 'vendor_callNo', 'target_callNo', 'duplicate bibs']
+    df_call.columns = [
+        'vendor', 'vendor_id', 'target_id', 'vendor_callNo',
+        'target_callNo', 'duplicate bibs']
     return df_call
 
 

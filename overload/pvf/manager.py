@@ -316,7 +316,11 @@ def save_stats():
     file_qty = len(batch['file_names'])
     batch.close()
 
-    df = reports.shelf2dataframe(BATCH_STATS)
+    try:
+        df = reports.shelf2dataframe(BATCH_STATS)
+    except ValueError:
+        df = None
+
     if df is not None:
         stats = reports.create_stats(system, df)
 

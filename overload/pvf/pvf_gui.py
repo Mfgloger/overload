@@ -599,7 +599,7 @@ class ProcessVendorFiles(tk.Frame):
         try:
             save_stats()
         except OverloadError as e:
-            tkMessageBox.showerror(e)
+            tkMessageBox.showerror('Stats error', e)
 
         # move created files to the archive
         archive_files = []
