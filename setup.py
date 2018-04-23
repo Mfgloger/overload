@@ -18,20 +18,25 @@ VERSION = None
 REQUIRED = [
     "certifi==2017.7.27.1",
     "chardet==3.0.4",
+    "funcsigs==1.0.2",
     "futures==3.1.1",
     "idna==2.6",
     "loggly-python-handler==1.0.0",
+    "mock==2.0.0",
     "numpy==1.13.1",
     "oauthlib==2.0.4",
     "pandas==0.20.3",
+    "pbr==3.1.1",
     "pymarc==3.1.7",
     "python-dateutil==2.6.1",
     "pytz==2017.2",
     "requests==2.18.4",
     "requests-futures==0.9.7",
+    "requests-mock==1.4.0",
     "requests-oauthlib==0.8.0",
     "six==1.11.0",
-    "urllib3==1.22",
+    "SQLAlchemy==1.2.6",
+    "urllib3==1.22"
 ]
 
 with open('README.md') as f:
