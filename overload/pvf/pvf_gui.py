@@ -376,12 +376,13 @@ class ProcessVendorFiles(tk.Frame):
             last_open_dir = MY_DOCS
 
         # select files for processing
-        self.files = tkFileDialog.askopenfilenames(
+        files = tkFileDialog.askopenfilenames(
             parent=self,
             title='Select files',
             initialdir=last_open_dir)
 
-        if len(self.files) > 0:
+        if len(files) > 0:
+            self.files = files
             # update selected qty
             self.file_count.set('{} file(s) selected:'.format(len(self.files)))
             names = []
