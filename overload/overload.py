@@ -479,7 +479,7 @@ class Reports(tk.Frame):
                 tk.END, 'Branches vendor breakdown:\n', 'blue')
             self.reportTxt.insert(tk.END, nypl_branch_stats.to_string() + '\n')
             self.reportTxt.insert(
-                tk.END, 'Branches vendor breakdown:\n', 'blue')
+                tk.END, 'Research vendor breakdown:\n', 'blue')
             self.reportTxt.insert(
                 tk.END, nypl_research_stats.to_string() + '\n')
             self.reportTxt.insert(tk.END, '\n' + ('-' * 60) + '\n')
