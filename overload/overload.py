@@ -1711,14 +1711,6 @@ if __name__ == "__main__":
     if not os.path.isdir(TEMP_DIR):
         os.mkdir(TEMP_DIR)
 
-    # # capture user?
-    # p = re.compile(r'.*\\Users\\(.*)\\AppData.*')
-    # m = p.search(APP_DIR)
-    # if m:
-    #     user = str(m.group(1))
-    # else:
-    #     user = 'UNKNOWN'
-
     # configure local settings
     user_data = shelve.open(USER_DATA)
     if 'paths' not in user_data:
