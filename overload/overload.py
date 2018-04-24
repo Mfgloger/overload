@@ -84,24 +84,31 @@ class MainApplication(tk.Tk):
         self.show_frame('Main')
 
     def updates(self):
-        print 'update activated'
         with open('version.txt', 'r') as app_fh:
             app_version = app_fh.readline()[9:].strip()
-            print 'app_version: {}'.format(app_version)
+            overload_logger.info(
+                'Checking for Overload updates. Current version: {}'.format(
+                    app_version))
 
         user_data = shelve.open(USER_DATA)
         if 'update_dir' in user_data['paths']:
             update_dir = user_data['paths']['update_dir']
-            print 'found update dir: {}'.format(update_dir)
-            # print 'opsutils update_dir'
+            overload_logger.info(
+                'Using update directory from user_data: {}'.format(
+                    update_dir))
             if os.path.isfile(update_dir + r'\version.txt'):
+                overload_logger.info(
+                    'Found version.txt in update directory')
                 up_fh = update_dir + r'\version.txt'
-                print 'found version.txt on S drive: {}'.format(fh)
                 with open(up_fh, 'r') as up_f:
                     update_version = up_f.readline()[9:].strip()
-                    print 'app_version: {}'.format(app_version)
+                    overload_logger.info(
+                        'Version available for download: {}'.format(
+                            update_version))
                     if app_version != update_version:
-                        print 'version not the same'
+                        overload_logger.debug(
+                            'Local and update directory versions are '
+                            'not the same. Launching update procedure.')
                         m = 'A new version ({}) of OpsUtils has been ' \
                             'found.\nWould you like to run the ' \
                             'update?.'.format(update_version)
@@ -114,18 +121,23 @@ class MainApplication(tk.Tk):
                             subprocess.call(
                                 args, creationflags=CREATE_NO_WINDOW)
                     else:
-                        print 'version the same'
+                        overload_logger.debug(
+                            'Local and update directory versions are '
+                            'the same.')
                         m = 'Babel is up-to-date'
                         tkMessageBox.showinfo('Info', m)
             else:
-                print 'did not find version.txt on S drive'
-                m = '"version.txt" file on S drive not found.\n' \
+                overload_logger.info(
+                    'Unable find version.txt in update directory ({})'.format(
+                        update_dir))
+                m = '"version.txt" file in update folder not found.\n' \
                     'Please provide update directory to correct folder\n' \
                     'Go to:\n' \
                     'settings>default directories>update folder'
                 tkMessageBox.showwarning('Missing Files', m)
         else:
-            print 'did not find update directory'
+            overload_logger.info(
+                'Update directory not setup in Settings.')
             m = 'please provide update directory\n' \
                 'Go to:\n' \
                 'settings>default directories>update folder'
@@ -460,6 +472,8 @@ class Reports(tk.Frame):
             row=12, column=6, sticky='nw', padx=5)
 
     def pvf_user_report(self):
+        overload_logger.info(
+            'Displaying user reports.')
         month = self.pvf_user_months.get()
         if month == '':
             m = 'plase select month to display user stats'
@@ -1032,6 +1046,9 @@ class PlatformAPIs(tk.Frame):
         valid_results = self.validate()
         correct = valid_results[0]
         new_conn_name = self.conn_name.get()
+        overload_logger.info(
+            'Saving new Platform API settings under name {}'.format(
+                new_conn_name))
 
         if correct:
             if self.oauth_server.get() == '' or \
@@ -1080,7 +1097,7 @@ class PlatformAPIs(tk.Frame):
         info = 'Please contact your ILS administrator for the\n' \
                'details of API settings.\n' \
                'Please note,\n' \
-               'you will need Sierra API authorization, that \n' \
+               'you will need Platform API authorization, that \n' \
                'includes client id and client secret to use this\n' \
                'feature.'
         tkMessageBox.showinfo('help', info)
@@ -1125,6 +1142,10 @@ class PlatformAPIs(tk.Frame):
             m += 'client secret field is required\n'
             correct = False
 
+        overload_logger.info(
+            'Validation of entered Platform API settings. '
+            'Correct: {}, errors: {}'.format(
+                correct, m))
         return (correct, m)
 
     def delete(self):
