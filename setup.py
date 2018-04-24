@@ -10,7 +10,7 @@ NAME = 'overload'
 DESCRIPTION = 'BookOps toolbox.'
 URL = 'https://github.com/BookOps/overload'
 EMAIL = 'klingaroo@gmail.com'
-AUTHOR = 'Tomasz Kalata'
+AUTHOR = 'Tomek Kalata'
 REQUIRES_PYTHON = '>=2.7.13'
 VERSION = None
 
@@ -30,6 +30,7 @@ REQUIRED = [
     "pymarc==3.1.7",
     "python-dateutil==2.6.1",
     "pytz==2017.2",
+    "PyZ3950==2.04",
     "requests==2.18.4",
     "requests-futures==0.9.7",
     "requests-mock==1.4.0",
@@ -39,14 +40,14 @@ REQUIRED = [
     "urllib3==1.22"
 ]
 
+# requires manual installation of Aaron Lav's PyZ3950
+# see details here: http://www.panix.com/~asl2/software/PyZ3950/
+
 with open('README.md') as f:
     readme = f.read()
 
 with open('LICENSE') as f:
     license = f.read()
-
-# requires manual installation of Aaron Lav's PyZ3950
-# see details here: http://www.panix.com/~asl2/software/PyZ3950/
 
 setup(
     name=NAME,
