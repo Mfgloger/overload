@@ -6,9 +6,9 @@ PVF jobs:
 - validate MARC records to adhere to MARC21 rules
 - validate vendor records against specification set for each vendor
 - display & record errors for statistical purposes
-- join multiple MARC files into as few files as possible (in most cases PVF will
-    create two files: new and duplicate records)
-- add constant data to certain vendor files
+- join multiple vendor MARC files into as few files as possible for Sierra
+  import
+- add constant data from templates
 - add bib numbers to vendor records that already are present in the database
 - split records into two separate files: NEW (new records) and DUP (duplicate 
     records) so they can be loaded into Sierra using the most appropriate load
@@ -18,27 +18,44 @@ PVF jobs:
     session
 
 PVF procedure:
-1. Select target database and it's accesing method
-2. Select MARC file(s) for processing (click, drag, use ctrl/shift to select
+1. Select system (NYPL or BPL), destination (research or branches), and
+   department (cataloging, selection, or acquisition); note, if BPL selected the
+   destination will automatically set to blank and the combo box will become
+   inactive - that is expected behaviour.
+2. Select target database and its accesing method (only databases and methods
+   for selected system are displayed)
+3. For Selection and Acquisition departmetns optionally apply templates from
+   a drop down menu. New templates or modifications to existing templates can
+   be accessed via the small button with a wrench icon to the right of the
+   templates drop-down menu.
+4. Select MARC file(s) for processing (click, drag, use ctrl/shift to select
     multiple files)
-3. Select validation to be performed (optional)
-4. Click Process
-    a) PVF will first attempt to validate records in MARCEdit if selected
-        unsucessful validation will result in termination of processing ;
-        please fix the records or unselect validation to continue ; PVF will
-        display the result of the validation in the pop-up window
-    b) PVF will determine vendor and type of records
-    c) PVF will attempt to validate records agains local rules specified
-        results of the validation will be displayed in a pop-up window
-    d) next, PVE will query database if needed to determine if the library
-        already has record for the material (conditional)
-    e) PVE will add bib numbers to duplicate records if applicable
-    f) PVE will add constant data if applicable
-    g) PVE will save records into NEW or DUP files based on results of the
-        above database query
-5. Confirm error report
-    a) see details of validation reports;
-    b) commit results of validation to a save file for statistical purposes
-6. Archive records (optional)
-    move vendor files to Archive folder on the shared drive
-7. Display session statistics
+5. Files to be processed can be downloaded to your machine by using the 
+   'get via FTP' button if the vendor makes them available through a
+   FTP service.
+6. Uncheck 'previous output directory' if you would like to save the processed
+   files in a new location. The program will prompt for a new
+   location after process is initiated (i.e. after clicking on the 'process' button).
+   Checked 'previous output directory' will save processed files in a previously
+   used folder - mouse-over the label to look up the destination.
+7. Check validations to be performed (optional)
+    a) MARCEdit validation - each selected file will be send automatically to
+       MARCEdit and its MARC21 syntax validation report will be available for
+       viewing by clicking on the 'validation' button
+    b) local specs validation - checks if vendor records adhere to supplied to
+       them specifications
+8. Launch processing (click 'process' button)
+    a) PVF will first attempt to validate records; 
+        unsucessful validation will result in termination of the processing;
+        please fix the records or unselect validation to continue
+    b) PVR will query the specificed database for matching records
+    e) If matches are found PVR will add Sierra bib number to a vendor record
+    f) Next, PVR will add any constant data if needed or specified
+    g) PVR will save records into NEW or DUP files based on results of
+       the query results and its analysis
+    h) Successful operation should result in a pop-up window displaying
+       a summary of the records batch
+9. Archive records (optional, but highly recommended!)
+    b) saves statistics of the processed batch
+    a) moves vendor files to Archive folder on the shared drive
+10. Display session statistics ('stats' button)
