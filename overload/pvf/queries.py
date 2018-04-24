@@ -2,7 +2,7 @@
 import logging
 
 
-module_logger = logging.getLogger('overload_console.pvr_queries')
+module_logger = logging.getLogger('overload_main.pvr_queries')
 
 
 def platform_status_interpreter(response=None):

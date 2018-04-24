@@ -1746,7 +1746,7 @@ if __name__ == "__main__":
     # set up app logger
     # don't forget to add Loggly token in prod!
     logging.config.dictConfig(LOGGING)
-    overload_logger = logging.getLogger('overload_console')
+    overload_logger = logging.getLogger('overload_main')
 
     # launch application
     app = MainApplication()

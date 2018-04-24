@@ -22,7 +22,7 @@ from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
     BATCH_META, BATCH_STATS
 
 
-module_logger = logging.getLogger('overload_console.pvr_gui')
+module_logger = logging.getLogger('overload_main.pvr_gui')
 
 
 class ProcessVendorFiles(tk.Frame):
@@ -56,6 +56,7 @@ class ProcessVendorFiles(tk.Frame):
         self.system.trace('w', self.system_observer)
         self.library = tk.StringVar()
         self.agent = tk.StringVar()
+        self.agent.trace('w', self.agent_observer)
         self.template = tk.StringVar()
 
         # logos
@@ -497,7 +498,7 @@ class ProcessVendorFiles(tk.Frame):
         if self.system.get() == 'NYPL':
             if self.library.get() == '':
                 required_params = False
-                missing_params.append('Please select library')
+                missing_params.append('Please select destination library')
             if self.agent.get() == '':
                 required_params = False
                 missing_params.append('Please select department')
@@ -648,15 +649,20 @@ class ProcessVendorFiles(tk.Frame):
             self.topA.rowconfigure(n + 3, minsize=10)
 
     def move_files(self):
+        batch = shelve.open(BATCH_META)
+        system = batch['system']
+        batch.close()
+
         user_data = shelve.open(USER_DATA)
         paths = user_data['paths']
-        if self.system.get() == 'BPL' and \
+        if system == 'bpl' and \
                 'bpl_archive_dir' in paths:
             archive_dir = paths['bpl_archive_dir']
-        elif self.system.get() == 'NYPL' and \
+        elif system == 'nypl' and \
                 'nyp_archive_dir' in paths:
             archive_dir = paths['nyp_archive_dir']
         else:
+            archive_dir = None
             m = 'Please select archive directory in Settings'
             tkMessageBox.showerror('Error', m)
         user_data.close()
@@ -685,7 +691,7 @@ class ProcessVendorFiles(tk.Frame):
                         os.remove(src)
                     except IOError:
                         all_archived = False
-                        overload_logger.error(
+                        module_logger.error(
                             'Archiving error: not able to move '
                             'file: {} to: {}'.format(
                                 src, dst))
@@ -1070,6 +1076,14 @@ class ProcessVendorFiles(tk.Frame):
         self.query_targetCbx['values'] = conns_display
         self.query_targetCbx['state'] = 'readonly'
         user_data.close()
+
+    def agent_observer(self, *args):
+        if self.agent.get() == 'cataloging':
+            self.templateCbx.set('')
+            self.templateCbx['state'] = 'disabled'
+        else:
+            self.templateCbx['state'] = '!disabled'
+            self.templateCbx['state'] = 'readonly'
 
     def observer(self, *args):
         if self.activeW.get() == 'ProcessVendorFiles':

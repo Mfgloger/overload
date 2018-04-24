@@ -21,7 +21,7 @@ from datastore import session_scope, Vendor, \
 from db_worker import insert_or_ignore
 
 
-module_logger = logging.getLogger('overload_console.pvr_manager')
+module_logger = logging.getLogger('overload_main.pvr_manager')
 
 
 def run_platform_queries(api_type, session, meta_in, matchpoint):
