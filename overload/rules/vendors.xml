@@ -28,59 +28,6 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 		<subfield code = 'n'>CATBL</subfield>
 	</field>
 </bib_template>
-
--->
-<!--#########################################-->
-<!--order record template:
-
-<template type = 'ord'>
-	<field>
-		<tag>960</tag>
-		<ind1></ind1>
-		<ind2></ind2>
-		<subfield code = 'a' desc = 'acq type'></subfield>
-		<subfield code = 'b' desc = 'claim'></subfield>
-		<subfield code = 'c' desc = 'code1'></subfield>
-		<subfield code = 'd' desc = 'code2'></subfield>
-		<subfield code = 'e' desc = 'code3'></subfield>
-		<subfield code = 'f' desc = 'code4'></subfield>
-		<subfield code = 'g' desc = 'form'></subfield>
-		<subfield code = 'h' desc = 'order note'></subfield>
-		<subfield code = 'i' desc = 'order type'></subfield>
-		<subfield code = 'j' desc = 'raction'></subfield>
-		<subfield code = 'k' desc = 'rloc'></subfield>
-		<subfield code = 'l' desc = 'bloc'></subfield>
-		<subfield code = 'm' desc = 'status'>1</subfield>
-		<subfield code = 'n' desc = 'tloc'></subfield>
-		<subfield code = 'o' desc = 'copies'></subfield>
-		<subfield code = 'p' desc = 'cdate'></subfield>
-		<subfield code = 'q' desc = 'odate'></subfield>
-		<subfield code = 'r' desc = 'rdate'></subfield>
-		<subfield code = 's' desc = 'eprice'></subfield>
-		<subfield code = 't' desc = 'location'></subfield>
-		<subfield code = 'u' desc = 'fund'></subfield>
-		<subfield code = 'v' desc = 'vendor'></subfield>
-		<subfield code = 'w' desc = 'lang'></subfield>
-		<subfield code = 'x' desc = 'country'></subfield>
-		<subfield code = 'y' desc = 'volume'></subfield>
-		<subfield code = 'z' desc = 'for curr'></subfield>
-	</field>
-	<field>
-		<tag>961</tag>
-		<ind1></ind1>
-		<ind2></ind2>
-		<subfield code = 'a' desc = 'indentity'></subfield>
-		<subfield code = 'c' desc = 'note'></subfield>
-		<subfield code = 'd' desc = 'int note'></subfield>
-		<subfield code = 'e' desc = 'old ord #'></subfield>
-		<subfield code = 'f' desc = 'selector'></subfield>
-		<subfield code = 'g' desc = 'ven addr'></subfield>
-		<subfield code = 'i' desc = 'ven title #'></subfield>
-		<subfield code = 'j' desc = 'paid note'></subfield>
-		<subfield code = 'k' desc = 'ship to'></subfield>
-		<subfield code = 'l' desc = 'requestor'></subfield>
-	</field>
-</template>
 -->
 
 <data>

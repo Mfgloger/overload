@@ -127,7 +127,7 @@ class Test_Reports(unittest.TestCase):
 
     def test_report_dups(self):
         df = reports.shelf2dataframe('temp')
-        dups = reports.report_dups('nypl', 'branches', df)
+        dups = reports.report_dups('NYPL', 'branches', df)
         self.assertEqual(
             dups.index.tolist(), [1])
 

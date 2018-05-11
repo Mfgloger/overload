@@ -2,6 +2,8 @@
 
 
 def open_help(help_fh):
+    # think how to refactor so the lines don't break mid-word
+    # in display
     help_fh = r'./help/' + help_fh
     help_lines = []
 

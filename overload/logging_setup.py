@@ -16,16 +16,16 @@ LOGGING = {
             'formatter': 'brief'
         },
         'loggly': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'loggly.handlers.HTTPSHandler',
             'formatter': 'standard',
-            'url': 'https://logs-01.loggly.com/inputs/[TOKEN]/tag/python',
+            'url': 'https://logs-01.loggly.com/inputs/[token]/tag/python',
         },
     },
     'loggers': {
         'overload_main': {
             'handlers': ['loggly'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True
         },
         'overload_console': {

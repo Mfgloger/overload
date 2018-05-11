@@ -12,7 +12,7 @@ from errors import OverloadError, APITokenError, APITokenExpiredError
 from setup_dirs import USER_DATA
 
 
-module_logger = logging.getLogger('overload_main.pvr_plat_comms')
+module_logger = logging.getLogger('overload_console.pvr_plat_comms')
 
 
 def open_platform_session(api_name=None):

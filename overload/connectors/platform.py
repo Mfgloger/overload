@@ -91,7 +91,8 @@ class PlatformSession(requests.Session):
             raise APITokenExpiredError(
                 'Platform access token expired')
 
-    def query_bibStandardNo(self, keywords=[], source='sierra-nypl', limit=20):
+    def query_bibStandardNo(
+            self, keywords=[], source='sierra-nypl', deleted=False, limit=20):
         """
         performs standar number query
         args:
@@ -108,6 +109,7 @@ class PlatformSession(requests.Session):
         payload = dict(
             nyplSource=source,
             limit=limit,
+            deleted=deleted,
             standardNumber=','.join(keywords))
         try:
             response = self.get(
@@ -121,7 +123,8 @@ class PlatformSession(requests.Session):
             raise ConnectionError(
                 'unable to connect to Platform')
 
-    def query_bibControlNo(self, keywords=[], source='sierra-nypl', limit=20):
+    def query_bibControlNo(
+            self, keywords=[], source='sierra-nypl', deleted=False, limit=20):
         """
         performs control number query (field 001)
         args:
@@ -138,6 +141,7 @@ class PlatformSession(requests.Session):
         payload = dict(
             nyplSource=source,
             limit=limit,
+            deleted=deleted,
             controlNumber=','.join(keywords))
         try:
             response = self.get(
@@ -151,7 +155,8 @@ class PlatformSession(requests.Session):
             raise ConnectionError(
                 'unable to connect to Platform')
 
-    def query_bibId(self, keywords=[], source='sierra-nypl', limit=20):
+    def query_bibId(
+            self, keywords=[], source='sierra-nypl', deleted=False, limit=20):
         """
         performs bib ID query
         args:
@@ -166,6 +171,7 @@ class PlatformSession(requests.Session):
         payload = dict(
             nyplSource=source,
             limit=limit,
+            deleted=deleted,
             id=','.join(keywords))
         try:
             response = self.get(
@@ -180,7 +186,8 @@ class PlatformSession(requests.Session):
                 'unable to connect to Platform')
 
     def query_bibCreatedDate(
-            self, start_date, end_date, source='sierra-nypl', limit=10):
+            self, start_date, end_date,
+            source='sierra-nypl', deleted=False, limit=10):
         """
         performs dateCreated query
         args:
@@ -195,6 +202,7 @@ class PlatformSession(requests.Session):
         payload = dict(
             createdDate='[{},{}]'.format(start_date, end_date),
             nyplSource=source,
+            deleted=False,
             limit=limit)
         try:
             response = self.get(
@@ -209,7 +217,8 @@ class PlatformSession(requests.Session):
                 'unable to connect to Platform')
 
     def query_bibUpdatedDate(
-            self, start_date, end_date, source='sierra-nypl', limit=10):
+            self, start_date, end_date,
+            deleted=False, source='sierra-nypl', limit=10):
         """
         performs updatedCreated query
         args:
@@ -224,6 +233,7 @@ class PlatformSession(requests.Session):
         payload = dict(
             updatedDate='[{},{}]'.format(start_date, end_date),
             nyplSource=source,
+            deleted=False,
             limit=limit)
         try:
             response = self.get(
@@ -261,7 +271,9 @@ class PlatformSession(requests.Session):
             raise ConnectionError(
                 'unable to connect to Platform')
 
-    def query_itemId(self, keywords=[], source='sierra-nypl', limit=10):
+    def query_itemId(
+            self, keywords=[],
+            source='sierra-nypl', deleted=False, limit=10):
         """
         requests item data for particular item id
         args:
@@ -275,6 +287,7 @@ class PlatformSession(requests.Session):
         endpoint = self.base_url + '/items'
         payload = dict(
             nyplSource=source,
+            deleted=deleted,
             limit=limit,
             id=','.join(keywords))
         try:
@@ -289,7 +302,9 @@ class PlatformSession(requests.Session):
             raise ConnectionError(
                 'unable to connect to Platform')
 
-    def query_itemBarcode(self, keyword, source='sierra-nypl', limit=10):
+    def query_itemBarcode(
+            self, keyword, source='sierra-nypl',
+            deleted=False, limit=10):
         """
         requests item data for particular barcode
         args:
@@ -303,6 +318,7 @@ class PlatformSession(requests.Session):
         endpoint = self.base_url + '/items'
         payload = dict(
             nyplSource=source,
+            deleted=deleted,
             limit=limit,
             barcode=keyword)
         try:
@@ -317,7 +333,9 @@ class PlatformSession(requests.Session):
             raise ConnectionError(
                 'unable to connect to Platform')
 
-    def query_itemBibId(self, keyword, source='sierra-nypl', limit=10):
+    def query_itemBibId(
+            self, keyword, source='sierra-nypl',
+            deleted=False, limit=10):
         """
         requests item data for particular bib id
         args:
@@ -331,6 +349,7 @@ class PlatformSession(requests.Session):
         endpoint = self.base_url + '/items'
         payload = dict(
             nyplSource=source,
+            deleted=deleted,
             limit=limit,
             bibId=keyword)
         try:
@@ -346,7 +365,8 @@ class PlatformSession(requests.Session):
                 'unable to connect to Platform')
 
     def query_itemCreatedDate(
-            self, start_date, end_date, source='sierra-nypl', limit=10):
+            self, start_date, end_date, source='sierra-nypl',
+            deleted=False, limit=10):
         """
         requests items created between two dates
         args:
@@ -362,6 +382,7 @@ class PlatformSession(requests.Session):
         payload = dict(
             createdDate='[{},{}]'.format(start_date, end_date),
             nyplSource=source,
+            deleted=deleted,
             limit=limit)
         try:
             response = self.get(
@@ -376,7 +397,8 @@ class PlatformSession(requests.Session):
                 'unable to connect to Platform')
 
     def query_itemUpdateddDate(
-            self, start_date, end_date, source='sierra-nypl', limit=10):
+            self, start_date, end_date, source='sierra-nypl',
+            deleted=False, limit=10):
         """
         requests items updated between two dates
         args:
@@ -392,6 +414,7 @@ class PlatformSession(requests.Session):
         payload = dict(
             updatedDate='[{},{}]'.format(start_date, end_date),
             nyplSource=source,
+            deleted=deleted,
             limit=limit)
         try:
             response = self.get(

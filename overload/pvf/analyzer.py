@@ -66,12 +66,12 @@ class PVRReport:
 
     def _determine_callNo_match(self, meta_inhouse):
         match = False
-        if self._meta_vendor.bCallNumber is None or \
-                meta_inhouse.bCallNumber is None:
-            match = True
-        elif self._meta_vendor.bCallNumber == \
-                meta_inhouse.bCallNumber:
-            match = True
+        if self._meta_vendor.dstLibrary == 'branches':
+            if meta_inhouse.bCallNumber is None:
+                match = True
+            elif self._meta_vendor.bCallNumber == \
+                    meta_inhouse.bCallNumber:
+                match = True
         return match
 
 
@@ -180,6 +180,7 @@ class PVR_NYPLReport(PVRReport):
 
     def _selection_workflow(self):
         # default action = 'insert'
+        self.callNo_match = True
         n = len(self._matched)
         if n > 0:
             c = 0
@@ -194,8 +195,10 @@ class PVR_NYPLReport(PVRReport):
                     # determine Sierra target call number
                     if self._meta_vendor.dstLibrary == 'branches':
                         self.target_callNo = meta.bCallNumber
+                        break
                     elif self._meta_vendor.dstLibrary == 'research':
                         self.target_callNo = ','.join(meta.rCallNumber)
+                        break
                 else:
                     # brief record situation
                     if c == n:

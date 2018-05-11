@@ -172,7 +172,7 @@ class Test_PVRReport(unittest.TestCase):
         report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
         self.assertTrue(
             report._determine_callNo_match(
-                self.inhouse_meta2))
+                self.inhouse_meta1))
 
     def test_order_inhouse_meta(self):
         report = PVRReport(
@@ -1082,7 +1082,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, [])
         self.assertEqual(
             report.vendor, 'INGRAM')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertIsNone(
             report.vendor_callNo)
@@ -1142,7 +1142,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, [])
         self.assertEqual(
             report.vendor, 'INGRAM')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertIsNone(
             report.vendor_callNo)
@@ -1219,7 +1219,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, ['000002'])
         self.assertEqual(
             report.vendor, 'INGRAM')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertIsNone(
             report.vendor_callNo)
@@ -1281,7 +1281,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, ['000001'])
         self.assertEqual(
             report.vendor, 'Sentrum')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertIsNone(
             report.vendor_callNo)
@@ -1343,7 +1343,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, [])
         self.assertEqual(
             report.vendor, 'MWT')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertIsNone(
             report.vendor_callNo)
@@ -1403,7 +1403,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, ['000001'])
         self.assertEqual(
             report.vendor, 'MWT')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertEqual(
             report.vendor_callNo, 'JER DVD')
@@ -1485,7 +1485,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             report.other, ['000001'])
         self.assertEqual(
             report.vendor, 'MWT')
-        self.assertFalse(
+        self.assertTrue(
             report.callNo_match)
         self.assertEqual(
             report.vendor_callNo, 'JER DVD')

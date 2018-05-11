@@ -1,8 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import (Column, ForeignKey, Integer, String, Boolean,
+from sqlalchemy import (Column, ForeignKey, Integer, String,
                         create_engine)
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from contextlib import contextmanager
 
@@ -71,6 +70,78 @@ class Vendor(Base):
         return "<Vendor(vendor_id='%s', name='%s)>" % (
             self.vid,
             self.name)
+
+
+class NYPLOrderTemplate(Base):
+    """NYPL order templates data"""
+
+    __tablename__ = 'NyplOrderTemplate'
+    otid = Column(Integer, primary_key=True)
+    tName = Column(String, nullable=False, unique=True)
+    acqType = Column(String)
+    claim = Column(String)
+    code1 = Column(String)
+    code2 = Column(String)
+    code3 = Column(String)
+    code4 = Column(String)
+    form = Column(String)
+    orderNote = Column(String)
+    orderType = Column(String)
+    status = Column(String, nullable=False, default='1')
+    vendor = Column(String)
+    lang = Column(String)
+    country = Column(String)
+    identity = Column(String)
+    generalNote = Column(String)
+    internalNote = Column(String)
+    oldOrdNo = Column(String)
+    selector = Column(String)
+    venAddr = Column(String)
+    venNote = Column(String)
+    blanketPO = Column(String)
+    venTitleNo = Column(String)
+    paidNote = Column(String)
+    shipTo = Column(String)
+    requestor = Column(String)
+    bibFormat = Column(String)  # sets Sierra record format; is this needed?
+    match1st = Column(String, nullable=False)
+    match2nd = Column(String)
+    match3rd = Column(String)
+
+    def __repr__(self):
+        return "<NyplOrderTemplate(otid='%s', tName='%s', acqType='%s', " \
+            "claim='%s', code1='%s', code2='%s', code3='%s', code4='%s', " \
+            "form='%s', orderType='%s', orderNote='%s', status='%s', " \
+            "vendor='%s', lang='%s', country='%s', identity='%s', " \
+            "generalNote='%s', internalNote='%s', oldOrdNo='%s', " \
+            "selector='%s', venAddr='%s', venNote='%s', venTitleNo='%s', " \
+            "blanketPO='%s', paidNote='%s', shipTo='%s', requestor='%s', " \
+            "bibFormat='%s, match1st='%s', match2nd='%s', match3rd='%s')>" % (
+                self.otid, self.tName, self.acqType, self.claim,
+                self.code1, self.code2, self.code3, self.code4,
+                self.form, self.orderType, self.orderNote, self.status,
+                self.vendor, self.lang, self.country,
+                self.identity, self.generalNote, self.internalNote,
+                self.oldOrdNo, self.selector, self.venAddr, self.venNote,
+                self.venTitleNo, self.blanketPO, self.paidNote, self.shipTo,
+                self.requestor, self.bibFormat, self.match1st, self.match2nd,
+                self.match3rd
+            )
+
+
+class FTPs(Base):
+    """Stores vendor FTP details"""
+    __tablename__ = 'ftps'
+    fid = Column(Integer, primary_key=True)
+    host = Column(String, nullable=False, unique=True)
+    user = Column(String)
+    password = Column(String)
+    system = Column(String, nullable=False)
+
+    def __repr__(self):
+        return "<FTPs(fid='%s', host='%s', user='%s', password='%s', " \
+            "system='%s')>" % (
+                self.fid, self.host, self.user, self.password, self.system)
 
 
 class DataAccessLayer:

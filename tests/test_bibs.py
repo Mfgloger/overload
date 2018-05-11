@@ -282,5 +282,250 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(meta.sierraId, '01234568')
 
 
+class TestTemplate_to_960(unittest.TestCase):
+    """
+    Tests of creation of order fixed fields in 960 MARC tag
+    """
+    def setUp(self):
+        class template:
+            pass
+
+        self.temp = template()
+        self.temp.acqType = None
+        self.temp.claim = None
+        self.temp.code1 = None
+        self.temp.code2 = None
+        self.temp.code3 = None
+        self.temp.code4 = None
+        self.temp.form = None
+        self.temp.orderNote = None
+        self.temp.orderType = None
+        self.temp.status = '1'
+        self.temp.vendor = None
+        self.temp.lang = None
+        self.temp.country = None
+
+    def test_vendor_960_is_None(self):
+        field = bibs.db_template_to_960(self.temp, None)
+        self.assertIsInstance(
+            field, Field)
+        self.assertEqual(
+            field['m'], '1')
+        self.assertEqual(
+            str(field),
+            '=960  \\\\$m1')
+
+    def test_template_None_keeps_vendor_subfields(self):
+        vfield = Field(
+            tag='960',
+            indicators=[' ', ' '],
+            subfields=[
+                'a', '1',
+                'b', '2',
+                'c', '3',
+                'd', '4',
+                'e', '5',
+                'f', '6',
+                'g', '7',
+                'h', '8',
+                'i', '9',
+                'm', '10',
+                'v', '11',
+                'w', '12',
+                'x', '13'
+            ])
+
+        field = bibs.db_template_to_960(self.temp, vfield)
+        self.assertEqual(
+            str(field),
+            '=960  \\\\$a1$b2$c3$d4$e5$f6$g7$h8$i9$m1$v11$w12$x13')
+
+    def test_template_overwrites_vendor(self):
+        self.temp.acqType = 'a'
+        self.temp.claim = 'b'
+        self.temp.code1 = 'c'
+        self.temp.code2 = 'd'
+        self.temp.code3 = 'e'
+        self.temp.code4 = 'f'
+        self.temp.form = 'g'
+        self.temp.orderNote = 'h'
+        self.temp.orderType = 'i'
+        self.temp.status = 'm'
+        self.temp.vendor = 'v'
+        self.temp.lang = 'w'
+        self.temp.country = 'x'
+
+        vfield = Field(
+            tag='960',
+            indicators=[' ', ' '],
+            subfields=[
+                'a', '1',
+                'b', '2',
+                'c', '3',
+                'd', '4',
+                'e', '5',
+                'f', '6',
+                'g', '7',
+                'h', '8',
+                'i', '9',
+                'm', '10',
+                'v', '11',
+                'w', '12',
+                'x', '13'
+            ])
+
+        field = bibs.db_template_to_960(self.temp, vfield)
+        self.assertEqual(
+            str(field),
+            '=960  \\\\$aa$bb$cc$dd$ee$ff$gg$hh$ii$mm$vv$ww$xx')
+
+    def test_mixed_template_vendor_subfields(self):
+        self.temp.acqType = 'a'
+        self.temp.code2 = 'd'
+        self.temp.code3 = 'e'
+        self.temp.orderType = 'i'
+        self.temp.status = 'm'
+        self.temp.vendor = 'v'
+
+        vfield = Field(
+            tag='960',
+            indicators=[' ', ' '],
+            subfields=[
+                'a', '1',
+                's', '9.99',
+                'u', '2'
+            ])
+        field = bibs.db_template_to_960(self.temp, vfield)
+        self.assertEqual(
+            str(field),
+            '=960  \\\\$s9.99$u2$aa$dd$ee$ii$mm$vv')
+
+
+class TestTemplate_to_961(unittest.TestCase):
+    """
+    Tests of creation of order varied fields in 961 MARC tag
+    """
+    def setUp(self):
+        class template:
+            pass
+
+        self.temp = template()
+        self.temp.identity = None
+        self.temp.generalNote = None
+        self.temp.internalNote = None
+        self.temp.oldOrdNo = None
+        self.temp.selector = None
+        self.temp.venAddr = None
+        self.temp.venNote = None
+        self.temp.blanketPO = None
+        self.temp.venTitleNo = None
+        self.temp.paidNote = None
+        self.temp.shipTo = None
+        self.temp.requestor = None
+
+    def test_vendor_subfields_None_return_None(self):
+        field = bibs.db_template_to_961(self.temp, None)
+        self.assertIsNone(field)
+
+    def test_retuns_None_if_all_template_attr_not_None(self):
+        field = bibs.db_template_to_961(self.temp, None)
+        self.assertIsNone(field)
+
+    def test_returns_Field_obj_when_template_None_but_field_exists(self):
+        vfield = Field(
+            tag='961',
+            indicators=[' ', ' '],
+            subfields=['a', '1', 'b', '2'])
+        field = bibs.db_template_to_961(self.temp, vfield)
+        self.assertIsInstance(field, Field)
+        self.assertEqual(
+            str(field),
+            '=961  \\\\$b2$a1')
+
+    def test_if_template_overwrites_vendor_subfields(self):
+        self.temp.identity = 'a'
+        self.temp.generalNote = 'c'
+        self.temp.internalNote = 'd'
+        self.temp.oldOrdNo = 'e'
+        self.temp.selector = 'f'
+        self.temp.venAddr = 'g'
+        self.temp.venNote = 'v'
+        self.temp.blanketPO = 'm'
+        self.temp.venTitleNo = 'i'
+        self.temp.paidNote = 'j'
+        self.temp.shipTo = 'k'
+        self.temp.requestor = 'l'
+
+        vfield = Field(
+            tag='961',
+            indicators=[' ', ' '],
+            subfields=[
+                'a', '1',
+                'c', '3',
+                'd', '4',
+                'e', '5',
+                'f', '6',
+                'g', '7',
+                'i', '8',
+                'j', '9',
+                'k', '10',
+                'l', '11',
+                'm', '12',
+                'v', '13',
+            ])
+        field = bibs.db_template_to_961(self.temp, vfield)
+        self.assertEqual(
+            str(field),
+            '=961  \\\\$aa$cc$dd$ee$ff$gg$vv$mm$ii$jj$kk$ll')
+
+    def test_template_attr_None_keeps_vendor_subfields(self):
+        vfield = Field(
+            tag='961',
+            indicators=[' ', ' '],
+            subfields=[
+                'a', '1',
+                'c', '2',
+                'd', '3',
+                'e', '4',
+                'f', '5',
+                'g', '6',
+                'i', '7',
+                'j', '8',
+                'k', '9',
+                'l', '10',
+                'm', '11',
+                'v', '12',
+            ])
+        field = bibs.db_template_to_961(self.temp, vfield)
+        self.assertEqual(
+            str(field),
+            '=961  \\\\$a1$c2$d3$e4$f5$g6$v12$m11$i7$j8$k9$l10')
+
+    def test_mixed_vendor_template_field(self):
+        vfield = Field(
+            tag='961',
+            indicators=[' ', ' '],
+            subfields=[
+                'a', '1',
+                'v', '1',])
+
+        self.temp.identity = 'a'
+        self.temp.blanketPO = 'm'
+        field = bibs.db_template_to_961(self.temp, vfield)
+        self.assertEqual(
+            str(field),
+            '=961  \\\\$aa$v1$mm')
+
+    def test_1(self):
+        vfield = Field(
+            tag='961',
+            indicators=[' ', ' '],
+            subfields=['h', 'g'])
+        field = bibs.db_template_to_961(self.temp, vfield)
+        self.assertEqual(
+            str(field),
+            '=961  \\\\$hg')
+
+
 if __name__ == '__main__':
     unittest.main()

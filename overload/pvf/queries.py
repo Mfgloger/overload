@@ -2,7 +2,7 @@
 import logging
 
 
-module_logger = logging.getLogger('overload_main.pvr_queries')
+module_logger = logging.getLogger('overload_console.pvr_queries')
 
 
 def platform_status_interpreter(response=None):
@@ -40,7 +40,7 @@ def platform_status_interpreter(response=None):
                     response.text))
             status = None
     else:
-        status = None
+        status = 'nohit'
     return status
 
 
