@@ -24,6 +24,8 @@ from db_worker import retrieve_record
 from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
     BATCH_META, BATCH_STATS
 import bibs.sierra_dicts as sd
+from ftp_manager import store_connection, delete_connection, \
+    get_ftp_connections, get_connection_details, connect2FTP
 
 
 module_logger = logging.getLogger('overload_console.pvr_gui')
@@ -31,8 +33,9 @@ module_logger = logging.getLogger('overload_console.pvr_gui')
 
 class TransferFiles(tk.Frame):
     """GUI for connecting to vendor's FTPs"""
-    def __init__(self, parent):
+    def __init__(self, parent, system):
         self.parent = parent
+        self.system = system
         tk.Frame.__init__(self, self.parent, background='white')
         self.top = tk.Toplevel(self, background='white')
         self.cur_manager = BusyManager(self)
@@ -40,7 +43,11 @@ class TransferFiles(tk.Frame):
         self.top.title('Transfer files')
 
         # variable
+        self.ftp = None
         self.host = tk.StringVar()
+        self.host.trace('w', self.set_host_details)
+        self.user = None
+        self.password = None
         self.files = None
         self.rename_option = tk.IntVar()
         self.transfer_type = tk.StringVar()
@@ -51,17 +58,18 @@ class TransferFiles(tk.Frame):
         # self.top.columnconfigure(7, minsize=40)
         self.top.columnconfigure(12, minsize=5)
         self.top.rowconfigure(0, minsize=5)
-        self.top.rowconfigure(2, minsize=20)
-        self.top.rowconfigure(23, minsize=5)
-        self.top.rowconfigure(26, minsize=5)
+        self.top.rowconfigure(2, minsize=15)
+        self.top.rowconfigure(27, minsize=5)
+        self.top.rowconfigure(30, minsize=5)
 
         # widgets
         ttk.Label(self.top, text='host:').grid(
-            row=1, column=1, sticky='se', padx=10, pady=10)
-        self.hostEnt = ttk.Entry(
-            self.top, textvariable=self.host)
-        self.hostEnt.grid(
-            row=1, column=2, columnspan=3, sticky='sew', pady=10)
+            row=1, column=1, sticky='ne', padx=10, pady=10)
+        self.hostCbx = ttk.Combobox(
+            self.top, textvariable=self.host,
+            postcommand=self.get_available_connections)
+        self.hostCbx.grid(
+            row=1, column=2, columnspan=3, sticky='snew', pady=10)
 
         self.connBtn = ttk.Button(
             self.top,
@@ -87,7 +95,7 @@ class TransferFiles(tk.Frame):
         self.deleteBtn = ttk.Button(
             self.top,
             text='delete',
-            command=self.delete_connection)
+            command=self.delete)
         self.deleteBtn.grid(
             row=1, column=9, sticky='new', padx=10, pady=5)
 
@@ -110,13 +118,14 @@ class TransferFiles(tk.Frame):
         self.locFrm = ttk.LabelFrame(
             self.top, text='local')
         self.locFrm.grid(
-            row=2, column=1, rowspan=20, columnspan=5, sticky='snew', padx=10)
+            row=3, column=1, rowspan=20, columnspan=5, sticky='snew', padx=10)
 
         self.locTrv = ttk.Treeview(
             self.locFrm,
             columns=('name', 'size', 'date'),
             displaycolumns=('name', 'size', 'date'),
             selectmode='extended')
+
         self.locTrv.column('#0', width=15)
         self.locTrv.column('name', width=250)
         self.locTrv.heading('name', text='name')
@@ -127,11 +136,17 @@ class TransferFiles(tk.Frame):
         self.locTrv.grid(
             row=0, column=0, columnspan=5, sticky='snew')
 
+        # local frame scrollbar
+        locSB = ttk.Scrollbar(
+            self.locFrm, orient="vertical", command=self.locTrv.yview)
+        locSB.grid(row=0, rowspan=20, column=5, sticky='ns')
+        self.locTrv.configure(yscrollcommand=locSB.set)
+
         # remote frame
         self.remFrm = ttk.LabelFrame(
             self.top, text='remote')
         self.remFrm.grid(
-            row=2, column=7, rowspan=20, columnspan=5, sticky='snew', padx=10)
+            row=3, column=7, rowspan=20, columnspan=5, sticky='snew', padx=10)
 
         self.remTrv = ttk.Treeview(
             self.remFrm,
@@ -147,6 +162,12 @@ class TransferFiles(tk.Frame):
         self.remTrv.heading('date', text='date')
         self.remTrv.grid(
             row=0, column=0, columnspan=6, sticky='snew')
+
+        # remote frame scrollbar
+        remSB = ttk.Scrollbar(
+            self.remFrm, orient="vertical", command=self.remTrv.yview)
+        remSB.grid(row=0, rowspan=20, column=6, sticky='ns')
+        self.remTrv.configure(yscrollcommand=remSB.set)
 
         ttk.Label(self.top, text='transfer type').grid(
             row=24, column=1, sticky='sw', padx=10, pady=10)
@@ -182,17 +203,90 @@ class TransferFiles(tk.Frame):
         self.closeBtn.grid(
             row=25, column=9, sticky='sew', padx=10, pady=10)
 
-    def connect():
-        pass
+    def get_available_connections(self):
+        conns = get_ftp_connections(self.system)
+        self.hostCbx['values'] = conns
+        self.hostCbx['state'] = 'readonly'
+
+    def connect(self):
+        if self.ftp:
+            pass
+        elif self.host.get() == '':
+            self.ftp = connect2FTP(
+                self.host.get(), self.user, self.password)
+        else:
+            tkMessageBox.showerror(
+                'FTP', 'Please select host to connect to')
 
     def disconnect():
         pass
 
-    def new_connection():
-        pass
+    def new_connection(self):
+        self.conn_top = tk.Toplevel(self, background='white')
+        self.conn_top.iconbitmap('./icons/settings.ico')
+        self.conn_top.title('FTP setup')
+        self.new_host = tk.StringVar()
+        self.new_user = tk.StringVar()
+        self.new_password = tk.StringVar()
 
-    def delete_connection():
-        pass
+        self.conn_top.columnconfigure(0, minsize=5)
+        self.conn_top.columnconfigure(4, minsize=5)
+        self.conn_top.rowconfigure(0, minsize=5)
+        self.conn_top.rowconfigure(4, minsize=5)
+
+        ttk.Label(self.conn_top, text='host').grid(
+            row=1, column=1, sticky='nw', pady=10)
+        hostEnt = ttk.Entry(
+            self.conn_top, textvariable=self.new_host)
+        hostEnt.grid(
+            row=1, column=2, sticky='ne', pady=10)
+
+        ttk.Label(self.conn_top, text='user').grid(
+            row=2, column=1, sticky='nw', padx=10, pady=10)
+        userEnt = ttk.Entry(
+            self.conn_top, textvariable=self.new_user)
+        userEnt.grid(
+            row=2, column=2, sticky='snew', pady=10)
+
+        ttk.Label(self.conn_top, text='password').grid(
+            row=3, column=1, sticky='nw', padx=10, pady=10)
+        passEnt = ttk.Entry(
+            self.conn_top, textvariable=self.new_password, show='*')
+        passEnt.grid(
+            row=3, column=2, sticky='snew', pady=10)
+
+        saveBtn = ttk.Button(
+            self.conn_top, text='save',
+            command=self.save)
+        saveBtn.grid(
+            row=4, column=1, columnspan=2, sticky='snew', padx=50, pady=10)
+
+    def save(self):
+        try:
+            store_connection(
+                self.new_host.get(),
+                self.new_user.get(),
+                self.new_password.get(),
+                self.system)
+            tkMessageBox.showinfo(
+                'Datastore', 'Connection details saved.',
+                parent=self.conn_top)
+            self.conn_top.destroy()
+        except OverloadError as e:
+            tkMessageBox.showerror('FTP', e, parent=self.conn_top)
+
+    def delete(self):
+        proceed = tkMessageBox.askokcancel(
+            'FTP details', 'Delete {} FTP details?'.format(
+                self.host.get()))
+        if proceed:
+            try:
+                delete_connection(self.host.get(), self.system)
+                self.host.set('')
+            except OverloadError as e:
+                tkMessageBox.showerror(
+                    'Datastore', e,
+                    parent=self.top)
 
     def move_left():
         pass
@@ -202,6 +296,12 @@ class TransferFiles(tk.Frame):
 
     def help():
         pass
+
+    def set_host_details(self, *args):
+        if self.host.get() == '':
+            details = get_connection_details(self.host.get(), self.system)
+            self.user = details[0]
+            self.password = details[1]
 
 
 class OrderTemplate(tk.Frame):
@@ -1307,7 +1407,11 @@ class ProcessVendorFiles(tk.Frame):
             self.reset()
 
     def ftp(self):
-        TransferFiles(self)
+        if self.system.get() == '':
+            tkMessageBox.showwarning(
+                'FTP', 'Please select system first')
+        else:
+            TransferFiles(self, self.system.get())
 
     def list_templates(self):
         names = get_template_names()
