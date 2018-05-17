@@ -25,7 +25,8 @@ from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
     BATCH_META, BATCH_STATS
 import bibs.sierra_dicts as sd
 from ftp_manager import store_connection, delete_connection, \
-    get_ftp_connections, get_connection_details, connect2FTP
+    get_ftp_connections, get_connection_details, connect2FTP, \
+    disconnectFTP
 
 
 module_logger = logging.getLogger('overload_console.pvr_gui')
@@ -41,6 +42,8 @@ class TransferFiles(tk.Frame):
         self.cur_manager = BusyManager(self)
         self.top.iconbitmap('./icons/ftp.ico')
         self.top.title('Transfer files')
+        self.top.protocol("WM_DELETE_WINDOW", self._delete_window)
+        # self.top.bind("<Destroy>", self.disconnect)
 
         # variable
         self.ftp = None
@@ -51,6 +54,10 @@ class TransferFiles(tk.Frame):
         self.files = None
         self.rename_option = tk.IntVar()
         self.transfer_type = tk.StringVar()
+        self.local_directory = None
+        self.local_directoryDsp = tk.StringVar()
+        self.ftp_directory = None
+        self.ftp_directoryDsp = tk.StringVar()
 
         # layout
         self.top.columnconfigure(0, minsize=5)
@@ -58,7 +65,7 @@ class TransferFiles(tk.Frame):
         # self.top.columnconfigure(7, minsize=40)
         self.top.columnconfigure(12, minsize=5)
         self.top.rowconfigure(0, minsize=5)
-        self.top.rowconfigure(2, minsize=15)
+        # self.top.rowconfigure(2, minsize=15)
         self.top.rowconfigure(27, minsize=5)
         self.top.rowconfigure(30, minsize=5)
 
@@ -70,6 +77,7 @@ class TransferFiles(tk.Frame):
             postcommand=self.get_available_connections)
         self.hostCbx.grid(
             row=1, column=2, columnspan=3, sticky='snew', pady=10)
+        self.hostCbx['state'] = 'readonly'
 
         self.connBtn = ttk.Button(
             self.top,
@@ -114,9 +122,16 @@ class TransferFiles(tk.Frame):
         self.rightBtn.grid(
             row=14, column=6, sticky='nw', pady=5)
 
+        self.locLbl = ttk.Label(
+            self.top,
+            style='Small.TLabel',
+            textvariable=self.local_directoryDsp)
+        self.locLbl.grid(
+            row=2, column=1, columnspan=5, sticky='sw')
+
         # local frame
-        self.locFrm = ttk.LabelFrame(
-            self.top, text='local')
+        self.locFrm = ttk.Frame(
+            self.top)
         self.locFrm.grid(
             row=3, column=1, rowspan=20, columnspan=5, sticky='snew', padx=10)
 
@@ -143,8 +158,8 @@ class TransferFiles(tk.Frame):
         self.locTrv.configure(yscrollcommand=locSB.set)
 
         # remote frame
-        self.remFrm = ttk.LabelFrame(
-            self.top, text='remote')
+        self.remFrm = ttk.Frame(
+            self.top)
         self.remFrm.grid(
             row=3, column=7, rowspan=20, columnspan=5, sticky='snew', padx=10)
 
@@ -199,9 +214,12 @@ class TransferFiles(tk.Frame):
         self.closeBtn = ttk.Button(
             self.top,
             text='close',
-            command=self.top.destroy)
+            command=self._delete_window)
         self.closeBtn.grid(
             row=25, column=9, sticky='sew', padx=10, pady=10)
+
+        # use last used settings
+        self.retrieve_last_local_directory()
 
     def get_available_connections(self):
         conns = get_ftp_connections(self.system)
@@ -211,15 +229,21 @@ class TransferFiles(tk.Frame):
     def connect(self):
         if self.ftp:
             pass
-        elif self.host.get() == '':
-            self.ftp = connect2FTP(
-                self.host.get(), self.user, self.password)
+        elif self.host.get() != '':
+            try:
+                self.ftp = connect2FTP(
+                    self.host.get(), self.user, self.password)
+            except OverloadError as e:
+                tkMessageBox.showerror(
+                    'FTP Error', e, parent=self.top)
         else:
             tkMessageBox.showerror(
                 'FTP', 'Please select host to connect to')
 
-    def disconnect():
-        pass
+    def disconnect(self):
+        if self.ftp:
+            disconnectFTP(self.ftp)
+            self.ftp = None
 
     def new_connection(self):
         self.conn_top = tk.Toplevel(self, background='white')
@@ -230,12 +254,12 @@ class TransferFiles(tk.Frame):
         self.new_password = tk.StringVar()
 
         self.conn_top.columnconfigure(0, minsize=5)
-        self.conn_top.columnconfigure(4, minsize=5)
+        self.conn_top.columnconfigure(4, minsize=10)
         self.conn_top.rowconfigure(0, minsize=5)
         self.conn_top.rowconfigure(4, minsize=5)
 
         ttk.Label(self.conn_top, text='host').grid(
-            row=1, column=1, sticky='nw', pady=10)
+            row=1, column=1, sticky='nw', padx=10, pady=10)
         hostEnt = ttk.Entry(
             self.conn_top, textvariable=self.new_host)
         hostEnt.grid(
@@ -298,10 +322,31 @@ class TransferFiles(tk.Frame):
         pass
 
     def set_host_details(self, *args):
-        if self.host.get() == '':
+        if self.host.get() != '':
             details = get_connection_details(self.host.get(), self.system)
             self.user = details[0]
             self.password = details[1]
+
+    def _delete_window(self):
+        try:
+            self.disconnect()
+            # self.store_last_local_directory()
+            self.top.destroy()
+        except:
+            pass
+
+    def retrieve_last_local_directory(self):
+        user_data = shelve.open(USER_DATA)
+        self.local_directory = user_data['paths']['pvr_last_open_dir']
+        self.local_directoryDsp.set('local: {}'.format(
+            self.local_directory))
+        user_data.close()
+
+    def store_last_local_directory(self):
+        if self.local_directory:
+            user_data = shelve.open(USER_DATA)
+            user_data['paths']['pvr_last_open_dir'] = self.local_directory
+            user_data.close()
 
 
 class OrderTemplate(tk.Frame):
