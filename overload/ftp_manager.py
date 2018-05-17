@@ -1,5 +1,5 @@
 import base64
-from ftplib import FTP, error_reply, error_perm
+from ftplib import FTP, error_reply, all_errors
 import logging
 from sqlalchemy.exc import IntegrityError
 
@@ -38,7 +38,7 @@ def store_connection(host, user, password, system):
     except IntegrityError as e:
         module_logger.error(e)
         raise OverloadError(
-            'Please provide missing host or system infomation')
+            'Please provide missing host address')
 
 
 def delete_connection(host, system):
@@ -71,8 +71,15 @@ def get_connection_details(host, system):
             FTPs,
             host=host,
             system=system)
-        user = base64.b64decode(record.user)
-        password = base64.b64decode(record.password)
+        if record.user:
+            user = base64.b64decode(record.user)
+        else:
+            user = ''
+        if record.password:
+            password = base64.b64decode(record.password)
+        else:
+            password = ''
+
         return (user, password)
 
 
@@ -90,8 +97,25 @@ def connect2FTP(host, user, password):
             module_logger.error(
                 'Unsuccessful connection attempt: {}.'.format(
                     conn))
-    except error_reply as e:
-        module_logger.error(e)
+            raise OverloadError(
+                'Unable to connect to FTP.\n'
+                'Error: {}'.format(conn))
+    except all_errors as e:
+        module_logger.error('Unable to connect to: {}. {}'.format(
+            host, e))
+        raise OverloadError(
+            'Unable to connect to: {}.\n'
+            'Verify host and your credentials'.format(
+                host))
+
+
+def disconnectFTP(ftp):
+    try:
+        ftp.quit()
+        module_logger.info('Quiting FTP.')
+    except error_reply:
+        ftp.close()
+        module_logger.info('Quiting FTP unsuccessful. Calling close method.')
 
 
 if __name__ == '__main__':
