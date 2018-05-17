@@ -134,14 +134,16 @@ class FTPs(Base):
     __tablename__ = 'ftps'
     fid = Column(Integer, primary_key=True)
     host = Column(String, nullable=False, unique=True)
+    folder = Column(String)
     user = Column(String)
     password = Column(String)
     system = Column(String, nullable=False)
 
     def __repr__(self):
-        return "<FTPs(fid='%s', host='%s', user='%s', password='%s', " \
-            "system='%s')>" % (
-                self.fid, self.host, self.user, self.password, self.system)
+        return "<FTPs(fid='%s', host='%s', folder='%s', user='%s', " \
+               "password='%s', system='%s')>" % (
+                   self.fid, self.host, self.folder,
+                   self.user, self.password, self.system)
 
 
 class DataAccessLayer:
