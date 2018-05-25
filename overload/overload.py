@@ -1761,5 +1761,6 @@ if __name__ == "__main__":
     s.configure('Flat.TEntry', borderwidth=0)
     s.configure('Bold.TLabel', font=('Helvetica', 12, 'bold'))
     s.configure('Small.TLabel', font=('Helvetica', 8))
+    s.configure('Medium.Treeview', font=('Helvetica', 9))
 
     app.mainloop()

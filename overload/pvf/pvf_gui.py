@@ -7,6 +7,7 @@ import os.path
 import shutil
 import logging
 import os
+import time
 from pymarc.exceptions import RecordLengthInvalid
 
 
@@ -27,6 +28,7 @@ import bibs.sierra_dicts as sd
 from ftp_manager import store_connection, delete_connection, \
     get_ftp_connections, get_connection_details, connect2FTP, \
     disconnectFTP
+from utils import convert_file_size
 
 
 module_logger = logging.getLogger('overload_console.pvr_gui')
@@ -49,6 +51,7 @@ class TransferFiles(tk.Frame):
         self.ftp = None
         self.host = tk.StringVar()
         self.host.trace('w', self.set_host_details)
+        # self.folder = None
         self.user = None
         self.password = None
         self.files = None
@@ -58,6 +61,11 @@ class TransferFiles(tk.Frame):
         self.local_directoryDsp = tk.StringVar()
         self.ftp_directory = None
         self.ftp_directoryDsp = tk.StringVar()
+
+        # icons
+        self.file_ico = tk.PhotoImage(file='./icons/file.gif')
+        self.dir_ico = tk.PhotoImage(file='./icons/dir.gif')
+        self.back_ico = tk.PhotoImage(file='./icons/back.gif')
 
         # layout
         self.top.columnconfigure(0, minsize=5)
@@ -127,7 +135,7 @@ class TransferFiles(tk.Frame):
             style='Small.TLabel',
             textvariable=self.local_directoryDsp)
         self.locLbl.grid(
-            row=2, column=1, columnspan=5, sticky='sw')
+            row=2, column=1, columnspan=5, sticky='sw', padx=10)
 
         # local frame
         self.locFrm = ttk.Frame(
@@ -138,16 +146,22 @@ class TransferFiles(tk.Frame):
         self.locTrv = ttk.Treeview(
             self.locFrm,
             columns=('name', 'size', 'date'),
-            displaycolumns=('name', 'size', 'date'),
-            selectmode='extended')
+            displaycolumns='#all',
+            selectmode='extended',
+            style='Medium.Treeview')
 
-        self.locTrv.column('#0', width=15)
+        self.locTrv.bind('<Double-Button-1>', self.change_directory)
+
+        self.locTrv.column('#0', width=36)
         self.locTrv.column('name', width=250)
         self.locTrv.heading('name', text='name')
-        self.locTrv.column('size', width=70)
+        self.locTrv.column('size', width=60)
         self.locTrv.heading('size', text='size')
-        self.locTrv.column('date', width=70)
+        self.locTrv.column('date', width=110)
         self.locTrv.heading('date', text='date')
+        self.locTrv.tag_configure('d', image=self.dir_ico)
+        self.locTrv.tag_configure('f', image=self.file_ico)
+        self.locTrv.tag_configure('o', image=self.back_ico)
         self.locTrv.grid(
             row=0, column=0, columnspan=5, sticky='snew')
 
@@ -156,6 +170,13 @@ class TransferFiles(tk.Frame):
             self.locFrm, orient="vertical", command=self.locTrv.yview)
         locSB.grid(row=0, rowspan=20, column=5, sticky='ns')
         self.locTrv.configure(yscrollcommand=locSB.set)
+
+        self.remLbl = ttk.Label(
+            self.top,
+            style='Small.TLabel',
+            textvariable=self.ftp_directoryDsp)
+        self.remLbl.grid(
+            row=2, column=1, columnspan=5, sticky='sw', padx=10)
 
         # remote frame
         self.remFrm = ttk.Frame(
@@ -167,14 +188,18 @@ class TransferFiles(tk.Frame):
             self.remFrm,
             columns=('name', 'size', 'date'),
             displaycolumns=('name', 'size', 'date'),
-            selectmode='extended')
-        self.remTrv.column('#0', width=15)
+            selectmode='extended',
+            style='Medium.Treeview')
+        self.remTrv.column('#0', width=36)
         self.remTrv.column('name', width=250)
         self.remTrv.heading('name', text='name')
-        self.remTrv.column('size', width=70)
+        self.remTrv.column('size', width=60)
         self.remTrv.heading('size', text='size')
-        self.remTrv.column('date', width=70)
+        self.remTrv.column('date', width=110)
         self.remTrv.heading('date', text='date')
+        self.remTrv.tag_configure('d', image=self.dir_ico)
+        self.remTrv.tag_configure('f', image=self.file_ico)
+        self.remTrv.tag_configure('o', image=self.back_ico)
         self.remTrv.grid(
             row=0, column=0, columnspan=6, sticky='snew')
 
@@ -220,6 +245,7 @@ class TransferFiles(tk.Frame):
 
         # use last used settings
         self.retrieve_last_local_directory()
+        self.populate_local_panel()
 
     def get_available_connections(self):
         conns = get_ftp_connections(self.system)
@@ -233,6 +259,9 @@ class TransferFiles(tk.Frame):
             try:
                 self.ftp = connect2FTP(
                     self.host.get(), self.user, self.password)
+                self.ftp.cwd(self.ftp_directory)
+                print 'current dir:', self.ftp.pwd()
+                # self.populate_remote_panel()
             except OverloadError as e:
                 tkMessageBox.showerror(
                     'FTP Error', e, parent=self.top)
@@ -252,6 +281,7 @@ class TransferFiles(tk.Frame):
         self.new_host = tk.StringVar()
         self.new_user = tk.StringVar()
         self.new_password = tk.StringVar()
+        self.new_folder = tk.StringVar()
 
         self.conn_top.columnconfigure(0, minsize=5)
         self.conn_top.columnconfigure(4, minsize=10)
@@ -265,30 +295,38 @@ class TransferFiles(tk.Frame):
         hostEnt.grid(
             row=1, column=2, sticky='ne', pady=10)
 
-        ttk.Label(self.conn_top, text='user').grid(
+        ttk.Label(self.conn_top, text='folder').grid(
             row=2, column=1, sticky='nw', padx=10, pady=10)
+        folderEnt = ttk.Entry(
+            self.conn_top, textvariable=self.new_folder)
+        folderEnt.grid(
+            row=2, column=2, sticky='ne', pady=10)
+
+        ttk.Label(self.conn_top, text='user').grid(
+            row=3, column=1, sticky='nw', padx=10, pady=10)
         userEnt = ttk.Entry(
             self.conn_top, textvariable=self.new_user)
         userEnt.grid(
-            row=2, column=2, sticky='snew', pady=10)
+            row=3, column=2, sticky='snew', pady=10)
 
         ttk.Label(self.conn_top, text='password').grid(
-            row=3, column=1, sticky='nw', padx=10, pady=10)
+            row=4, column=1, sticky='nw', padx=10, pady=10)
         passEnt = ttk.Entry(
             self.conn_top, textvariable=self.new_password, show='*')
         passEnt.grid(
-            row=3, column=2, sticky='snew', pady=10)
+            row=4, column=2, sticky='snew', pady=10)
 
         saveBtn = ttk.Button(
             self.conn_top, text='save',
             command=self.save)
         saveBtn.grid(
-            row=4, column=1, columnspan=2, sticky='snew', padx=50, pady=10)
+            row=5, column=1, columnspan=2, sticky='snew', padx=50, pady=10)
 
     def save(self):
         try:
             store_connection(
                 self.new_host.get(),
+                self.new_folder.get(),
                 self.new_user.get(),
                 self.new_password.get(),
                 self.system)
@@ -323,9 +361,11 @@ class TransferFiles(tk.Frame):
 
     def set_host_details(self, *args):
         if self.host.get() != '':
-            details = get_connection_details(self.host.get(), self.system)
+            details = get_connection_details(
+                self.host.get(), self.system)
             self.user = details[0]
             self.password = details[1]
+            self.ftp_directory = details[2]
 
     def _delete_window(self):
         try:
@@ -335,11 +375,22 @@ class TransferFiles(tk.Frame):
         except:
             pass
 
+    def shorten_directory(self, directory):
+        n = len(directory)
+        dlist = directory.split('/')
+        while len('/'.join(dlist)) > 70:
+            dlist = dlist[1:]
+        if n > len('/'.join(dlist)):
+            return '../{}'.format('/'.join(dlist))
+        else:
+            return '/'.join(dlist)
+
     def retrieve_last_local_directory(self):
         user_data = shelve.open(USER_DATA)
         self.local_directory = user_data['paths']['pvr_last_open_dir']
+        disp_dir = self.shorten_directory(self.local_directory)
         self.local_directoryDsp.set('local: {}'.format(
-            self.local_directory))
+            disp_dir))
         user_data.close()
 
     def store_last_local_directory(self):
@@ -347,6 +398,116 @@ class TransferFiles(tk.Frame):
             user_data = shelve.open(USER_DATA)
             user_data['paths']['pvr_last_open_dir'] = self.local_directory
             user_data.close()
+
+    def change_directory(self, *args):
+        curItem = self.locTrv.focus()
+        try:
+            # up the current directory
+            if self.locTrv.item(curItem)['tags'][0] == 'o':
+                self.local_directory = os.path.split(
+                    self.local_directory)[0]
+            # down the directory
+            elif self.locTrv.item(curItem)['tags'][0] == 'd':
+                self.local_directory = os.path.join(
+                    self.local_directory,
+                    self.locTrv.item(curItem)['values'][0])
+            # set path
+            self.local_directoryDsp.set('local: {}'.format(
+                self.shorten_directory(self.local_directory)))
+            # populate the panel
+            self.populate_local_panel()
+        except IndexError:
+            pass
+
+    def populate_local_panel(self):
+        # empty current list
+        self.locTrv.delete(*self.locTrv.get_children())
+
+        # build lists of available files and directories
+        files = []
+        dirs = []
+        try:
+            for i in os.listdir(self.local_directory):
+                if os.path.isfile(os.path.join(self.local_directory, i)):
+                    files.append(i)
+                elif os.path.isdir(os.path.join(self.local_directory, i)):
+                    dirs.append(i)
+
+            # populate the panel
+            self.locTrv.insert(
+                '', tk.END, values=('...', '', ''),
+                tags='o', open=False)
+            for d in sorted(dirs):
+                self.locTrv.insert(
+                    '', tk.END, values=(d, '', ''), tags='d', open=False)
+            for f in sorted(files):
+                # get size
+                try:
+                    size_bytes = os.path.getsize('{}/{}'.format(
+                        self.local_directory, f))
+                    size = convert_file_size(size_bytes)
+                except OSError:
+                    size = '?'
+
+                # get last modification date
+                try:
+                    mtime = os.path.getmtime('{}/{}'.format(
+                        self.local_directory, f))
+                    mtime = time.strftime(
+                        '%Y-%m-%d %H:%M',
+                        time.localtime(mtime))
+                except OSError:
+                    mtime = '?'
+
+                # add new row
+                self.locTrv.insert(
+                    '', tk.END, values=(f, size, mtime),
+                    tags='f', open=False)
+
+        except WindowsError as e:
+            module_logger.error(
+                'Encounted error when populating FTP local panel.'
+                'Error: {}'.format(e))
+            self.locTrv.insert(
+                '', tk.END, values=('...', '', ''),
+                tags='o', open=False)
+
+    def populate_remote_panel(self):
+        self.remTrv.delete(*self.remTrv.get_children())
+        files = self.ftp.nlst()
+        print 'files: ', files
+        ls = []
+        self.ftp.retrlines('MLSD', ls.append)
+        for item in ls:
+            print item.split(';')
+        # print self.ftp.pwd()
+        # dirs = self.ftp.dir()
+        # for d in sorted(dirs):
+        #     self.remTrv.insert(
+        #         '', tk.END, values=(d, '', ''), tags='d', open=False)
+        for f in sorted(files):
+            # # get size
+            # try:
+            #     size_bytes = os.path.getsize('{}/{}'.format(
+            #         self.local_directory, f))
+            #     size = convert_file_size(size_bytes)
+            # except OSError:
+            #     size = '?'
+
+            # # get last modification date
+            # try:
+            #     mtime = os.path.getmtime('{}/{}'.format(
+            #         self.local_directory, f))
+            #     mtime = time.strftime(
+            #         '%Y-%m-%d %H:%M',
+            #         time.localtime(mtime))
+            # except OSError:
+            #     mtime = '?'
+
+            # add new row
+            self.remTrv.insert(
+                '', tk.END, values=(f, '', ''),
+                tags='f', open=False)
 
 
 class OrderTemplate(tk.Frame):

@@ -12,9 +12,11 @@ from errors import OverloadError
 module_logger = logging.getLogger('overload_console.ftp_manager')
 
 
-def store_connection(host, user, password, system):
+def store_connection(host, folder, user, password, system):
     if host == '':
         host = None
+    if folder == '':
+        folder = None
     if system == '':
         system = None
     if user == '':
@@ -32,6 +34,7 @@ def store_connection(host, user, password, system):
                 db_session,
                 FTPs,
                 host=host,
+                folder=folder,
                 user=user,
                 password=password,
                 system=system)
@@ -80,7 +83,7 @@ def get_connection_details(host, system):
         else:
             password = ''
 
-        return (user, password)
+        return (user, password, record.folder)
 
 
 def connect2FTP(host, user, password):
