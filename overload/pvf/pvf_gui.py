@@ -9,6 +9,7 @@ import logging
 import os
 import time
 from pymarc.exceptions import RecordLengthInvalid
+from ftplib import error_perm
 
 
 from bibs import bibs
@@ -26,8 +27,8 @@ from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
     BATCH_META, BATCH_STATS
 import bibs.sierra_dicts as sd
 from ftp_manager import store_connection, delete_connection, \
-    get_ftp_connections, get_connection_details, connect2FTP, \
-    disconnectFTP
+    get_ftp_connections, get_connection_details, connect2ftp, \
+    disconnect_ftp, read_ftp_content, move2ftp, move2local
 from utils import convert_file_size
 
 
@@ -45,22 +46,22 @@ class TransferFiles(tk.Frame):
         self.top.iconbitmap('./icons/ftp.ico')
         self.top.title('Transfer files')
         self.top.protocol("WM_DELETE_WINDOW", self._delete_window)
-        # self.top.bind("<Destroy>", self.disconnect)
 
         # variable
         self.ftp = None
         self.host = tk.StringVar()
         self.host.trace('w', self.set_host_details)
-        # self.folder = None
         self.user = None
         self.password = None
         self.files = None
         self.rename_option = tk.IntVar()
+        self.new_fh = None
         self.transfer_type = tk.StringVar()
         self.local_directory = None
         self.local_directoryDsp = tk.StringVar()
         self.ftp_directory = None
         self.ftp_directoryDsp = tk.StringVar()
+        self.ftp_directoryDsp.set('remote: not connected')
 
         # icons
         self.file_ico = tk.PhotoImage(file='./icons/file.gif')
@@ -122,6 +123,9 @@ class TransferFiles(tk.Frame):
             command=self.move_left)
         self.leftBtn.grid(
             row=13, column=6, sticky='nw', pady=5)
+        self.createToolTip(
+            self.leftBtn,
+            'download to your computer')
         self.rightBtn = ttk.Button(
             self.top,
             text='=>',
@@ -129,6 +133,9 @@ class TransferFiles(tk.Frame):
             command=self.move_right)
         self.rightBtn.grid(
             row=14, column=6, sticky='nw', pady=5)
+        self.createToolTip(
+            self.rightBtn,
+            'upload to remote server')
 
         self.locLbl = ttk.Label(
             self.top,
@@ -147,10 +154,10 @@ class TransferFiles(tk.Frame):
             self.locFrm,
             columns=('name', 'size', 'date'),
             displaycolumns='#all',
-            selectmode='extended',
+            selectmode='browse',
             style='Medium.Treeview')
 
-        self.locTrv.bind('<Double-Button-1>', self.change_directory)
+        self.locTrv.bind('<Double-Button-1>', self.change_loc_directory)
 
         self.locTrv.column('#0', width=36)
         self.locTrv.column('name', width=250)
@@ -176,7 +183,7 @@ class TransferFiles(tk.Frame):
             style='Small.TLabel',
             textvariable=self.ftp_directoryDsp)
         self.remLbl.grid(
-            row=2, column=1, columnspan=5, sticky='sw', padx=10)
+            row=2, column=7, columnspan=5, sticky='sw', padx=10)
 
         # remote frame
         self.remFrm = ttk.Frame(
@@ -188,8 +195,11 @@ class TransferFiles(tk.Frame):
             self.remFrm,
             columns=('name', 'size', 'date'),
             displaycolumns=('name', 'size', 'date'),
-            selectmode='extended',
+            selectmode='browse',
             style='Medium.Treeview')
+
+        self.remTrv.bind('<Double-Button-1>', self.change_rem_directory)
+
         self.remTrv.column('#0', width=36)
         self.remTrv.column('name', width=250)
         self.remTrv.heading('name', text='name')
@@ -257,11 +267,19 @@ class TransferFiles(tk.Frame):
             pass
         elif self.host.get() != '':
             try:
-                self.ftp = connect2FTP(
+                self.ftp = connect2ftp(
                     self.host.get(), self.user, self.password)
-                self.ftp.cwd(self.ftp_directory)
-                print 'current dir:', self.ftp.pwd()
-                # self.populate_remote_panel()
+                if self.ftp_directory:
+                    self.ftp.cwd(self.ftp_directory)
+                    self.ftp_directoryDsp.set(
+                        'remote: {}'.format(
+                            self.shorten_directory(self.ftp_directory)))
+                else:
+                    self.ftp_directory = self.ftp.pwd()
+                    self.ftp_directoryDsp.set(
+                        'remote: {}'.format(
+                            self.shorten_directory(self.ftp_directory)))
+                self.populate_remote_panel()
             except OverloadError as e:
                 tkMessageBox.showerror(
                     'FTP Error', e, parent=self.top)
@@ -271,8 +289,10 @@ class TransferFiles(tk.Frame):
 
     def disconnect(self):
         if self.ftp:
-            disconnectFTP(self.ftp)
+            disconnect_ftp(self.ftp)
             self.ftp = None
+        self.remTrv.delete(*self.remTrv.get_children())
+        self.ftp_directoryDsp.set('remote: not connected')
 
     def new_connection(self):
         self.conn_top = tk.Toplevel(self, background='white')
@@ -350,16 +370,159 @@ class TransferFiles(tk.Frame):
                     'Datastore', e,
                     parent=self.top)
 
-    def move_left():
-        pass
+    def save_new_fh(self, from_location):
+        if from_location == 'local':
+            self.new_fh = self.rem_fh.get()
+        elif from_location == 'remote':
+            self.new_fh = self.loc_fh.get()
+        self.new_fh = self.new_fh.strip()
+        if self.new_fh == '':
+            tkMessageBox.showwarning(
+                'Renaming File',
+                'New file name cannot be empty',
+                parent=self.rename_top)
+        else:
+            self.rename_top.destroy()
 
-    def move_right():
-        pass
+    def rename_file(self, fh, from_location):
+        self.rename_top = tk.Toplevel(self, background='white')
+        self.rename_top.iconbitmap('./icons/pen.ico')
+        self.rename_top.title('Renaming File')
+        self.loc_fh = tk.StringVar()
+        self.loc_fh.set(fh)
+        self.rem_fh = tk.StringVar()
+        self.rem_fh.set(fh)
+
+        self.rename_top.columnconfigure(0, minsize=5)
+        self.rename_top.columnconfigure(1, minsize=200)
+        self.rename_top.columnconfigure(2, minsize=15)
+        self.rename_top.columnconfigure(3, minsize=200)
+        self.rename_top.columnconfigure(4, minsize=10)
+
+        self.rename_top.rowconfigure(0, minsize=5)
+        self.rename_top.rowconfigure(4, minsize=5)
+
+        ttk.Label(
+            self.rename_top, text='local name:',
+            style='Small.TLabel').grid(
+            row=1, column=1, sticky='sw')
+        ttk.Label(
+            self.rename_top, text='remote name:',
+            style='Small.TLabel').grid(
+            row=1, column=3, sticky='sw')
+
+        loc_fhEnt = ttk.Entry(
+            self.rename_top,
+            textvariable=self.loc_fh)
+        loc_fhEnt.grid(
+            row=2, column=1, sticky='snew', pady=5)
+        rem_fhEnt = ttk.Entry(
+            self.rename_top,
+            textvariable=self.rem_fh)
+        rem_fhEnt.grid(
+            row=2, column=3, sticky='snew', pady=5)
+
+        saveBtn = ttk.Button(
+            self.rename_top,
+            text='OK',
+            command=lambda:self.save_new_fh(from_location))
+        saveBtn.grid(
+            row=3, column=1, sticky='snew', padx=50, pady=10)
+        cancelBtn = ttk.Button(
+            self.rename_top,
+            text='cancel',
+            command=self.rename_top.destroy)
+        cancelBtn.grid(
+            row=3, column=3, sticky='snew', padx=50, pady=10)
+
+        if from_location == 'local':
+            loc_fhEnt['state'] = 'readonly'
+        elif from_location == 'remote':
+            rem_fhEnt['state'] = 'readonly'
+
+        self.rename_top.wait_window()
+
+    def move_left(self):
+        if self.ftp:
+            curItem = self.remTrv.focus()
+            # allow download of files only
+            if self.remTrv.item(curItem)['tags'][0] == 'f':
+                # find file handle
+                remote_fh = self.remTrv.item(curItem)['values'][0]
+                module_logger.debug(
+                    'Selected file: {}'.format(remote_fh))
+
+                if self.rename_option.get() == 1:
+                    module_logger.debug('Renaming transfer file.')
+                    self.rename_file(remote_fh, 'remote')
+                    local_fh = self.new_fh
+                    module_logger.debug(
+                        'Transfer file renamed to: {}'.format(local_fh))
+                else:
+                    local_fh = remote_fh
+
+                # local path to file
+                lfh = os.path.join(self.local_directory, local_fh)
+                module_logger.debug(
+                    'Desination path: {}'.format(lfh))
+
+                self.cur_manager.busy()
+                try:
+                    transfered = move2local(
+                        self.host.get(), self.ftp, remote_fh, lfh,
+                        self.transfer_type.get())
+                except OverloadError as e:
+                    tkMessageBox.showerror(
+                        'Transfer Error', e, parent=self.top)
+                    transfered = False
+                finally:
+                    self.cur_manager.notbusy()
+                if transfered:
+                    self.populate_local_panel()
+
+    def move_right(self):
+        if self.ftp:
+            curItem = self.locTrv.focus()
+            # allow upload of files only
+            if self.locTrv.item(curItem)['tags'][0] == 'f':
+                # file handle
+                fh = self.locTrv.item(curItem)['values'][0]
+                module_logger.debug('Selected file: {}'.format(
+                    fh))
+                # local path to file
+                lfh = os.path.join(
+                    self.local_directory,
+                    self.locTrv.item(curItem)['values'][0])
+                module_logger.debug('Selected file path: {}'.format(
+                    lfh))
+
+                # file handle on the remote
+                if self.rename_option.get() == 1:
+                    module_logger.debug('Renaming transfer file.')
+                    self.rename_file(fh, 'local')
+                    fh = self.new_fh
+                    module_logger.debug(
+                        'Transfer file renamed to: {}'.format(fh))
+
+                self.cur_manager.busy()
+                try:
+                    transfered = move2ftp(
+                        self.host.get(), self.ftp, lfh, fh,
+                        self.transfer_type.get())
+                except OverloadError as e:
+                    tkMessageBox.showerror(
+                        'Transfer Error', e, parent=self.top)
+                    transfered = False
+                finally:
+                    self.cur_manager.notbusy()
+                if transfered:
+                    self.populate_remote_panel()
 
     def help():
         pass
 
     def set_host_details(self, *args):
+        self.disconnect()
         if self.host.get() != '':
             details = get_connection_details(
                 self.host.get(), self.system)
@@ -399,7 +562,7 @@ class TransferFiles(tk.Frame):
             user_data['paths']['pvr_last_open_dir'] = self.local_directory
             user_data.close()
 
-    def change_directory(self, *args):
+    def change_loc_directory(self, *args):
         curItem = self.locTrv.focus()
         try:
             # up the current directory
@@ -418,6 +581,31 @@ class TransferFiles(tk.Frame):
             self.populate_local_panel()
         except IndexError:
             pass
+
+    def change_rem_directory(self, *args):
+        curItem = self.remTrv.focus()
+        try:
+            if self.remTrv.item(curItem)['tags'][0] == 'o':
+                self.ftp_directory = os.path.split(self.ftp.pwd())[0]
+                self.ftp.cwd(self.ftp_directory)
+            elif self.remTrv.item(curItem)['tags'][0] == 'd':
+                self.ftp_directory = os.path.join(
+                    self.ftp.pwd(),
+                    self.remTrv.item(curItem)['values'][0])
+                self.ftp.cwd(self.ftp_directory)
+
+            # set path
+            self.ftp_directoryDsp.set('remote: {}'.format(
+                self.shorten_directory(self.ftp_directory)))
+            # # populate the panel
+            self.populate_remote_panel()
+        except error_perm as e:
+            module_logger.error(
+                'Unable to access FTP directory: {}, {}. Error: {}'.format(
+                    self.host.get(), self.ftp_directory, e))
+            tkMessageBox.showerror(
+                'FTP Error', 'Unable to change the FTP directory',
+                parent=self.top)
 
     def populate_local_panel(self):
         # empty current list
@@ -474,40 +662,46 @@ class TransferFiles(tk.Frame):
 
     def populate_remote_panel(self):
         self.remTrv.delete(*self.remTrv.get_children())
-        files = self.ftp.nlst()
-        print 'files: ', files
-        ls = []
-        self.ftp.retrlines('MLSD', ls.append)
-        for item in ls:
-            print item.split(';')
-        # print self.ftp.pwd()
-        # dirs = self.ftp.dir()
-        # for d in sorted(dirs):
-        #     self.remTrv.insert(
-        #         '', tk.END, values=(d, '', ''), tags='d', open=False)
-        for f in sorted(files):
-            # # get size
-            # try:
-            #     size_bytes = os.path.getsize('{}/{}'.format(
-            #         self.local_directory, f))
-            #     size = convert_file_size(size_bytes)
-            # except OSError:
-            #     size = '?'
 
-            # # get last modification date
-            # try:
-            #     mtime = os.path.getmtime('{}/{}'.format(
-            #         self.local_directory, f))
-            #     mtime = time.strftime(
-            #         '%Y-%m-%d %H:%M',
-            #         time.localtime(mtime))
-            # except OSError:
-            #     mtime = '?'
+        show = True
+        try:
+            dirs, files = read_ftp_content(self.ftp, self.host.get())
+        except OverloadError as e:
+            tkMessageBox.showerror(
+                'FTP Error', e, parent=self.top)
+            show = False
 
-            # add new row
+        if show:
             self.remTrv.insert(
-                '', tk.END, values=(f, '', ''),
-                tags='f', open=False)
+                '', tk.END, values=('...', '', ''), tags='o', open=False)
+
+            for d in sorted(dirs):
+                self.remTrv.insert(
+                    '', tk.END, values=(d, '', ''), tags='d', open=False)
+            for f in files:
+                try:
+                    size = convert_file_size(int(f[1]))
+                except ValueError:
+                    self.remTrv.insert(
+                        '', tk.END, values=(f, '', ''),
+                        tags='d', open=False)
+
+                self.remTrv.insert(
+                    '', tk.END,
+                    values=(f[0], size, f[2]),
+                    tags='f', open=False)
+
+    def createToolTip(self, widget, text):
+        toolTip = ToolTip(widget)
+
+        def enter(event):
+            toolTip.showtip(text)
+
+        def leave(event):
+            toolTip.hidetip()
+
+        widget.bind('<Enter>', enter)
+        widget.bind('<Leave>', leave)
 
 
 class OrderTemplate(tk.Frame):

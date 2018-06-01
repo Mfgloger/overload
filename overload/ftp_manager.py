@@ -1,5 +1,6 @@
+import json
 import base64
-from ftplib import FTP, error_reply, all_errors
+from ftplib import FTP, all_errors
 import logging
 from sqlalchemy.exc import IntegrityError
 
@@ -86,7 +87,7 @@ def get_connection_details(host, system):
         return (user, password, record.folder)
 
 
-def connect2FTP(host, user, password):
+def connect2ftp(host, user, password):
     module_logger.info('Connecting to FTP: {}.'.format(
         host))
     try:
@@ -112,14 +113,129 @@ def connect2FTP(host, user, password):
                 host))
 
 
-def disconnectFTP(ftp):
+def disconnect_ftp(ftp):
     try:
         ftp.quit()
         module_logger.info('Quiting FTP.')
-    except error_reply:
+    except all_errors:
         ftp.close()
         module_logger.info('Quiting FTP unsuccessful. Calling close method.')
 
 
-if __name__ == '__main__':
-    store_connection('', 'tomek', 'pass', 'nypl')
+def read_ftp_content(ftp, host):
+    module_logger.info(
+        'Accessing FTP ({}) directory & file listing'.format(
+            host))
+    # create a list of directories and files
+    ls = []
+    try:
+        ftp.retrlines('LIST', ls.append)
+    except all_errors as e:
+        module_logger.error(
+            'Unable to retrieve file & directory list on FTP host {}.'
+            'Error: {}'.format(host, e))
+        raise OverloadError(
+            'Encountered error while retrieving\n'
+            'content of the FTP server.')
+
+    # load available FTP parsing methods
+    try:
+        ftp_settings = open('./rules/ftp_parsing.json', 'r')
+        fs = json.load(ftp_settings)
+    except ValueError as e:
+        module_logger.error(
+            'FTP settings JSON file malformed. Error: {}'.format(
+                e))
+        raise OverloadError('Unable to access FTP parsing methods')
+    finally:
+        ftp_settings.close()
+
+    # determine FTP server response parsing
+    try:
+        m = fs[host]
+    except KeyError:
+        module_logger.error(
+            'Accessing parsing info for unidentified FTP host: {}'.format(
+                host))
+        raise OverloadError(
+            'Unidentified FTP host.')
+    if m:
+        dirs = []
+        files = []
+        try:
+            for l in ls:
+                if l[m['dir_mark'][1]:m['dir_mark'][2] + 1] == \
+                        m['dir_mark'][0]:
+                    d = l[m['dir_handle']:].strip()
+                    dirs.append(d)
+                elif l[m['file_mark'][1]:m['file_mark'][2] + 1] == \
+                        m['file_mark'][0]:
+                    f = l[m['file_handle']:].strip()
+                    s = l[m['file_size_pos'][0]:m[
+                        'file_size_pos'][1] + 1].strip()
+                    t = l[m['file_time_pos'][0]:m[
+                        'file_time_pos'][1] + 1].strip()
+                    files.append((f, s, t))
+            return (dirs, files)
+        except KeyError as e:
+            module_logger.error(
+                'FTP parsing settings for {} are malformed. Error: {}'.format(
+                    host, e))
+            raise OverloadError(
+                'FTP parsing settings error.')
+        except IndexError as e:
+            module_logger.error(
+                'FTP parsing settigns for {} are incorrect. Error: {}'.format(
+                    host, e))
+            raise OverloadError(
+                'FTP parsing settings error.')
+    else:
+        module_logger.error(
+            'Unable to parse FTP response to LIST cmd on host {}'.format(
+                host))
+        raise OverloadError('Unable to parse FTP response.')
+
+
+def move2ftp(host, ftp, fh, dstfh, transfer_type):
+    try:
+        module_logger.debug(
+            'Uploading file to FTP: host={}, local path={}, '
+            'destination fh={}, transfer type={}'.format(
+                host, fh, dstfh, transfer_type))
+        if transfer_type == 'binary':
+            ftp.storbinary('STOR {}'.format(dstfh), open(fh, 'rb'))
+        elif transfer_type == 'ASCII':
+            ftp.storlines('STOR {}'.format(dstfh), open(fh, 'r'))
+        module_logger.debug(
+            'Upload successful.')
+
+    except all_errors as e:
+        module_logger.error(
+            'Upload to FTP failed: host={}, destination fh={}, '
+            'transfer type={}. Error: {}'.format(
+                host, dstfh, transfer_type, e))
+        raise OverloadError(
+            'Encountered error while uploading file to FTP.\nAborting.')
+
+
+def move2local(host, ftp, fh, dstfh, transfer_type):
+    try:
+        module_logger.debug(
+            'Downloading file from FTP: host={}, fh={}, destination path={}, '
+            'transfer type={}'.format(
+                host, fh, dstfh, transfer_type))
+        if transfer_type == 'binary':
+            with open(dstfh, 'wb') as f:
+                ftp.retrbinary('RETR %s' % fh, lambda data: f.write(data))
+        elif transfer_type == 'ASCII':
+            with open(dstfh, 'w') as f:
+                ftp.retrlines('RETR %s' % fh, lambda data: f.write(data))
+        module_logger.debug(
+            'Download successful.')
+
+    except all_errors as e:
+        module_logger.error(
+            'Download from FTP failed: host={}, file on remote={}, '
+            'destination path={}, transfer type={}. Error: {}'.format(
+                host, fh, dstfh, transfer_type, e))
+        raise OverloadError('Encountered error while downloading the file.')
