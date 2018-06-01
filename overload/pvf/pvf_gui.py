@@ -468,9 +468,10 @@ class TransferFiles(tk.Frame):
 
                 self.cur_manager.busy()
                 try:
-                    transfered = move2local(
+                    move2local(
                         self.host.get(), self.ftp, remote_fh, lfh,
                         self.transfer_type.get())
+                    transfered = True
                 except OverloadError as e:
                     tkMessageBox.showerror(
                         'Transfer Error', e, parent=self.top)
@@ -506,9 +507,10 @@ class TransferFiles(tk.Frame):
 
                 self.cur_manager.busy()
                 try:
-                    transfered = move2ftp(
+                    move2ftp(
                         self.host.get(), self.ftp, lfh, fh,
                         self.transfer_type.get())
+                    transfered = True
                 except OverloadError as e:
                     tkMessageBox.showerror(
                         'Transfer Error', e, parent=self.top)
