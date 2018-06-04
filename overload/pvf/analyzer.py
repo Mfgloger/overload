@@ -98,13 +98,13 @@ class PVR_NYPLReport(PVRReport):
     def _group_by_library(self):
 
         for meta in self._meta_inhouse:
-            # print self._meta_vendor.dstLibrary, print self.li
             if self._meta_vendor.dstLibrary == meta.ownLibrary:
                 # correct library
                 self._matched.append(meta)
             elif meta.ownLibrary == 'mixed':
                 self.mixed.append(meta.sierraId)
             else:
+                # other library
                 self.other.append(meta.sierraId)
 
     def _cataloging_workflow(self):
@@ -209,7 +209,9 @@ class PVR_NYPLReport(PVRReport):
             self.inhouse_dups = [meta.sierraId for meta in self._matched]
 
     def _acquisition_workflow(self):
-        pass
+        # all actions = 'insert'!
+        self.callNo_match = True
+        self.action = 'insert'
 
     def to_dict(self):
         return {
