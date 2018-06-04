@@ -535,7 +535,7 @@ class TransferFiles(tk.Frame):
     def _delete_window(self):
         try:
             self.disconnect()
-            # self.store_last_local_directory()
+            self.store_last_local_directory()
             self.top.destroy()
         except:
             pass
@@ -708,8 +708,9 @@ class TransferFiles(tk.Frame):
 
 class OrderTemplate(tk.Frame):
     """GUI for selection order templates"""
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         self.parent = parent
+        self.agent = kwargs['agent']
         tk.Frame.__init__(self, self.parent, background='white')
         self.top = tk.Toplevel(self, background='white')
         self.cur_manager = BusyManager(self)
@@ -757,7 +758,7 @@ class OrderTemplate(tk.Frame):
         self.top.rowconfigure(23, minsize=10)
 
         # templates list
-        ttk.Label(self.top, text='available:').grid(
+        ttk.Label(self.top, text='{} templates:'.format(self.agent)).grid(
             row=0, column=1, sticky='sw', pady=10)
         scrollbar = ttk.Scrollbar(self.top, orient=tk.VERTICAL)
         scrollbar.grid(
@@ -772,7 +773,7 @@ class OrderTemplate(tk.Frame):
         scrollbar['command'] = self.templateLst.yview
 
         # template name
-        ttk.Label(self.top, text='template:').grid(
+        ttk.Label(self.top, text='name:').grid(
             row=0, column=4, sticky='sw', padx=5, pady=10)
         self.templateEnt = ttk.Entry(
             self.top, textvariable=self.template_name)
@@ -1112,7 +1113,7 @@ class OrderTemplate(tk.Frame):
 
         with session_scope() as session:
             t = retrieve_record(
-                session, NYPLOrderTemplate, tName=name)
+                session, NYPLOrderTemplate, tName=name, agent=self.agent)
             self.template_name.set(t.tName)
             self.otid.set(t.otid)
 
@@ -1192,6 +1193,7 @@ class OrderTemplate(tk.Frame):
         # comboboxes
         f = dict(
             tName=self.template_name.get().strip(),
+            agent=self.agent,
             acqType=self.acqType.get(),
             claim=self.claim.get(),
             code1=self.oCode1.get(),
@@ -1327,7 +1329,7 @@ class OrderTemplate(tk.Frame):
 
     def update_template_lst(self):
         self.templateLst.delete(0, tk.END)
-        names = get_template_names()
+        names = get_template_names(self.agent)
         for name in names:
             self.templateLst.insert(tk.END, name)
 
@@ -1792,15 +1794,14 @@ class ProcessVendorFiles(tk.Frame):
             self.file_count.set('{} file(s) selected:'.format(len(self.files)))
             names = []
             for file in self.files:
-                name = file.split('/')[-1]
-                names.append(name)
+                names.append(os.path.split(file)[1])
             self.selected_filesEnt['state'] = '!readonly'
             self.selected_filesEnt.delete(0, tk.END)
             self.selected_filesEnt.insert(0, ','.join(names))
             self.selected_filesEnt['state'] = 'readonly'
 
             # save accessed directory for the future
-            last_open_dir = '/'.join(self.files[-1].split('/')[:-1])
+            last_open_dir = os.path.split(self.files[0])[0]
             paths = user_data['paths']
             paths['pvr_last_open_dir'] = last_open_dir
             user_data['paths'] = paths
@@ -1816,12 +1817,16 @@ class ProcessVendorFiles(tk.Frame):
             TransferFiles(self, self.system.get())
 
     def list_templates(self):
-        names = get_template_names()
+        names = get_template_names(self.agent.get())
         self.templateCbx['values'] = names
         self.templateCbx['state'] = 'readonly'
 
     def create_template(self):
-        OrderTemplate(self)
+        if self.agent.get() == 'cataloging' or \
+                self.agent.get() == '':
+            pass
+        else:
+            OrderTemplate(self, agent=self.agent.get())
 
     def process(self):
         self.reset()
@@ -2027,8 +2032,8 @@ class ProcessVendorFiles(tk.Frame):
         archive_files = []
         for file in os.listdir(self.last_directory):
             if file.endswith('.mrc') and (
-                    '.DUP-' in file or '.NEW-' in file \
-                    or'.FILE-' in file):
+                    '.DUP-' in file or '.NEW-' in file or
+                    '.PRC-' in file):
                 archive_files.append(file)
         if len(archive_files) > 0:
             self.topA = tk.Toplevel(self, background='white')
@@ -2040,7 +2045,11 @@ class ProcessVendorFiles(tk.Frame):
             self.topA.columnconfigure(4, minsize=10)
             self.topA.rowconfigure(0, minsize=10)
 
-            n = 1
+            ttk.Label(
+                self.topA, text='Check files to be archived:').grid(
+                row=1, column=1, columnspan=2, sticky='snw')
+
+            n = 2
             self.check_id = dict()
             for file in archive_files:
                 self.check_id[file] = tk.IntVar()
@@ -2050,7 +2059,7 @@ class ProcessVendorFiles(tk.Frame):
                     text=file,
                     variable=self.check_id[file])
                 check.grid(
-                    row=n, column=1)
+                    row=n, column=1, columnspan=3, sticky='nsw')
                 n += 1
             self.topA.rowconfigure(n + 1, minsize=10)
             ttk.Button(
@@ -2093,14 +2102,21 @@ class ProcessVendorFiles(tk.Frame):
             for file, value in self.check_id.iteritems():
                 if value.get() == 1:
                     # check if file exists
-                    src = '{}/{}'.format(self.last_directory, file)
-                    dst = '{}/{}'.format(archive_dir, file)
+                    src = os.path.join(self.last_directory, file)
+                    dst = os.path.join(archive_dir, file)
                     if os.path.exists(dst):
                         renaming = True
                         n = 1
                         while renaming:
-                            file = '{}{}{}'.format(file[:-5], n, file[-4:])
-                            dst = '{}/{}'.format(archive_dir, file)
+                            if '.DUP-' in file:
+                                s = '.DUP-'
+                            elif '.NEW-' in file:
+                                s = '.NEW-'
+                            elif '.PRC-' in file:
+                                s = '.PRC-'
+                            p = file.index(s)
+                            file = '{}{}{}'.format(file[:p + 5], n, file[-4:])
+                            dst = os.path.join(archive_dir, file)
                             if not os.path.exists(dst):
                                 renaming = False
                             else:

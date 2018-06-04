@@ -1,9 +1,11 @@
 # handles and oversees processing of vendor records (top level below gui)
 # logging and passing exception to gui happens here
+import os
 from datetime import datetime, date
 import shelve
 import logging
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
 
 from bibs.bibs import VendorBibMeta, read_marc21, \
@@ -117,29 +119,35 @@ def run_processing(
                 if system == 'nypl':
                     query_matchpoints = dict()
                     with session_scope() as db_session:
-                        trec = retrieve_record(
-                            db_session, NYPLOrderTemplate, tName=template)
+                        try:
+                            trec = retrieve_record(
+                                db_session, NYPLOrderTemplate, tName=template)
 
-                        if trec.match1st == 'sierra_id':
-                            query_matchpoints['primary'] = (
-                                'id', trec.match1st)
-                        else:
-                            query_matchpoints['primary'] = (
-                                'tag', trec.match1st)
-                        if trec.match2nd is not None:
-                            if trec.match2nd == 'sierra_id':
-                                query_matchpoints['secondary'] = (
-                                    'id', trec.match2nd)
+                            if trec.match1st == 'sierra_id':
+                                query_matchpoints['primary'] = (
+                                    'id', trec.match1st)
                             else:
-                                query_matchpoints['secondary'] = (
-                                    'tag', trec.match2nd)
-                        if trec.match3rd is not None:
-                            if trec.match3rd == 'sierra_id':
-                                query_matchpoints['tertiary'] = (
-                                    'id', trec.match3rd)
-                            else:
-                                query_matchpoints['tertiary'] = (
-                                    'tag', trec.match3rd)
+                                query_matchpoints['primary'] = (
+                                    'tag', trec.match1st)
+                            if trec.match2nd is not None:
+                                if trec.match2nd == 'sierra_id':
+                                    query_matchpoints['secondary'] = (
+                                        'id', trec.match2nd)
+                                else:
+                                    query_matchpoints['secondary'] = (
+                                        'tag', trec.match2nd)
+                            if trec.match3rd is not None:
+                                if trec.match3rd == 'sierra_id':
+                                    query_matchpoints['tertiary'] = (
+                                        'id', trec.match3rd)
+                                else:
+                                    query_matchpoints['tertiary'] = (
+                                        'tag', trec.match3rd)
+                        except NoResultFound:
+                            raise OverloadError(
+                                'Unable to find template {}.\n'
+                                'Please verify it exists.'.format(
+                                    template))
                 else:
                     raise OverloadError(
                         'selection workflow for BPL not implemented yet')
@@ -276,18 +284,20 @@ def run_processing(
             # determine mrc files namehandles
             date_today = date.today().strftime('%y%m%d')
             if agent == 'cat':
-                fh_dups = output_directory + '/{}.DUP-0.mrc'.format(
-                    date_today)
-                fh_new = output_directory + '/{}.NEW-0.mrc'.format(
-                    date_today)
-            elif agent == 'sel':
-                fh = output_directory + '/{}-{}.FILE-0.mrc'.format(
-                    date_today, vendor)
-            elif agent == 'acq':
-                fh_dups = output_directory + '/{}-{}.DUP-0.mrc'.format(
-                    date_today, vendor)
-                fh_new = output_directory + '/{}-{}.NEW-0.mrc'.format(
-                    date_today, vendor)
+                fh_dups = os.path.join(
+                    output_directory, '{}.DUP-0.mrc'.format(
+                        date_today))
+                fh_new = os.path.join(
+                    output_directory,
+                    '{}.NEW-0.mrc'.format(
+                        date_today))
+            elif agent in ('sel', 'acq'):
+                # remove mrc extention if exists
+                tail = os.path.split(file)[1]
+                if tail[-4:] == '.mrc':
+                    tail = tail[:-4]
+                tail = '{}.PRC-0.mrc'.format(tail)
+                fh = os.path.join(output_directory, tail)
 
             # output processed records according to analysis
             # add Sierra bib id if matched
@@ -380,7 +390,7 @@ def run_processing(
                         bib.add_field(new_field)
 
             # append to appropirate output file
-            if agent in ('cat', 'acq'):
+            if agent == 'cat':
                 if analysis['action'] == 'attach':
                     module_logger.info(
                         'Appending vendor record to the dup file.')
@@ -391,7 +401,7 @@ def run_processing(
                     write_marc21(fh_new, bib)
             else:
                 module_logger.info(
-                    'Appending vendor record to a file.')
+                    'Appending vendor record to a prc file.')
                 write_marc21(fh, bib)
 
             # update progbar
@@ -478,9 +488,10 @@ def save_stats():
             'Encountered problems while trying to save statistics.')
 
 
-def get_template_names():
+def get_template_names(agent):
     with session_scope() as session:
-        values = retrieve_values(session, NYPLOrderTemplate, 'tName')
+        values = retrieve_values(
+            session, NYPLOrderTemplate, 'tName', agent=agent)
         return [x.tName for x in values]
 
 
