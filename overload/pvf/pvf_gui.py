@@ -1113,7 +1113,7 @@ class OrderTemplate(tk.Frame):
 
         with session_scope() as session:
             t = retrieve_record(
-                session, NYPLOrderTemplate, tName=name, agent=self.agent)
+                session, NYPLOrderTemplate, tName=name, agent=self.agent[:3])
             self.template_name.set(t.tName)
             self.otid.set(t.otid)
 
@@ -1193,7 +1193,7 @@ class OrderTemplate(tk.Frame):
         # comboboxes
         f = dict(
             tName=self.template_name.get().strip(),
-            agent=self.agent,
+            agent=self.agent[:3],
             acqType=self.acqType.get(),
             claim=self.claim.get(),
             code1=self.oCode1.get(),
@@ -1329,7 +1329,7 @@ class OrderTemplate(tk.Frame):
 
     def update_template_lst(self):
         self.templateLst.delete(0, tk.END)
-        names = get_template_names(self.agent)
+        names = get_template_names(self.agent[:3])
         for name in names:
             self.templateLst.insert(tk.END, name)
 
@@ -1817,7 +1817,7 @@ class ProcessVendorFiles(tk.Frame):
             TransferFiles(self, self.system.get())
 
     def list_templates(self):
-        names = get_template_names(self.agent.get())
+        names = get_template_names(self.agent.get()[:3])
         self.templateCbx['values'] = names
         self.templateCbx['state'] = 'readonly'
 
@@ -2236,6 +2236,14 @@ class ProcessVendorFiles(tk.Frame):
             width=12,
             cursor='hand2',
             command=self.detailed_view_window).grid(
+            row=12, column=1, sticky='ne', padx=5)
+
+        ttk.Button(
+            self.topD,
+            text='download',
+            width=12,
+            cursor='hand2',
+            command=self.download).grid(
             row=12, column=2, sticky='nw', padx=5)
 
         ttk.Button(
@@ -2361,13 +2369,14 @@ class ProcessVendorFiles(tk.Frame):
                 self.system.get(), self.library.get()))
         self.reportDTxt.insert(tk.END, 'Duplicates report:\n', 'blue')
         if df is not None:
-            dups = reports.report_dups(
+            self.dups = reports.report_dups(
                 self.system.get(), self.library.get(), df)
-            if dups.size == 0:
+            if self.dups.size == 0:
                 self.reportDTxt.insert(tk.END, 'All clear\n')
             else:
-                self.reportDTxt.insert(tk.END, dups.to_string() + '\n')
+                self.reportDTxt.insert(tk.END, self.dups.to_string() + '\n')
         else:
+            self.dups = None
             self.reportDTxt.insert(
                 tk.END, 'DUPLICATE REPORT PARSING ERROR\n')
         self.reportDTxt.insert(
@@ -2376,18 +2385,24 @@ class ProcessVendorFiles(tk.Frame):
         # report callNo issues
         module_logger.info(
             'Generating call number issues section.')
-        self.reportDTxt.insert(tk.END, 'Call number issues:\n', 'blue')
-        if df is not None:
-            callNos = reports.report_callNo_issues(df)
-            if callNos.size == 0:
-                self.reportDTxt.insert(tk.END, 'All clear\n')
+        if self.library.get() != 'research':
+            self.reportDTxt.insert(tk.END, 'Call number issues:\n', 'blue')
+
+            if df is not None:
+                self.callNos = reports.report_callNo_issues(df)
+                if self.callNos.size == 0:
+                    self.reportDTxt.insert(tk.END, 'All clear\n')
+                else:
+                    self.reportDTxt.insert(
+                        tk.END, self.callNos.to_string() + '\n')
             else:
-                self.reportDTxt.insert(tk.END, callNos.to_string() + '\n')
-        else:
+                self.callNos = None
+                self.reportDTxt.insert(
+                    tk.END, 'CALL NUMBER CONFLICTS PARSING ERROR\n')
             self.reportDTxt.insert(
-                tk.END, 'CALL NUMBER CONFLICTS PARSING ERROR\n')
-        self.reportDTxt.insert(
-            tk.END, '\n' + ('-' * 120) + '\n')
+                tk.END, '\n' + ('-' * 120) + '\n')
+        else:
+            self.callNos = None
 
         # prevent edits
         self.reportDTxt['state'] = tk.DISABLED
@@ -2422,6 +2437,25 @@ class ProcessVendorFiles(tk.Frame):
 
         # prevent edits
         self.reportBTxt['state'] = tk.DISABLED
+
+    def download(self):
+        # ask for folder for output marc files
+        dir_opt = {}
+        dir_opt['parent'] = self
+        dir_opt['title'] = 'Save As'
+        dir_opt['initialdir'] = self.last_directory
+
+        fh = tkFileDialog.asksaveasfilename(**dir_opt)
+        if fh != '':
+            if self.dups is None:
+                pass
+            else:
+                self.dups.to_csv(fh, index=False)
+            # if self.callNos is None:
+            #     pass
+            # else:
+            #     csv_callNos = ''
+            #     self.callNos.to_csv(csv_callNos, index=False)
 
     def help(self):
         # add scrollbar
@@ -2516,9 +2550,11 @@ class ProcessVendorFiles(tk.Frame):
 
     def agent_observer(self, *args):
         if self.agent.get() == 'cataloging':
-            self.templateCbx.set('')
+            self.template.set('')
+            # self.templateCbx.set('')
             self.templateCbx['state'] = 'disabled'
         else:
+            self.template.set('')
             self.templateCbx['state'] = '!disabled'
             self.templateCbx['state'] = 'readonly'
 
