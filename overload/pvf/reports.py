@@ -115,15 +115,27 @@ def report_dups(system, library, df):
             other = 'branches'
         dups = '{} dups'.format(library)
 
-        df_rep = df[[
-            'vendor', 'vendor_id', 'target_sierraId',
-            'inhouse_dups', 'mixed', 'other']]
+        if library == 'research':
+            # research reports are simpler since
+            # PVR always inserts bibs
+            df_rep = df[[
+                'vendor', 'vendor_id',
+                'inhouse_dups', 'mixed', 'other']]
+            df_rep = df_rep[
+                df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
+            df_rep.columns = [
+                'vendor', 'vendor_id',
+                dups, 'mixed', other]
+        else:
+            df_rep = df[[
+                'vendor', 'vendor_id', 'target_sierraId',
+                'inhouse_dups', 'mixed', 'other']]
 
-        df_rep = df_rep[
-            df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
-        df_rep.columns = [
-            'vendor', 'vendor_id', 'target_id',
-            dups, 'mixed', other]
+            df_rep = df_rep[
+                df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
+            df_rep.columns = [
+                'vendor', 'vendor_id', 'target_id',
+                dups, 'mixed', other]
     else:
         # bpl stats
         df_rep = df[[
@@ -151,22 +163,27 @@ def report_callNo_issues(df):
 def report_details(system, library, df):
     df = df.sort_index()
     if system == 'NYPL':
+        dups = '{} dups'.format(library)
         if library == 'branches':
             other = 'research bibs'
+            df = df[[
+                'vendor', 'vendor_id', 'action', 'target_sierraId',
+                'updated_by_vendor',
+                'callNo_match', 'vendor_callNo', 'target_callNo',
+                'inhouse_dups', 'mixed', 'other']]
+            df.columns = [
+                'vendor', 'vendor_id', 'action', 'target_id',
+                'updated',
+                'callNo_match', 'vendor_callNo', 'target_callNo',
+                dups, 'mixed bibs', other]
         else:
             other = 'branches bibs'
-        dups = '{} dups'.format(library)
-
-        df = df[[
-            'vendor', 'vendor_id', 'action', 'target_sierraId',
-            'updated_by_vendor',
-            'callNo_match', 'vendor_callNo', 'target_callNo',
-            'inhouse_dups', 'mixed', 'other']]
-        df.columns = [
-            'vendor', 'vendor_id', 'action', 'target_id',
-            'updated',
-            'callNo_match', 'vendor_callNo', 'target_callNo',
-            dups, 'mixed bibs', other]
+            df = df[[
+                'vendor', 'vendor_id', 'action',
+                'vendor_callNo', 'inhouse_dups', 'mixed', 'other']]
+            df.columns = [
+                'vendor', 'vendor_id', 'action',
+                'vendor_callNo', dups, 'mixed bibs', other]
     else:
         # bpl stats
         df = df[[
