@@ -210,8 +210,11 @@ class PVR_NYPLReport(PVRReport):
 
     def _acquisition_workflow(self):
         # all actions = 'insert'!
+        n = len(self._matched)
         self.callNo_match = True
         self.action = 'insert'
+        if n > 0:
+            self.inhouse_dups = [meta.sierraId for meta in self._matched]
 
     def to_dict(self):
         return {
