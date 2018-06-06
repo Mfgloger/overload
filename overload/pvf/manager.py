@@ -41,6 +41,8 @@ def run_processing(
     files, system, library, agent, api_type, api_name,
         template, output_directory, progbar):
 
+    # agent argument is 3 letter code
+
     module_logger.info('PVR process launched.')
 
     # tokens and sessions are opened on this level
@@ -114,14 +116,14 @@ def run_processing(
                         'Unable to match vendor {} with data '
                         'in cat vendor index'.format(
                             vendor))
-            elif agent == 'sel':
-                # default matchpoints 020 than 001 for all
+            elif agent in ('sel', 'acq'):
                 if system == 'nypl':
                     query_matchpoints = dict()
                     with session_scope() as db_session:
                         try:
                             trec = retrieve_record(
-                                db_session, NYPLOrderTemplate, tName=template)
+                                db_session, NYPLOrderTemplate, tName=template,
+                                agent=agent)
 
                             if trec.match1st == 'sierra_id':
                                 query_matchpoints['primary'] = (
@@ -148,27 +150,20 @@ def run_processing(
                                 'Unable to find template {}.\n'
                                 'Please verify it exists.'.format(
                                     template))
+                    # vendor code
+                    vendor = get_vendor_from_nypl_template(template, agent)
+                    if vendor is None:
+                        # do not apply but keep for stats
+                        vendor = 'UNKNOWN'
                 else:
                     raise OverloadError(
                         'selection workflow for BPL not implemented yet')
 
-                # vendor code
-                vendor = get_vendor_from_template(template)
-                if vendor is None:
-                    # do not apply but keep for stats
-                    vendor == 'UNKNOWN'
-            else:
-                # acq workflows
-                module_logger.warning(
-                    'ACQ workflows for vendor identification '
-                    'has not been implemented yet.')
-                raise OverloadError(
-                    'Acquisition workflows not yet implemented.')
-
             if vendor == 'UNKNOWN':
                 module_logger.warning(
                     'Encounted unidentified vendor in record # : {} '
-                    'in file {}.'.format(n, file))
+                    'in file {} (system={}, library={}, agent={}).'.format(
+                        n, file, system, library, agent))
 
             # determine vendor bib meta
             meta_in = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
@@ -279,6 +274,7 @@ def run_processing(
             # save analysis to shelf
             module_logger.info('Analyzing query results and vendor bib')
             analysis = analysis.to_dict()
+            module_logger.info('Analysis results: {}'.format(analysis))
             stats[str(n)] = analysis
 
             # determine mrc files namehandles
@@ -489,6 +485,7 @@ def save_stats():
 
 
 def get_template_names(agent):
+    # agent arg must be 3 letter code
     with session_scope() as session:
         values = retrieve_values(
             session, NYPLOrderTemplate, 'tName', agent=agent)
@@ -524,8 +521,9 @@ def delete_template(otid):
         delete_record(session, NYPLOrderTemplate, otid=otid)
 
 
-def get_vendor_from_template(template):
+def get_vendor_from_nypl_template(template, agent):
+    # agent arg must be 3 letter code
     with session_scope() as session:
         record = retrieve_record(
-            session, NYPLOrderTemplate, tName=template)
+            session, NYPLOrderTemplate, tName=template, agent=agent)
         return record.vendor
