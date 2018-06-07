@@ -275,6 +275,8 @@ def run_processing(
             module_logger.info('Analyzing query results and vendor bib')
             analysis = analysis.to_dict()
             module_logger.info('Analysis results: {}'.format(analysis))
+
+            # save analysis to shelf for statistical purposes
             stats[str(n)] = analysis
 
             # determine mrc files namehandles
