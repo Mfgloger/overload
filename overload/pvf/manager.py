@@ -225,7 +225,7 @@ def run_processing(
                                     'Using tertiary marchpoint: {}.'.format(
                                         matchpoint))
 
-                                # run platform request for the tertiary 
+                                # run platform request for the tertiary
                                 # matchpoint
                                 try:
                                     result = run_platform_queries(
