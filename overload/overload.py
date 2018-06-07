@@ -528,7 +528,8 @@ class Reports(tk.Frame):
             # find out date values for PFV report
             with session_scope() as session:
                 records = retrieve_values(session, PVR_Batch, 'timestamp')
-                values = list(set([record.timestamp[:7] for record in records]))
+                values = list(
+                    set([record.timestamp[:7] for record in records]))
             self.userReportCbx['values'] = values
             self.userReportCbx['state'] = 'readonly'
 
