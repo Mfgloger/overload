@@ -8,6 +8,7 @@ import shutil
 import logging
 import os
 import time
+from datetime import date
 from pymarc.exceptions import RecordLengthInvalid
 from ftplib import error_perm
 
@@ -521,7 +522,24 @@ class TransferFiles(tk.Frame):
                     self.populate_remote_panel()
 
     def help():
-        pass
+        text = overload_help.open_help(
+            'pvr_ftp_help.txt')
+        help_popup = tk.Toplevel(background='white')
+        help_popup.iconbitmap('./icons/help.ico')
+        yscrollbar = tk.Scrollbar(help_popup, orient=tk.VERTICAL)
+        yscrollbar.grid(
+            row=0, column=1, rowspan=10, sticky='nsw', padx=2)
+        helpTxt = tk.Text(
+            help_popup,
+            background='white',
+            relief=tk.FLAT,
+            yscrollcommand=yscrollbar.set)
+        helpTxt.grid(
+            row=0, column=0, sticky='snew', padx=10, pady=10)
+        yscrollbar.config(command=helpTxt.yview)
+        for line in text:
+            helpTxt.insert(tk.END, line)
+        helpTxt['state'] = tk.DISABLED
 
     def set_host_details(self, *args):
         self.disconnect()
@@ -2439,23 +2457,36 @@ class ProcessVendorFiles(tk.Frame):
         self.reportBTxt['state'] = tk.DISABLED
 
     def download(self):
-        # ask for folder for output marc files
+        # suggested name
+        date_today = date.today().strftime('%y%m%d')
+        fh = 'pvr-report-{}.csv'.format(date_today)
+
         dir_opt = {}
-        dir_opt['parent'] = self
+        dir_opt['parent'] = self.topD
         dir_opt['title'] = 'Save As'
         dir_opt['initialdir'] = self.last_directory
+        dir_opt['initialfile'] = fh
 
         fh = tkFileDialog.asksaveasfilename(**dir_opt)
-        if fh != '':
-            if self.dups is None:
-                pass
-            else:
-                self.dups.to_csv(fh, index=False)
-            # if self.callNos is None:
-            #     pass
-            # else:
-            #     csv_callNos = ''
-            #     self.callNos.to_csv(csv_callNos, index=False)
+        try:
+            if fh != '':
+                if self.dups is not None:
+                    with open(fh, 'w') as file:
+                        file.write('Duplicate Report:\n')
+                    self.dups.to_csv(fh, index=False, mode='a')
+                if self.callNos is not None:
+                    with open(fh, 'a') as file:
+                        file.write('\nCall Number Report:\n')
+                    self.callNos.to_csv(fh, index=False, mode='a')
+            tkMessageBox.showinfo(
+                'Download', 'Report saved successfully.', parent=self.topD)
+        except IOError as e:
+            module_logger.error(
+                'Unable to download report. Error: {}'.format(e))
+            tkMessageBox.showerror(
+                'Save Error',
+                'Encountered error while saving the report. Aborting.',
+                parent=self.topD)
 
     def help(self):
         # add scrollbar
