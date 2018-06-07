@@ -2,14 +2,13 @@ GENERAL INFO
 -------------------------
 Templates provide a convinient method for adding data to pre-imported records. Templates are intented to replace Sierra post-import Rapid Update, when extra infomation is added to just loaded records.
 
-To create an order and bibliographic record template please provide elements that you wish to be added to processes records. Overload will map your data into appropriate MARC tags and subfields.
+To create an order and bibliographic record template please provide elements that you wish to be added to processed records. Overload will map your data into appropriate MARC tags and subfields.
 
-Please note, any populated element will be added to the record if it is not present or will overwrite existing one (!). Empty element will be omitted in mapping. If records being processed include already a particular data, to preserve it please make sure the specified field box is empty.
+Please note, any populated element will be added to the record if missing on vendor record or it will overwrite existing one (!). Empty element will be omitted in mapping. If records being processed include already a particular data, to preserve it please make sure the specified field box is empty.
 
 The 'bib material form' box allows to define Sierra's internal bib material format. Please note, this will only work for new records. If a record is determined to be a duplicate, the used load table will not allow bib material format to be set - orders will be attached to existing record without altering the original bib format.
 
-Sierra matchpoints specify what elements of a record should be used to query Sierra for matches. 
-Unless specifically instructed use following setup for 
+Sierra matchpoints specify what elements of a record should be used to query Sierra for matches. Unless specifically instructed use following setup:
 
 SELECTION:
 ----------
@@ -18,3 +17,4 @@ SELECTION:
 
 ACQUISITION:
 ------------
+-print materials: primary 020

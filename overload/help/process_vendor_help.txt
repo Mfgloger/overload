@@ -1,21 +1,14 @@
-Process Vendor File (PVF) is a tool for preprocessing MARC records received from
-vendors.
+Process Vendor File (PVF) is a tool for preprocessing MARC records received from vendors to ensure their proper import to our ILSes.
 --------------------------------------------------------------------------------
-PVF jobs:
-- preprocess NYPL & BPL MARC files
-- validate MARC records to adhere to MARC21 rules
-- validate vendor records against specification set for each vendor
-- display & record errors for statistical purposes
-- join multiple vendor MARC files into as few files as possible for Sierra
-  import
-- add constant data from templates
-- add bib numbers to vendor records that already are present in the database
-- split records into two separate files: NEW (new records) and DUP (duplicate 
-    records) so they can be loaded into Sierra using the most appropriate load
-    table
-- move processed vendor records into archive folder
-- display statistical information for the user of processed records during the
-    session
+PVF functionality:
+- searches Sierra to find out what records we already have
+- protects inhouse records from being overlaid by vendor bibs
+- in case of NYPL, ensures that records are matched to proper RL or BL libraries and prevents creation of mixed records
+- reports duplicate or call number errors in vendor bibs
+- validates MARC records to adhere to MARC21 rules
+- validates vendor records against specification set for each vendor (in works)
+- adds constant data from templates to incoming new records
+- archives all vendor data and its statistical breakdown
 
 PVF procedure:
 1. Select system (NYPL or BPL), destination (research or branches), and
@@ -24,6 +17,8 @@ PVF procedure:
    inactive - that is expected behaviour.
 2. Select target database and its accesing method (only databases and methods
    for selected system are displayed)
+   a) for NYPL select "NYPL PROD (Platofrm API)"
+   b) for BPL select "BPL PROD (Z3950)"
 3. For Selection and Acquisition departmetns optionally apply templates from
    a drop down menu. New templates or modifications to existing templates can
    be accessed via the small button with a wrench icon to the right of the
@@ -50,9 +45,8 @@ PVF procedure:
         please fix the records or unselect validation to continue
     b) PVR will query the specificed database for matching records
     e) If matches are found PVR will add Sierra bib number to a vendor record
-    f) Next, PVR will add any constant data if needed or specified
-    g) PVR will save records into NEW or DUP files based on results of
-       the query results and its analysis
+    f) Next, PVR will add any constant data if specified (via applied template or automatically in case of cataloging dept.)
+    g) PVR will save records into "YYYYMMDD.NEW-0.mrc"/"YYYYMMDD.DUP-0.mrc" (cataloging) or "[originalname].PRC-0.mrc" (selection and acquisition) files based on results of the query results and its analysis
     h) Successful operation should result in a pop-up window displaying
        a summary of the records batch
 9. Archive records (optional, but highly recommended!)
