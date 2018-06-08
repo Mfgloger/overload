@@ -109,7 +109,7 @@ class MainApplication(tk.Tk):
                         overload_logger.debug(
                             'Local and update directory versions are '
                             'not the same. Launching update procedure.')
-                        m = 'A new version ({}) of OpsUtils has been ' \
+                        m = 'A new version ({}) of Overload has been ' \
                             'found.\nWould you like to run the ' \
                             'update?.'.format(update_version)
                         if tkMessageBox.askyesno('Update Info', m):
