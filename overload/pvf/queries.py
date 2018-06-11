@@ -1,5 +1,9 @@
 # constructs Z3950/SierraAPI/PlatformAPI queries for particular resource
 import logging
+from pymarc import Record
+
+
+from connectors.sierra_z3950 import Z3950_QUALIFIERS, z3950_query
 
 
 module_logger = logging.getLogger('overload_console.pvr_queries')
@@ -110,7 +114,66 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
     elif request_dst == 'Sierra API':
         pass
     elif request_dst == 'Z3950':
-        pass
+        if matchpoint == '020':
+            module_logger.debug(
+                'Z3950 isbn endpoint request, '
+                'keywords (020): {}'.format(
+                    bibmeta.t020))
+            qualifier = Z3950_QUALIFIERS['isbn']
+            keywords = bibmeta.t020
+        elif matchpoint == '022':
+            module_logger.debug(
+                'Z3950 issn endpoint request, '
+                'keywords (022): {}'.format(
+                    bibmeta.t022))
+            qualifier = Z3950_QUALIFIERS['issn']
+            keywords = bibmeta.t022
+        elif matchpoint == 'sierra_id':
+            module_logger.debug(
+                'Z3950 bibId endpoint request, '
+                'keywords (sierra id): {}'.format(
+                    bibmeta.sierraId))
+            qualifier = Z3950_QUALIFIERS['bib number']
+            keywords = bibmeta.sierraId
+
+        # lists
+        status = 'nohit'
+        retrieved_bibs = []
+        if matchpoint in ('020', '022'):
+            for keyword in keywords:
+                success, results = z3950_query(
+                    target=session,
+                    keyword=keyword,
+                    qualifier=qualifier)
+                if success:
+                    for item in results:
+                        status = 'hit'
+                        retrieved_bibs.append(Record(data=item.data))
+                    module_logger.debug(
+                        'Z3950 response: {}'.format(status))
+                    return status, retrieved_bibs
+                else:
+                    module_logger.debug(
+                        'Z3950 response: {}'.format(status))
+                    return status, None
+        # strings
+        elif matchpoint == 'sierra_id':
+            success, results = z3950_query(
+                target=session,
+                keyword=keywords,
+                qualifier=qualifier)
+            if success:
+                for item in results:
+                    status = 'hit'
+                    retrieved_bibs.append(Record(data=item.data))
+                module_logger.debug(
+                    'Z3950 response: {}'.format(status))
+                return status, retrieved_bibs
+            else:
+                module_logger.debug(
+                    'Z3950 response: {}'.format(status))
+                return status, None
+
     else:
         raise ValueError(
             'Invalid query destionation provided: {}'.format(
