@@ -73,9 +73,15 @@ class TestParseSierraID(unittest.TestCase):
 
     def test_bib_number_parsing(self):
         self.assertIsNotNone(bibs.parse_sierra_id('.b119629811'))
+        self.assertEqual(
+            bibs.parse_sierra_id('.b119629811'),
+            '11962981')
 
     def test_order_number_parsing(self):
         self.assertIsNotNone(bibs.parse_sierra_id('.o16799069'))
+        self.assertEqual(
+            bibs.parse_sierra_id('.o16799069'),
+            '1679906')
 
     def test_wrong_id_number_parsing(self):
         self.assertIsNone(bibs.parse_sierra_id('349876789087'))

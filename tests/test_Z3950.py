@@ -37,5 +37,6 @@ class TestZ3950(unittest.TestCase):
                     qualifier='(1,7)')[0])
         user_data.close()
 
+
 if __name__ == "__main__":
     unittest.main()

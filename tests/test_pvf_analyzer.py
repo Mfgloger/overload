@@ -1419,8 +1419,8 @@ class TestPVR_NYPLReport(unittest.TestCase):
             t001='MWT001',
             t003=None,
             t005=None,
-            t020=[],
-            t022=['0439136350', '9780439136358'],
+            t020=['0439136350', '9780439136358'],
+            t022=[],
             t024=[],
             t028=[],
             t901=[],
@@ -1436,8 +1436,8 @@ class TestPVR_NYPLReport(unittest.TestCase):
             t005=datetime.strptime(
                 '20100731084140.9',
                 '%Y%m%d%H%M%S.%f'),
-            t020=[],
-            t022=['0439136350', '9780439136358'],
+            t020=['0439136350', '9780439136358'],
+            t022=[],
             t024=[],
             t028=[],
             t901=[],
@@ -1455,8 +1455,8 @@ class TestPVR_NYPLReport(unittest.TestCase):
                 '20100731084140.9',
                 '%Y%m%d%H%M%S.%f'),
             t020=[],
-            t022=['0439136350', '9780439136358'],
-            t024=[],
+            t022=[],
+            t024=['0439136350', '9780439136358'],
             t028=[],
             t901=[],
             t947=[],
@@ -1496,6 +1496,406 @@ class TestPVR_NYPLReport(unittest.TestCase):
         self.assertEqual(
             report.inhouse_dups, [])
 
+    def test_acq_scenario1_no_Sierra_matches(self):
+        attrs1 = dict(
+            t001='ypb001',
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='gobi',
+            dstLibrary='research')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+
+        report = PVR_NYPLReport(
+            'acq', vendor_meta, [])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertEqual(
+            report._matched, [])
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, [])
+        self.assertTrue(
+            report.callNo_match)
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_acq_scenario2_brief_RL_only(self):
+        attrs1 = dict(
+            t001='ypb001',
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='gobi',
+            dstLibrary='research')
+
+        attrs2 = dict(
+            t001='oc0001',
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=[],
+            catSource='vendor',
+            ownLibrary='research')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+
+        report = PVR_NYPLReport(
+            'acq', vendor_meta, [inhouse_meta1])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertEqual(
+            report._matched, [inhouse_meta1])
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, [])
+        self.assertTrue(
+            report.callNo_match)
+        self.assertEqual(
+            report.inhouse_dups, ['000001'])
+
+    def test_acq_scenario3_full_RL_and_full_BL(self):
+        attrs1 = dict(
+            t001='ypb001',
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='gobi',
+            dstLibrary='research')
+
+        attrs2 = dict(
+            t001='oc0001',
+            t003='OCoLC',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=['JRE-01234'],
+            catSource='inhouse',
+            ownLibrary='research')
+        attrs3 = dict(
+            t001='oc0001',
+            t003='OCoLC',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000002',
+            bCallNumber='FIC TEST',
+            rCallNumber=[],
+            catSource='inhouse',
+            ownLibrary='branches')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+        inhouse_meta2 = MagicMock()
+        inhouse_meta2.configure_mock(**attrs3)
+
+        report = PVR_NYPLReport(
+            'acq', vendor_meta, [inhouse_meta1, inhouse_meta2])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertEqual(
+            report._matched, [inhouse_meta1])
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, ['000002'])
+        self.assertTrue(
+            report.callNo_match)
+        self.assertEqual(
+            report.inhouse_dups, ['000001'])
+
+    def test_acq_scenario4_mixed_bib_only(self):
+        attrs1 = dict(
+            t001='ypb001',
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='gobi',
+            dstLibrary='research')
+
+        attrs2 = dict(
+            t001='oc0001',
+            t003='OCoLC',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=['ac'],
+            t947=[],
+            sierraId='000001',
+            bCallNumber='FIC TEST',
+            rCallNumber=['JFE-01234'],
+            catSource='inhouse',
+            ownLibrary='mixed')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+
+        report = PVR_NYPLReport(
+            'acq', vendor_meta, [inhouse_meta1])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertEqual(
+            report._matched, [])
+        self.assertEqual(
+            report.mixed, ['000001'])
+        self.assertEqual(
+            report.other, [])
+        self.assertTrue(
+            report.callNo_match)
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_acq_scenario5_BL_brief_only(self):
+        attrs1 = dict(
+            t001='ypb001',
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='gobi',
+            dstLibrary='research')
+
+        attrs2 = dict(
+            t001=None,
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=[],
+            catSource='vendor',
+            ownLibrary='branches')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+
+        report = PVR_NYPLReport(
+            'acq', vendor_meta, [inhouse_meta1])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertEqual(
+            report._matched, [])
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, ['000001'])
+        self.assertTrue(
+            report.callNo_match)
+        self.assertEqual(
+            report.inhouse_dups, [])
+
+    def test_acq_scenario6_approval_plan_full_RL_and_full_BL_bib(self):
+        attrs1 = dict(
+            t001='ypb001',
+            t003=None,
+            t005=None,
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=[],
+            vendor='casalini',
+            dstLibrary='research')
+
+        attrs2 = dict(
+            t001='oc0001',
+            t003='OCoLC',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=['JRE-01234'],
+            catSource='inhouse',
+            ownLibrary='research')
+        attrs3 = dict(
+            t001='oc0002',
+            t003='OCoLC',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000002',
+            bCallNumber='FIC TEST',
+            rCallNumber=[],
+            catSource='inhouse',
+            ownLibrary='branches')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+        inhouse_meta2 = MagicMock()
+        inhouse_meta2.configure_mock(**attrs3)
+
+        report = PVR_NYPLReport(
+            'acq', vendor_meta, [inhouse_meta1, inhouse_meta2])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertEqual(
+            report._matched, [inhouse_meta1])
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, ['000002'])
+        self.assertTrue(
+            report.callNo_match)
+        self.assertEqual(
+            report.inhouse_dups, ['000001'])
+
+    def test_acq_scenario7_full_RL_updated_bib(self):
+        attrs1 = dict(
+            t001='csb001',
+            t003='cs',
+            t005=datetime.strptime(
+                '20140731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId=None,
+            bCallNumber=None,
+            rCallNumber=['JER-01234'],
+            vendor='casalini',
+            dstLibrary='research')
+
+        attrs2 = dict(
+            t001='csb001',
+            t003='cs',
+            t005=datetime.strptime(
+                '20100731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[],
+            t947=[],
+            sierraId='000001',
+            bCallNumber=None,
+            rCallNumber=['JER-02345'],
+            catSource='vendor',
+            ownLibrary='research')
+
+        vendor_meta = MagicMock()
+        vendor_meta.configure_mock(**attrs1)
+        inhouse_meta1 = MagicMock()
+        inhouse_meta1.configure_mock(**attrs2)
+
+        report = PVR_NYPLReport(
+            'acq', vendor_meta, [inhouse_meta1])
+        self.assertEqual(
+            report.action, 'insert')
+        self.assertEqual(
+            report._matched, [inhouse_meta1])
+        self.assertEqual(
+            report.mixed, [])
+        self.assertEqual(
+            report.other, [])
+        self.assertTrue(
+            report.callNo_match)
+        self.assertEqual(
+            report.inhouse_dups, ['000001'])
 
 
 if __name__ == '__main__':
