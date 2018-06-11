@@ -3,6 +3,11 @@
 from PyZ3950 import zoom
 import logging
 
+from errors import OverloadError
+
+
+# create logger
+module_logger = logging.getLogger('overload_console.z3950')
 
 # query qualifiers use CCL specs
 # more on CCL @ www.indexdata.com/yaz/doc/tools.html#CCL
@@ -19,10 +24,6 @@ Z3950_QUALIFIERS = {
 
 def z3950_query(target=None, keyword=None, qualifier='(1,1016)',
                 query_type='CCL'):
-
-    # create logger
-    module_logger = logging.getLogger('overload_logger.Z3950COMM')
-
     if target is not None:
         host = target['host']
         database = target['database']
@@ -51,14 +52,14 @@ def z3950_query(target=None, keyword=None, qualifier='(1,1016)',
                 query_type, query_str))
             query = zoom.Query(query_type, query_str)
             res = conn.search(query)
-            module_logger.info('Response received')
+            module_logger.info('Response received.')
 
             return True, res
 
         except zoom.ConnectionError:
             msg = (host, port, database, syntax, user)
             module_logger.critical('unreachable host: %s:%s@%s-%s,%s' % msg)
-
-            return False, None
+            raise
     else:
-        module_logger.error('Z3950 target not selected!')
+        module_logger.error('Z3950 target not provided.')
+        raise ValueError('Z3950 target not provided.')
