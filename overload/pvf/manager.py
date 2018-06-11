@@ -12,12 +12,13 @@ from bibs.bibs import VendorBibMeta, read_marc21, \
     create_target_id_field, write_marc21, check_sierra_id_presence, \
     check_sierra_format_tag_presence, create_field_from_template, \
     db_template_to_960, db_template_to_961, db_template_to_949
-from bibs.crosswalks import platform2meta
+from bibs.crosswalks import platform2meta, bibs2meta
 from platform_comms import open_platform_session, platform_queries_manager
+from z3950_comms import z3950_query_manager
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import reports
-from analyzer import PVR_NYPLReport
-from setup_dirs import BATCH_STATS, BATCH_META
+from analyzer import PVR_NYPLReport, PVR_BPLReport
+from setup_dirs import BATCH_STATS, BATCH_META, USER_DATA
 from errors import OverloadError, APITokenExpiredError
 from datastore import session_scope, Vendor, \
     PVR_Batch, PVR_File, NYPLOrderTemplate
@@ -49,13 +50,18 @@ def run_processing(
 
     # determine destination API
     if api_type == 'Platform API':
-        module_logger.info('Connecting Platform API session.')
+        module_logger.info('Creating Platform API session.')
         try:
             session = open_platform_session(api_name)
         except OverloadError:
             raise
     elif api_type == 'Z3950':
-        module_logger.info('Connecting to Z3950')
+        module_logger.info('retrieving Z3950 settings for {}'.format(
+            api_name))
+        user_data = shelve.open(USER_DATA)
+        target = user_data['Z3950s'][api_name]
+        user_data.close()
+
     elif api_type == 'Sierra API':
         module_logger.info('Connecting to Sierra API')
 
@@ -254,11 +260,22 @@ def run_processing(
                     raise OverloadError('Platform server error.')
 
             # queries performed via Z3950
-            elif 'api_type' == 'Z3950s':
-                module_logger.error('Z3950 is not yet implemented.')
-                raise OverloadError('Z3950 is not yet implemented.')
+            elif api_type == 'Z3950':
+                meta_out = []
+                matchpoint = query_matchpoints['primary'][1]
+                module_logger.debug(
+                    'Using primary marchpoint: {}.'.format(
+                        matchpoint))
+                results = z3950_query_manager(
+                    target, meta_in, matchpoint)
+                if results[0] == 'hit':
+                    meta_out = bibs2meta(results[1])
+                module_logger.debug(
+                    'Retrieved bibs meta: {}'.format(
+                        meta_out))
+
             # queries performed via Sierra API
-            elif 'api_type' == 'Sierra API':
+            elif api_type == 'Sierra API':
                 module_logger.error('Sierra API is not implemented yet.')
                 raise OverloadError('Sierra API is not implemented yet.')
             else:
@@ -268,8 +285,7 @@ def run_processing(
             if system == 'nypl':
                 analysis = PVR_NYPLReport(agent, meta_in, meta_out)
             elif system == 'bpl':
-                # analysis = PVR_BPLReport(agent, meta_in, meta_out)
-                pass
+                analysis = PVR_BPLReport(agent, meta_in, meta_out)
 
             # save analysis to shelf
             module_logger.info('Analyzing query results and vendor bib')
