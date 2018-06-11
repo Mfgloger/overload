@@ -58,3 +58,12 @@ def platform2meta(results=None):
         meta = InhouseBibMeta(bib, sierraId=bid, locations=locations)
         bibs.append(meta)
     return bibs
+
+
+def bibs2meta(results=None):
+    bibs = []
+    if results:
+        for bib in results:
+            meta = InhouseBibMeta(bib)
+            bibs.append(meta)
+    return bibs
