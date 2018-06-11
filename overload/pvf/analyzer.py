@@ -82,9 +82,9 @@ class PVR_NYPLReport(PVRReport):
     """
     def __init__(self, agent, meta_vendor, meta_inhouse):
         PVRReport.__init__(self, meta_vendor, meta_inhouse)
-        self._matched = []
-        self.mixed = []
-        self.other = []
+        self._matched = []  # list of meta objs
+        self.mixed = []  # list of bib #
+        self.other = []  # list of bib #
 
         self._group_by_library()
 
@@ -246,4 +246,99 @@ class PVR_NYPLReport(PVRReport):
                 self.target_sierraId,
                 ','.join(self.mixed),
                 ','.join(self.other),
+                self.action)
+
+
+class PVR_BPLReport(PVRReport):
+    """
+    Creates a BPL analysis report of a vendor record in relation
+    to retrieved from the catalog existing matching bibs
+    """
+    def __init__(self, agent, meta_vendor, meta_inhouse):
+        PVRReport.__init__(self, meta_vendor, meta_inhouse)
+        self._matched = meta_inhouse
+
+        if agent == 'cat':
+            self._cataloging_workflow()
+
+    def _cataloging_workflow(self):
+        # default action = 'insert'
+        n = len(self._matched)
+        if n == 0:
+            # no matches found
+            self.callNo_match = True
+        elif n > 0:
+            c = 0
+            for meta in self._matched:
+                c += 1
+                if meta.bCallNumber is not None:
+                    # full record
+                    # check if call number matches
+                    call_match = self._determine_callNo_match(meta)
+                    if call_match:
+                        self.callNo_match = True
+                        self.target_sierraId = meta.sierraId
+                        self.target_callNo = meta.bCallNumber
+                        if meta.catSource == 'inhouse':
+                            self.action = 'attach'
+                        else:
+                            updated = self._compare_update_timestamp(meta)
+                            if updated:
+                                self.updated_by_vendor = True
+                                self.action = 'overlay'
+                            else:
+                                self.action = 'attach'
+                        # do not check any further
+                        break
+                    else:
+                        # no more records to check
+                        if c == n:
+                            self.target_sierraId = meta.sierraId
+                            self.target_callNo = meta.bCallNumber
+                            if meta.catSource == 'inhouse':
+                                self.action = 'attach'
+                            else:
+                                updated = self._compare_update_timestamp(
+                                    meta)
+                                if updated:
+                                    self.updated_by_vendor = True
+                                    self.action = 'overlay'
+                                else:
+                                    self.action = 'attach'
+                else:
+                    # brief record matching dstLibrary
+                    # overlay the earliest record
+                    if c == n:
+                        # no other bibs to consider
+                        self.callNo_match = True
+                        self.target_sierraId = meta.sierraId
+                        self.action = 'overlay'
+        if n > 1:
+            self.inhouse_dups = [meta.sierraId for meta in self._matched]
+
+    def to_dict(self):
+        return {
+            'vendor_id': self.vendor_id,
+            'vendor': self.vendor,
+            'updated_by_vendor': self.updated_by_vendor,
+            'callNo_match': self.callNo_match,
+            'target_callNo': self.target_callNo,
+            'vendor_callNo': self.vendor_callNo,
+            'inhouse_dups': self.inhouse_dups,
+            'target_sierraId': self.target_sierraId,
+            'action': self.action}
+
+    def __repr__(self):
+        return "<PVF Report(vendor_id={}, vendor={}, " \
+            "callNo_match={}, target_callNo={}, vendor_callNo={}, " \
+            "updated_by_vendor={}, " \
+            "inhouse_dups={}, target_sierraId={}, action={})>".format(
+                self.vendor_id,
+                self.vendor,
+                self.callNo_match,
+                self.target_callNo,
+                self.vendor_callNo,
+                self.updated_by_vendor,
+                ','.join(self.inhouse_dups),
+                self.target_sierraId,
                 self.action)
