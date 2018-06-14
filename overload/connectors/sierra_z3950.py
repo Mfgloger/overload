@@ -1,13 +1,7 @@
 # handles Z3950 requests
 
 from PyZ3950 import zoom
-import logging
 
-from errors import OverloadError
-
-
-# create logger
-module_logger = logging.getLogger('overload_console.z3950')
 
 # query qualifiers use CCL specs
 # more on CCL @ www.indexdata.com/yaz/doc/tools.html#CCL
@@ -31,10 +25,6 @@ def z3950_query(target=None, keyword=None, qualifier='(1,1016)',
         syntax = target['syntax']
         user = target['user']
         password = target['password']
-        module_logger.debug(
-            'connection params: host={};db={};'
-            'port={};syntax={};user={};pass={}'.format(
-                host, database, port, syntax, user, password))
 
         try:
             if user is not None \
@@ -46,20 +36,14 @@ def z3950_query(target=None, keyword=None, qualifier='(1,1016)',
                 conn = zoom.Connection(host, port)
 
             conn.databaseName = database
-            # conn.preferredRecordSyntax = syntax
+            conn.preferredRecordSyntax = syntax
             query_str = qualifier + '=' + keyword
-            module_logger.debug('query type: {}, query keywords: {}'.format(
-                query_type, query_str))
             query = zoom.Query(query_type, query_str)
             res = conn.search(query)
-            module_logger.info('Response received.')
 
             return True, res
 
         except zoom.ConnectionError:
-            msg = (host, port, database, syntax, user)
-            module_logger.critical('unreachable host: %s:%s@%s-%s,%s' % msg)
             raise
     else:
-        module_logger.error('Z3950 target not provided.')
         raise ValueError('Z3950 target not provided.')
