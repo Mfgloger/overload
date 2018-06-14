@@ -1,10 +1,8 @@
 import logging
 
 
-from connectors.sierra_z3950 import Z3950_QUALIFIERS, z3950_query
 from pvf import queries
 from errors import OverloadError
-from setup_dirs import USER_DATA
 from PyZ3950.zoom import ConnectionError
 
 
@@ -29,7 +27,8 @@ def z3950_query_manager(target, meta, matchpoint):
         return result
     except ConnectionError:
         raise OverloadError(
-            'Connection error. Unable to reach Z3950 host.')
+            'Connection error. Unable to reach Z3950 host: {}.'.format(
+                target))
     except ValueError:
         raise OverloadError(
             'Z3950 target not provided')
