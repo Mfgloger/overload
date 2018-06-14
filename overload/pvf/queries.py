@@ -116,48 +116,49 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
     elif request_dst == 'Z3950':
         if matchpoint == '020':
             module_logger.debug(
-                'Z3950 isbn endpoint request, '
-                'keywords (020): {}'.format(
+                'Vendor query keywords (020): {}'.format(
                     bibmeta.t020))
             qualifier = Z3950_QUALIFIERS['isbn']
             keywords = bibmeta.t020
         elif matchpoint == '022':
             module_logger.debug(
-                'Z3950 issn endpoint request, '
-                'keywords (022): {}'.format(
+                'Vendor query keywords (022): {}'.format(
                     bibmeta.t022))
             qualifier = Z3950_QUALIFIERS['issn']
             keywords = bibmeta.t022
         elif matchpoint == 'sierra_id':
             module_logger.debug(
-                'Z3950 bibId endpoint request, '
-                'keywords (sierra id): {}'.format(
+                'Vendor query keywords (sierra id): {}'.format(
                     bibmeta.sierraId))
             qualifier = Z3950_QUALIFIERS['bib number']
             keywords = bibmeta.sierraId
 
         # lists
-        status = 'nohit'
         retrieved_bibs = []
         if matchpoint in ('020', '022'):
             for keyword in keywords:
+                module_logger.debug(
+                    'Z3950 query params: keyword={}, '
+                    'qualifier={}'.format(
+                        keyword, qualifier))
                 success, results = z3950_query(
                     target=session,
                     keyword=keyword,
                     qualifier=qualifier)
                 if success:
                     for item in results:
-                        status = 'hit'
                         retrieved_bibs.append(Record(data=item.data))
                     module_logger.debug(
-                        'Z3950 response: {}'.format(status))
-                    return status, retrieved_bibs
+                        'Z3950 response: hit')
                 else:
                     module_logger.debug(
-                        'Z3950 response: {}'.format(status))
-                    return status, None
+                        'Z3950 response: nohit')
         # strings
         elif matchpoint == 'sierra_id':
+            module_logger.debug(
+                'Z3950 query params: keyword={}, '
+                'qualifier={}'.format(
+                    keyword, qualifier))
             success, results = z3950_query(
                 target=session,
                 keyword=keywords,
@@ -168,11 +169,17 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
                     retrieved_bibs.append(Record(data=item.data))
                 module_logger.debug(
                     'Z3950 response: {}'.format(status))
-                return status, retrieved_bibs
-            else:
-                module_logger.debug(
-                    'Z3950 response: {}'.format(status))
-                return status, None
+
+        if len(retrieved_bibs) == 0:
+            status = 'nohit'
+            response = None
+        else:
+            status = 'hit'
+            response = retrieved_bibs
+        module_logger.debug(
+            'Z3950 results: {}, number of matches: {}'.format(
+                status, len(retrieved_bibs)))
+        return status, response
 
     else:
         raise ValueError(

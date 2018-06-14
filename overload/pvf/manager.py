@@ -266,10 +266,10 @@ def run_processing(
                 module_logger.debug(
                     'Using primary marchpoint: {}.'.format(
                         matchpoint))
-                results = z3950_query_manager(
+                status, bibs = z3950_query_manager(
                     target, meta_in, matchpoint)
-                if results[0] == 'hit':
-                    meta_out = bibs2meta(results[1])
+                if status == 'hit':
+                    meta_out = bibs2meta(bibs)
                 module_logger.debug(
                     'Retrieved bibs meta: {}'.format(
                         meta_out))
