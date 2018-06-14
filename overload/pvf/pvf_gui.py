@@ -2541,7 +2541,7 @@ class ProcessVendorFiles(tk.Frame):
                             conn + ' (' + params['method'] + ')')
 
             # disable unwanted widgets
-            self.library.set('')
+            self.library.set('branches')
             self.libraryCbx['state'] = 'disabled'
             self.agent.set('cataloging')
             self.agentCbx['state'] = 'disabled'
