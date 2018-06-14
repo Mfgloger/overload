@@ -61,9 +61,14 @@ def platform2meta(results=None):
 
 
 def bibs2meta(results=None):
+    # results are deduped to accomodate two separate Z3950
+    # searches for 10 and 13 digit ISBNs
     bibs = []
+    bibs_ids = set()
     if results:
         for bib in results:
             meta = InhouseBibMeta(bib)
-            bibs.append(meta)
+            if meta.sierraId not in bibs_ids:
+                bibs_ids.add(meta.sierraId)
+                bibs.append(meta)
     return bibs
