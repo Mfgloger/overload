@@ -132,7 +132,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 		</vendor>
 		<vendor name = "BT SERIES">
-			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T SERIES</vendor_tag>
+			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T SERIES</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T SERIES</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 			<bib_template>
@@ -145,10 +145,22 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			</bib_template>
 		</vendor>
 		<vendor name = "BT ROMANCE">
-			<vendor_tag type = "standard" tag = "037a" operator = "main">B&amp;T ROMANCE</vendor_tag>
+			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T ROMANCE</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T ROMANCE</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
-			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
+		<vendor name = "BT URBAN">
+			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T URBAN</vendor_tag>
+			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T URBAN</vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
