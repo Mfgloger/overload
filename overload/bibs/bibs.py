@@ -623,7 +623,8 @@ class InhouseBibMeta(BibMeta):
 
     def __init__(self, bib, sierraId=None, locations=[]):
         BibMeta.__init__(self, bib)
-        self.sierraId = sierraId
+        if sierraId is not None:
+            self.sierraId = sierraId
         self.catSource = 'vendor'
         self.ownLibrary = None
 
@@ -672,7 +673,7 @@ class InhouseBibMeta(BibMeta):
             self.ownLibrary = 'research'
 
     def __repr__(self):
-        return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
+        return "<InhouseBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
             "024:{}, 028:{}, 901:{}, 947:{}, " \
             "sierraId:{}, bCallNumber:{}, rCallNumber:{}, " \
             "catSource:{}, ownLibrary:{})>".format(
