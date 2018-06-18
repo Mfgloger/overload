@@ -5,7 +5,7 @@
 <!--########################################-->
 <!--pick the system ("nypl" or "bpl")-->
 <!--then enter vendor name-->
-<!--enter vendor_tag attributes: type ("standard" or "control_field" (001-009)), tag (tagsubfield, ex: 901a), and operator ("main" - multiple "main" match if all of them match, or "alternative" - multiple "alternative conditions match if all of them match")-->
+<!--enter vendor_tag attributes: type ("standard" or "control_field" (001-009)), tag (tag subfield, ex: 901a), and operator ("main" - multiple "main" match if all of them match, or "alternative" - multiple "alternative conditions match if one of them match")-->
 <!-- enter tag_value to be match for identificaiton-->
 <!--provide query_tag attribute type ("primary", "secondary") and marc tag number to be used for the query-->
 <!--########################################-->
@@ -167,6 +167,74 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
+		<vendor name = "BT LEASE">
+			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T LEASE</vendor_tag>
+			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T LEASE</vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
+		<vendor name = "BT PBP">
+			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T PBP</vendor_tag>
+			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T PBP</vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
+		<vendor name = "Midwest DVD">
+			<vendor_tag type = "standard" tag = "037b" operator = "main">Midwest</vendor_tag>
+			<vendor_tag type = "standard" tag = "099a" operator = "main">DVD</vendor_tag>
+			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=h;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
+		<vendor name = "Midwest Audio">
+			<vendor_tag type = "standard" tag = "037b" operator = "main">Midwest</vendor_tag>
+			<vendor_tag type = "standard" tag = "099a" operator = "main">AUDIO</vendor_tag>
+			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=i;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
+		<vendor name = "Midwest CD">
+			<vendor_tag type = "standard" tag = "037b" operator = "main">Midwest</vendor_tag>
+			<vendor_tag type = "standard" tag = "099a" operator = "main">CD</vendor_tag>
+			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=j;</subfield>
 				</field>
 			</bib_template>
 		</vendor>
