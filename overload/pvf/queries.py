@@ -148,27 +148,24 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
                 if success:
                     for item in results:
                         retrieved_bibs.append(Record(data=item.data))
-                    module_logger.debug(
-                        'Z3950 response: hit')
-                else:
-                    module_logger.debug(
-                        'Z3950 response: nohit')
         # strings
         elif matchpoint == 'sierra_id':
-            module_logger.debug(
-                'Z3950 query params: keyword={}, '
-                'qualifier={}'.format(
-                    keyword, qualifier))
-            success, results = z3950_query(
-                target=session,
-                keyword=keywords,
-                qualifier=qualifier)
-            if success:
-                for item in results:
-                    status = 'hit'
-                    retrieved_bibs.append(Record(data=item.data))
+            if keywords and len(keywords) == 8:
                 module_logger.debug(
-                    'Z3950 response: {}'.format(status))
+                    'Z3950 query params: keyword={}, '
+                    'qualifier={}'.format(
+                        keywords, qualifier))
+                success, results = z3950_query(
+                    target=session,
+                    keyword=keywords,
+                    qualifier=qualifier)
+                if success:
+                    for item in results:
+                        status = 'hit'
+                        retrieved_bibs.append(Record(data=item.data))
+            else:
+                module_logger.debug(
+                    'Z3950 query params insufficient. Skipping.')
 
         if len(retrieved_bibs) == 0:
             status = 'nohit'
