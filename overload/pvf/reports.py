@@ -2,10 +2,15 @@
 
 import pandas as pd
 import shelve
+import os
 from sqlalchemy import func
+import logging
 
 
 from datastore import PVR_Batch, PVR_File, Vendor, session_scope
+
+
+module_logger = logging.getLogger('overload_console.reports')
 
 
 def generate_processing_summary(batch_meta):
@@ -20,10 +25,12 @@ def generate_processing_summary(batch_meta):
     """
     meta = shelve.open(batch_meta)
     summary = []
+    system = meta['system'].upper()
+    library = meta['library']
     summary.append(
         'system: {}, library: {}, user: {}\n'.format(
-            meta['system'].upper(),
-            meta['library'],
+            system,
+            library,
             meta['agent'].upper()))
     summary.append(
         'total processed files: {}  '.format(
@@ -34,15 +41,17 @@ def generate_processing_summary(batch_meta):
     summary.append(
         'file names: {}\n'.format(
             ','.join(
-                name.split('/')[-1] for name in meta['file_names'])))
+                os.path.basename(name) for name in meta['file_names'])))
     summary.append(
         'processing time: {}\n'.format(
             meta['processing_time']))
     meta.close()
-    return summary
+    module_logger.debug('Processing summary: {}'.format(
+        summary))
+    return system, library, summary
 
 
-def shelf2dataframe(batch_stats):
+def shelf2dataframe(batch_stats, system):
     stats = shelve.open(batch_stats)
     frames = []
     list2str = ['inhouse_dups', 'mixed', 'other']
@@ -50,13 +59,13 @@ def shelf2dataframe(batch_stats):
         if value['target_sierraId'] is not None:
             value['target_sierraId'] = 'b{}a'.format(
                 value['target_sierraId'])
-
         for cat in list2str:
-            if value[cat] == []:
-                value[cat] = None
-            else:
-                value[cat] = ','.join(
-                    ['b{}a'.format(bid) for bid in value[cat]])
+            if cat in value:
+                if value[cat] == []:
+                    value[cat] = None
+                else:
+                    value[cat] = ','.join(
+                        ['b{}a'.format(bid) for bid in value[cat]])
         frames.append(pd.DataFrame(value, index=[int(key)]))
     df = pd.concat(frames)
     stats.close()
@@ -145,7 +154,6 @@ def report_dups(system, library, df):
         df_rep = df_rep[
             df_rep['inhouse_dups'].notnull()].sort_index()
         df_rep.columns = ['vendor', 'vendor_id', 'target_id', 'duplicate bibs']
-
     return df_rep
 
 

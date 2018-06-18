@@ -1477,7 +1477,9 @@ class ProcessVendorFiles(tk.Frame):
         self.files = None
         self.system = tk.StringVar()
         self.system.trace('w', self.system_observer)
+        self.last_used_sys = None
         self.library = tk.StringVar()
+        self.last_used_lib = None
         self.agent = tk.StringVar()
         self.agent.trace('w', self.agent_observer)
         self.template = tk.StringVar()
@@ -2341,7 +2343,9 @@ class ProcessVendorFiles(tk.Frame):
 
         # generate summary
         try:
-            summary = reports.generate_processing_summary(BATCH_META)
+            self.last_used_sys, self.last_used_lib, summary = \
+                reports.generate_processing_summary(
+                    BATCH_META)
             for line in summary:
                 self.reportDTxt.insert(tk.END, line)
         except KeyError:
@@ -2352,8 +2356,8 @@ class ProcessVendorFiles(tk.Frame):
         try:
             module_logger.info(
                 'Mapping BATCH_STATS to dataframe for general '
-                'stats report.')
-            df = reports.shelf2dataframe(BATCH_STATS)
+                'stats report for {}.'.format(self.last_used_sys))
+            df = reports.shelf2dataframe(BATCH_STATS, self.last_used_sys)
         except KeyError as e:
             module_logger.error(
                 'Unable to map BATCH_STATS to dataframe. '
@@ -2368,11 +2372,11 @@ class ProcessVendorFiles(tk.Frame):
         # generate vendor stats
         module_logger.info(
             'Generating vendor breakdown section for '
-            '{}.'.format(self.system.get()))
+            '{}.'.format(self.last_used_sys))
         self.reportDTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
         if df is not None:
             if df.size > 0:
-                stats = reports.create_stats(self.system.get(), df)
+                stats = reports.create_stats(self.last_used_sys, df)
                 self.reportDTxt.insert(tk.END, stats.to_string())
             elif df.size == 0:
                 self.reportDTxt.insert(tk.END, 'Nothing to report.')
@@ -2384,11 +2388,11 @@ class ProcessVendorFiles(tk.Frame):
         # report duplicates
         module_logger.info(
             'Generating duplicate reports section for {}-{}.'.format(
-                self.system.get(), self.library.get()))
+                self.last_used_sys, self.last_used_lib))
         self.reportDTxt.insert(tk.END, 'Duplicates report:\n', 'blue')
         if df is not None:
             self.dups = reports.report_dups(
-                self.system.get(), self.library.get(), df)
+                self.last_used_sys, self.last_used_lib, df)
             if self.dups.size == 0:
                 self.reportDTxt.insert(tk.END, 'All clear\n')
             else:
@@ -2403,7 +2407,7 @@ class ProcessVendorFiles(tk.Frame):
         # report callNo issues
         module_logger.info(
             'Generating call number issues section.')
-        if self.library.get() != 'research':
+        if self.last_used_lib != 'research':
             self.reportDTxt.insert(tk.END, 'Call number issues:\n', 'blue')
 
             if df is not None:
@@ -2431,7 +2435,7 @@ class ProcessVendorFiles(tk.Frame):
 
         # create dataframe to be tabulated
         try:
-            df = reports.shelf2dataframe(BATCH_STATS)
+            df = reports.shelf2dataframe(BATCH_STATS, self.last_used_sys)
         except KeyError as e:
             module_logger.error(
                 'Unable to map BATCH_STATS to dataframe. '
@@ -2445,10 +2449,10 @@ class ProcessVendorFiles(tk.Frame):
 
         module_logger.info(
             'Generating detailed report for {}-{}'.format(
-                self.system.get(), self.library.get()))
+                self.last_used_sys, self.last_used_lib))
         if df is not None:
             df = reports.report_details(
-                self.system.get(), self.library.get(), df)
+                self.last_used_sys, self.last_used_lib, df)
             self.reportBTxt.insert(tk.END, df.to_string())
         else:
             self.reportBTxt.insert(tk.END, 'DETAILED REPORT PARSING ERROR')
@@ -2459,7 +2463,8 @@ class ProcessVendorFiles(tk.Frame):
     def download(self):
         # suggested name
         date_today = date.today().strftime('%y%m%d')
-        fh = 'pvr-report-{}.csv'.format(date_today)
+        fh = '{}-{}-pvr-report-{}.csv'.format(
+            self.last_used_sys, self.last_used_lib, date_today)
 
         dir_opt = {}
         dir_opt['parent'] = self.topD
