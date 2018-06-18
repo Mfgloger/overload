@@ -2263,7 +2263,7 @@ class ProcessVendorFiles(tk.Frame):
             text='download',
             width=12,
             cursor='hand2',
-            command=self.download).grid(
+            command=self.download_errors).grid(
             row=12, column=2, sticky='nw', padx=5)
 
         ttk.Button(
@@ -2312,6 +2312,14 @@ class ProcessVendorFiles(tk.Frame):
 
         self.yscrollbarB.config(command=self.reportBTxt.yview)
         self.xscrollbarB.config(command=self.reportBTxt.xview)
+
+        ttk.Button(
+            self.topB,
+            text='download',
+            width=12,
+            cursor='hand2',
+            command=self.download_details).grid(
+            row=12, column=5, sticky='nw', padx=5)
 
         ttk.Button(
             self.topB,
@@ -2451,19 +2459,20 @@ class ProcessVendorFiles(tk.Frame):
             'Generating detailed report for {}-{}'.format(
                 self.last_used_sys, self.last_used_lib))
         if df is not None:
-            df = reports.report_details(
+            self.df_details = reports.report_details(
                 self.last_used_sys, self.last_used_lib, df)
-            self.reportBTxt.insert(tk.END, df.to_string())
+            self.reportBTxt.insert(tk.END, self.df_details.to_string())
         else:
+            self.df_details = None
             self.reportBTxt.insert(tk.END, 'DETAILED REPORT PARSING ERROR')
 
         # prevent edits
         self.reportBTxt['state'] = tk.DISABLED
 
-    def download(self):
+    def download_errors(self):
         # suggested name
         date_today = date.today().strftime('%y%m%d')
-        fh = '{}-{}-pvr-report-{}.csv'.format(
+        fh = '{}-{}-pvr-errors-{}.csv'.format(
             self.last_used_sys, self.last_used_lib, date_today)
 
         dir_opt = {}
@@ -2492,6 +2501,33 @@ class ProcessVendorFiles(tk.Frame):
                 'Save Error',
                 'Encountered error while saving the report. Aborting.',
                 parent=self.topD)
+
+    def download_details(self):
+        # suggested name
+        date_today = date.today().strftime('%y%m%d')
+        fh = '{}-{}-pvr-detailed-{}.csv'.format(
+            self.last_used_sys, self.last_used_lib, date_today)
+
+        dir_opt = {}
+        dir_opt['parent'] = self.topB
+        dir_opt['title'] = 'Save As'
+        dir_opt['initialdir'] = self.last_directory
+        dir_opt['initialfile'] = fh
+
+        fh = tkFileDialog.asksaveasfilename(**dir_opt)
+        try:
+            if fh != '' and self.df_details is not None:
+                with open(fh, 'w') as file:
+                    self.df_details.to_csv(file, index=False, mode='a')
+                tkMessageBox.showinfo(
+                    'Download', 'Report saved successfully.', parent=self.topB)
+        except IOError as e:
+            module_logger.error(
+                'Unable to download report. Error: {}'.format(e))
+            tkMessageBox.showerror(
+                'Save Error',
+                'Encountered error while saving the report. Aborting.',
+                parent=self.topB)
 
     def help(self):
         # add scrollbar
