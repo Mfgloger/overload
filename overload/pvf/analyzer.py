@@ -267,6 +267,12 @@ class PVR_BPLReport(PVRReport):
         if n == 0:
             # no matches found
             self.callNo_match = True
+
+            # special vendors with separate workflow
+            spec_vendors = [
+                'Midwest DVD', 'Midwest Audio', 'Midwest CD']
+            if self.vendor in spec_vendors:
+                self.action = 'attach'
         elif n > 0:
             c = 0
             for meta in self._matched:
