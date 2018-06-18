@@ -270,6 +270,16 @@ def run_processing(
                     target, meta_in, matchpoint)
                 if status == 'hit':
                     meta_out = bibs2meta(bibs)
+                elif status == 'nohit' and \
+                        'secondary' in query_matchpoints:
+                    matchpoint = query_matchpoints['secondary'][1]
+                    module_logger.debug(
+                        'Using secondary matchpoint: {}'.format(
+                            matchpoint))
+                    status, bibs = z3950_query_manager(
+                        target, meta_in, matchpoint)
+                    if status == 'hit':
+                        meta_out = bibs2meta(bibs)
                 module_logger.debug(
                     'Retrieved bibs meta: {}'.format(
                         meta_out))
