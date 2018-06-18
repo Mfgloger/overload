@@ -8,9 +8,11 @@ import datetime
 from setup_dirs import USER_DATA, CVAL_REP, MVAL_REP
 
 
+module_logger = logging.getLogger('overload_console.marcedit')
+
+
 def get_engine():
 
-    module_logger = logging.getLogger('main.marcedit')
     module_logger.debug('Getting MARCEdit engine & MARC21 rules info')
 
     user_data = shelve.open(USER_DATA)
@@ -58,8 +60,6 @@ def get_engine():
 def validate(cmarcedit, MARCfile, report, rules_fh, overwrite):
 
     """uses MARCEdit engine to validate records in a file"""
-
-    module_logger = logging.getLogger('main.marcedit')
 
     args = [
         cmarcedit,
