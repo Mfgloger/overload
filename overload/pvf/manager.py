@@ -361,8 +361,10 @@ def run_processing(
                         vendor, templates))
                 for template in templates:
                     # skip if present or always add
-
-                    if template['option'] == 'skip':
+                    if template['tag'] == '949' and \
+                            analysis['action'] == 'attach':
+                        pass
+                    elif template['option'] == 'skip':
                         if template['tag'] not in bib:
                             module_logger.debug(
                                 'Field {} not present, adding '
@@ -461,7 +463,7 @@ def save_stats():
     batch.close()
 
     try:
-        df = reports.shelf2dataframe(BATCH_STATS)
+        df = reports.shelf2dataframe(BATCH_STATS, system)
     except ValueError:
         df = None
 
