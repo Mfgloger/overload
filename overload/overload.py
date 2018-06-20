@@ -23,7 +23,8 @@ from logging_setup import LOGGING
 from pvf.pvf_gui import ProcessVendorFiles
 from datastore import session_scope, PVR_Batch
 from db_worker import retrieve_values
-from pvf.reports import cumulative_nypl_stats
+from pvf.reports import cumulative_nypl_stats, cumulative_bpl_stats, \
+    cumulative_vendor_stats
 
 
 class MainApplication(tk.Tk):
@@ -488,29 +489,77 @@ class Reports(tk.Frame):
             nypl_branch_stats = nypl_stats[0]
             nypl_research_stats = nypl_stats[1]
             self.reportTxt.insert(
+                tk.END, 'Report for period from {} to {}\n'.format(
+                    start_date, end_date))
+            self.reportTxt.insert(
                 tk.END, 'NYPL\n', 'red')
             self.reportTxt.insert(
                 tk.END, 'Branches vendor breakdown:\n', 'blue')
-            self.reportTxt.insert(tk.END, nypl_branch_stats.to_string() + '\n')
+            self.reportTxt.insert(
+                tk.END, nypl_branch_stats.to_string(index=False) + '\n')
             self.reportTxt.insert(
                 tk.END, 'Research vendor breakdown:\n', 'blue')
             self.reportTxt.insert(
-                tk.END, nypl_research_stats.to_string() + '\n')
+                tk.END, nypl_research_stats.to_string(index=False) + '\n')
             self.reportTxt.insert(tk.END, '\n' + ('-' * 60) + '\n')
             self.reportTxt.insert(
                 tk.END, 'BPL\n', 'red')
             self.reportTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
+            bpl_stats = cumulative_bpl_stats(start_date, end_date)
+            self.reportTxt.insert(
+                tk.END, bpl_stats.to_string(index=False) + '\n')
 
     def pvf_vendor_report(self):
-        m = 'Functionality not ready yet. Vendor reports are being developed'
-        tkMessageBox.showinfo('Under construction...', m)
+        overload_logger.info(
+            'Displaying vendor reports.')
+        start_month = self.pvf_ven_dateA.get()
+        end_month = self.pvf_ven_dateB.get()
+        if start_month == '' or end_month == '':
+            m = 'Please select start and end month\nto display vendor stats.'
+            tkMessageBox.showwarning('Input Error', m)
+        else:
+            # summon the widget
+            self.report_display()
+
+            # parse start and end dates
+            start_date = datetime.datetime.strptime(
+                start_month, "%Y-%m").date()
+            end_date = datetime.datetime.strptime(
+                end_month, "%Y-%m").date()
+            days_in_month = calendar.monthrange(
+                end_date.year, end_date.month)[1]
+            end_date = end_date + datetime.timedelta(days=days_in_month)
+
+            # get dataframes for specified time period
+            nbdf, nrdf, bdf = cumulative_vendor_stats(start_date, end_date)
+
+            # enter stats into widget
+            self.reportTxt.insert(
+                tk.END, 'Report for period from {} to {}\n'.format(
+                    start_date, end_date))
+            self.reportTxt.insert(
+                tk.END, 'NYPL\n', 'red')
+            self.reportTxt.insert(
+                tk.END, 'Branches vendor breakdown:\n', 'blue')
+            self.reportTxt.insert(
+                tk.END, nbdf.to_string(index=False) + '\n')
+            self.reportTxt.insert(
+                tk.END, 'Research vendor breakdown:\n', 'blue')
+            self.reportTxt.insert(
+                tk.END, nrdf.to_string(index=False) + '\n')
+            self.reportTxt.insert(tk.END, '\n' + ('-' * 60) + '\n')
+            self.reportTxt.insert(
+                tk.END, 'BPL\n', 'red')
+            self.reportTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
+            self.reportTxt.insert(
+                tk.END, bdf.to_string(index=False) + '\n')
 
     def pvf_error_report(self):
         m = 'Functionality not ready yet. Error reports are being developed'
         tkMessageBox.showinfo('Under construction...', m)
 
     def help(self):
-        m = 'help not availble yet...'
+        m = 'help not available yet...'
         tkMessageBox.showinfo('Under construction...', m)
 
     def reset(self):
@@ -532,6 +581,10 @@ class Reports(tk.Frame):
                     set([record.timestamp[:7] for record in records]))
             self.userReportCbx['values'] = values
             self.userReportCbx['state'] = 'readonly'
+            self.ven_dateAReportCbx['values'] = values
+            self.ven_dateAReportCbx['state'] = 'readonly'
+            self.ven_dateBReportCbx['values'] = values
+            self.ven_dateBReportCbx['state'] = 'readonly'
 
 
 class Settings(tk.Frame):

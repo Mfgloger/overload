@@ -242,3 +242,81 @@ def cumulative_nypl_stats(start_date, end_date):
         'vendor', 'insert', 'attach',
         'overlay', 'mixed dups', 'branches dups', 'total loaded']
     return (bdf, rdf)
+
+
+def cumulative_bpl_stats(start_date, end_date):
+    """
+    Produces dataframe with cumulative statistics of
+    processed BPL records
+    """
+
+    with session_scope() as session:
+        query = session.query(
+            PVR_Batch.system,
+            func.sum(PVR_File.new),
+            func.sum(PVR_File.dups),
+            func.sum(PVR_File.updated),
+            Vendor.name)
+        query = query.join(PVR_File).join(Vendor)
+        results = query.filter(
+            PVR_Batch.timestamp >= start_date,
+            PVR_Batch.timestamp < end_date,
+            PVR_Batch.system == 'bpl').group_by(Vendor.name).all()
+    labels = [
+        'system', 'insert', 'attach', 'overlay', 'vendor']
+    df = pd.DataFrame.from_records(results, columns=labels)
+    df['total loaded'] = df['insert'] + df['attach'] + df['overlay']
+    df = df[['vendor', 'insert', 'attach', 'overlay', 'total loaded']]
+    return df
+
+
+def cumulative_vendor_stats(start_date, end_date):
+    """
+    Produces dataframe of vendor statistics during span of time
+    """
+
+    with session_scope() as session:
+        query = session.query(
+            PVR_Batch.system,
+            PVR_Batch.library,
+            func.sum(PVR_File.new),
+            func.sum(PVR_File.dups),
+            func.sum(PVR_File.updated),
+            func.sum(PVR_File.mixed),
+            func.sum(PVR_File.other),
+            Vendor.name)
+        query = query.join(PVR_File).join(Vendor)
+
+        nypl_br_results = query.filter(
+            PVR_Batch.timestamp >= start_date,
+            PVR_Batch.timestamp < end_date,
+            PVR_Batch.system == 'nypl',
+            PVR_Batch.library == 'branches').group_by(Vendor.name).all()
+        nypl_rl_results = query.filter(
+            PVR_Batch.timestamp >= start_date,
+            PVR_Batch.timestamp < end_date,
+            PVR_Batch.system == 'nypl',
+            PVR_Batch.library == 'research').group_by(Vendor.name).all()
+        bpl_results = query.filter(
+            PVR_Batch.timestamp >= start_date,
+            PVR_Batch.timestamp < end_date,
+            PVR_Batch.system == 'bpl').group_by(Vendor.name).all()
+    labels = [
+        'system', 'library', 'insert',
+        'attach', 'overlay', 'mixed',
+        'other', 'vendor']
+    nbdf = pd.DataFrame.from_records(nypl_br_results, columns=labels)
+    nrdf = pd.DataFrame.from_records(nypl_rl_results, columns=labels)
+    bdf = pd.DataFrame.from_records(bpl_results, columns=labels)
+    nbdf['total loaded'] = nbdf['insert'] + nbdf['attach'] + nbdf['overlay']
+    nbdf = nbdf[[
+        'vendor', 'insert', 'attach', 'overlay',
+        'total loaded', 'mixed', 'other']]
+    nrdf['total loaded'] = nrdf['insert'] + nrdf['attach'] + nrdf['overlay']
+    nrdf = nrdf[[
+        'vendor', 'insert', 'attach', 'overlay',
+        'total loaded', 'mixed', 'other']]
+    bdf['total loaded'] = bdf['insert'] + bdf['attach'] + bdf['overlay']
+    bdf = bdf[['vendor', 'insert', 'attach', 'overlay', 'total loaded']]
+
+    return nbdf, nrdf, bdf

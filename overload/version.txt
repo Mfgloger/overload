@@ -1,2 +1,2 @@
-version: 0.3.1 (BETA)
+version: 0.3.2 (BETA)
 last updated: 06-19-2018
