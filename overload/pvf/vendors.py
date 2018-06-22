@@ -1,4 +1,7 @@
 import xml.etree.ElementTree as ET
+import logging
+
+# module_logger = logging.getLogger('overload_console.vendors')
 
 
 def vendor_index(vendor_fh, library, agent):
@@ -60,7 +63,8 @@ def vendor_index(vendor_fh, library, agent):
                     identification=vids_dict),
                     query=query_dict,
                     bib_template=tlist)
-
+    # module_logger.debug('Created vendor index from xml file: {}'.format(
+    #     ven_index))
     return ven_index
 
 
@@ -75,15 +79,29 @@ def find_matches(bib, conditions):
     """
     matches_found = 0
     for condition in conditions:
-        fields = bib.get_fields(condition[0])
-        for field in fields:
-            if condition[1] is not None:
-                for subfield in field.get_subfields(condition[1]):
-                    if condition[2].lower() in subfield.lower():
+        # module_logger.debug('Checking matches on condition: {}.'.format(
+            # condition))
+        try:
+            fields = bib.get_fields(condition[0])
+            # module_logger.debug(
+                # 'Found {} matching condition fields in bib.'.format(
+                    # len(fields)))
+            for field in fields:
+                if condition[1] is not None:
+                    # module_logger.debug(
+                    #     'Cheking subfield matches on value {}.'.format(
+                    #         condition[1]))
+                    for subfield in field.get_subfields(condition[1]):
+                        if condition[2].lower() in subfield.lower():
+                            # module_logger.debug(
+                            #     'Condition match found.')
+                            matches_found += 1
+                else:
+                    if condition[2] == field.data:
                         matches_found += 1
-            else:
-                if condition[2] == field.data:
-                    matches_found += 1
+        except IndexError:
+            pass
+    # module_logger.debug('Total matches found: {}.'.format(matches_found))
     return matches_found
 
 
@@ -119,6 +137,8 @@ def identify_vendor(bib, vendor_index):
     """
     matching_vendors = []
     for vendor, data in vendor_index.iteritems():
+        # module_logger.debug('Matching bib to {} vendor.'.format(
+        #     vendor))
         main = []
         alternative = []
         identification = data['identification']
@@ -138,6 +158,7 @@ def identify_vendor(bib, vendor_index):
         if matches_needed > 0:
             matches_found = find_matches(bib, main)
             if matches_found == matches_needed:
+                # module_logger.debug('Vendor matched to bib sucessfully!')
                 matching_vendors.append(vendor)
             else:
                 # go to alternarive method
@@ -146,6 +167,8 @@ def identify_vendor(bib, vendor_index):
                 if matches_needed > 0:
                     matches_found = find_matches(bib, alternative)
                     if matches_found == matches_needed:
+                        # module_logger.debug(
+                        #     'Vendor matched to bib sucessfully.')
                         matching_vendors.append(vendor)
 
     # set to unknown if not found
