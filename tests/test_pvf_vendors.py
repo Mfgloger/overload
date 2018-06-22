@@ -203,6 +203,34 @@ class TestIdentifyVendor(unittest.TestCase):
                 tag='001',
                 data='1234'
             ))
+        self.bib4 = Record()
+        self.bib4.add_field(
+            Field(
+                tag='245',
+                indicators=['0', '0'],
+                subfields=[
+                    'a', 'Test4']))
+        self.bib4.add_field(
+            Field(
+                tag='049',
+                indicators=[' ', ' '],
+                subfields=[
+                    'a', 'BKLA']))
+        self.bib4.add_field(
+            Field(
+                tag='960',
+                indicators=[' ', ' '],
+                subfields=[
+                    'i', '33333',
+                    'n', 'B&T']))
+        self.bib4.add_field(
+            Field(
+                tag='960',
+                indicators=[' ', ' '],
+                subfields=[
+                    'i', '33334',
+                    'n', 'B&T']))
+
         self.vendor_index = {
             'TEST VENDOR1': {
                 'query': {
@@ -223,7 +251,20 @@ class TestIdentifyVendor(unittest.TestCase):
                     '037a': {
                         'operator': 'main',
                         'type': 'standard',
-                        'value': 'some other value'}}}}
+                        'value': 'some other value'}}},
+            'BT CLS': {
+                'query': {
+                    'primary': 'sierra_id',
+                    'secondary': '020',
+                    'tertiary': '022'},
+                'identification': {
+                    '049a': {
+                        'operator': 'main',
+                        'type': 'standard',
+                        'value': 'BKLA'
+                    }
+                }
+            }}
 
     def test_positive_single_main_match(self):
         self.assertEqual(
@@ -234,6 +275,11 @@ class TestIdentifyVendor(unittest.TestCase):
         self.assertEqual(
             vendors.identify_vendor(
                 self.bib2, self.vendor_index), 'TEST VENDOR2')
+
+    def test_positive_BTCLS_match(self):
+        self.assertEqual(
+            vendors.identify_vendor(
+                self.bib4, self.vendor_index), 'BT CLS')
 
     def test_unknow_vendor(self):
         self.assertEqual(
