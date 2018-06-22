@@ -79,7 +79,7 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
                 'Platform bibId endpoint request, '
                 'keywords (sierra id): {}'.format(
                     bibmeta.sierraId))
-            if bibmeta.sierraId is not None:
+            if bibmeta.sierraId is not None and len(bibmeta.sierraId) == 8:
                 # sierraID must be passed as a list to query_bibId
                 response = session.query_bibId(keywords=[bibmeta.sierraId])
             else:
