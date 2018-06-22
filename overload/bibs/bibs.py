@@ -483,6 +483,7 @@ class BibMeta:
         bib obj (pymarc)
         sierraId str
     """
+
     def __init__(self, bib, sierraId=None):
         self.t001 = None
         self.t003 = None
@@ -491,6 +492,7 @@ class BibMeta:
         self.t022 = []
         self.t024 = []
         self.t028 = []
+        self.t336 = []
         self.t901 = []
         self.t947 = []
         self.sierraId = sierraId
@@ -532,6 +534,10 @@ class BibMeta:
                 self.t028.append(
                     parse_upc(subfield))
 
+        for field in bib.get_fields('336'):
+            for subfield in field.get_subfields('a'):
+                self.t336.append(subfield)
+
         for field in bib.get_fields('901'):
             self.t901.append(field.value())
 
@@ -562,7 +568,7 @@ class BibMeta:
 
     def __repr__(self):
         return "<BibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, 024:{}, " \
-            "028:{}, 901:{}, 947:{}, sierraId:{}, " \
+            "028:{}, 336: {}, 901:{}, 947:{}, sierraId:{}, " \
             "bCallNumber:{}, rCallNumber:{})>".format(
                 self.t001,
                 self.t003,
@@ -571,6 +577,7 @@ class BibMeta:
                 self.t022,
                 self.t024,
                 self.t028,
+                self.t336,
                 self.t901,
                 self.t947,
                 self.sierraId,
@@ -586,6 +593,7 @@ class VendorBibMeta(BibMeta):
         vendor str
         dstLibrary str ('research' or 'branches')
     """
+
     def __init__(self, bib, vendor=None, dstLibrary=None):
         BibMeta.__init__(self, bib)
         self.vendor = vendor
@@ -593,7 +601,7 @@ class VendorBibMeta(BibMeta):
 
     def __repr__(self):
         return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
-            "024:{}, 028:{}, 901:{}, 947:{}, " \
+            "024:{}, 028:{}, 336:{}, 901:{}, 947:{}, " \
             "sierraId:{}, bCallNumber:{}, rCallNumber:{}, " \
             "vendor:{}, dstLibrary:{})>".format(
                 self.t001,
@@ -603,6 +611,7 @@ class VendorBibMeta(BibMeta):
                 self.t022,
                 self.t024,
                 self.t028,
+                self.t336,
                 self.t901,
                 self.t947,
                 self.sierraId,
@@ -674,7 +683,7 @@ class InhouseBibMeta(BibMeta):
 
     def __repr__(self):
         return "<InhouseBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
-            "024:{}, 028:{}, 901:{}, 947:{}, " \
+            "024:{}, 028:{}, 336:{}, 901:{}, 947:{}, " \
             "sierraId:{}, bCallNumber:{}, rCallNumber:{}, " \
             "catSource:{}, ownLibrary:{})>".format(
                 self.t001,
@@ -684,6 +693,7 @@ class InhouseBibMeta(BibMeta):
                 self.t022,
                 self.t024,
                 self.t028,
+                self.t336,
                 self.t901,
                 self.t947,
                 self.sierraId,
