@@ -21,7 +21,7 @@ def parse_issn(field):
     p = re.compile(r'^(\d{4}-\d{3}[\dxX]$)')
     m = re.search(p, field)
     if m:
-        return str(m.group(0))
+        return str(m.group(0).replace('-', ''))
     else:
         return None
 
