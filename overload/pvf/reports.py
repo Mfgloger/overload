@@ -27,6 +27,7 @@ def generate_processing_summary(batch_meta):
     summary = []
     system = meta['system'].upper()
     library = meta['library']
+    agent = meta['agent']
     summary.append(
         'system: {}, library: {}, user: {}\n'.format(
             system,
@@ -48,7 +49,7 @@ def generate_processing_summary(batch_meta):
     meta.close()
     module_logger.debug('Processing summary: {}'.format(
         summary))
-    return system, library, summary
+    return system, library, agent, summary
 
 
 def shelf2dataframe(batch_stats, system):
@@ -157,8 +158,12 @@ def report_dups(system, library, df):
     return df_rep
 
 
-def report_callNo_issues(df):
+def report_callNo_issues(df, agent):
     df_call = df[~df['callNo_match']].sort_index()
+    if agent == 'cat':
+        df_supp = df[
+            df['vendor_callNo'].isnull() & df['target_callNo'].isnull()]
+        df_call = pd.concat([df_call, df_supp])
     df_call = df_call[
         ['vendor', 'vendor_id', 'target_sierraId',
          'vendor_callNo', 'target_callNo', 'inhouse_dups']]

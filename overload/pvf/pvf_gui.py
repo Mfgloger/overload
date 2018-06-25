@@ -1482,6 +1482,7 @@ class ProcessVendorFiles(tk.Frame):
         self.last_used_lib = None
         self.agent = tk.StringVar()
         self.agent.trace('w', self.agent_observer)
+        self.last_used_agent = None
         self.template = tk.StringVar()
 
         # logos
@@ -2351,7 +2352,8 @@ class ProcessVendorFiles(tk.Frame):
 
         # generate summary
         try:
-            self.last_used_sys, self.last_used_lib, summary = \
+            self.last_used_sys, self.last_used_lib, \
+            self.last_used_agent, summary = \
                 reports.generate_processing_summary(
                     BATCH_META)
             for line in summary:
@@ -2419,7 +2421,8 @@ class ProcessVendorFiles(tk.Frame):
             self.reportDTxt.insert(tk.END, 'Call number issues:\n', 'blue')
 
             if df is not None:
-                self.callNos = reports.report_callNo_issues(df)
+                self.callNos = reports.report_callNo_issues(
+                    df, self.last_used_agent)
                 if self.callNos.size == 0:
                     self.reportDTxt.insert(tk.END, 'All clear\n')
                 else:

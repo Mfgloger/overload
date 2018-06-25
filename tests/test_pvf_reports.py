@@ -46,7 +46,7 @@ class Test_Reports(unittest.TestCase):
         stats_shelf.close()
 
     def test_shelf2dataframe(self):
-        df = reports.shelf2dataframe('temp')
+        df = reports.shelf2dataframe('temp', 'nypl')
         self.assertIsInstance(
             df, pd.DataFrame)
         self.assertEqual(
@@ -60,7 +60,7 @@ class Test_Reports(unittest.TestCase):
             [2])
 
     def test_create_nypl_stats(self):
-        df = reports.shelf2dataframe('temp')
+        df = reports.shelf2dataframe('temp', 'nypl')
         stats = reports.create_stats('nypl', df)
         self.assertEqual(
             stats.shape, (2, 7))
@@ -97,7 +97,7 @@ class Test_Reports(unittest.TestCase):
             stats.iloc[1]['other'], 0)
 
     def test_create_bpl_stats(self):
-        df = reports.shelf2dataframe('temp')
+        df = reports.shelf2dataframe('temp', 'bpl')
         stats = reports.create_stats('bpl', df)
         self.assertEqual(
             stats.shape, (2, 5))
@@ -126,13 +126,13 @@ class Test_Reports(unittest.TestCase):
             stats.iloc[1]['total'], 1)
 
     def test_report_dups(self):
-        df = reports.shelf2dataframe('temp')
+        df = reports.shelf2dataframe('temp', 'nypl')
         dups = reports.report_dups('NYPL', 'branches', df)
         self.assertEqual(
             dups.index.tolist(), [1])
 
     def test_callNo_issues(self):
-        df = reports.shelf2dataframe('temp')
+        df = reports.shelf2dataframe('temp', 'bpl')
         callNo = reports.report_callNo_issues(df)
         self.assertEqual(
             list(callNo.columns.values),
