@@ -80,6 +80,7 @@ class PVR_NYPLReport(PVRReport):
     Creates a NYPL analysis report of a vendor record in relation
     to retrieved from the catalog existing matching bibs
     """
+
     def __init__(self, agent, meta_vendor, meta_inhouse):
         PVRReport.__init__(self, meta_vendor, meta_inhouse)
         self._matched = []  # list of meta objs
@@ -254,6 +255,7 @@ class PVR_BPLReport(PVRReport):
     Creates a BPL analysis report of a vendor record in relation
     to retrieved from the catalog existing matching bibs
     """
+
     def __init__(self, agent, meta_vendor, meta_inhouse):
         PVRReport.__init__(self, meta_vendor, meta_inhouse)
         self._matched = meta_inhouse
