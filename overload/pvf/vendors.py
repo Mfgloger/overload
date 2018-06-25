@@ -4,11 +4,12 @@ import logging
 # module_logger = logging.getLogger('overload_console.vendors')
 
 
-def vendor_index(vendor_fh, library, agent):
+def vendor_index(vendor_fh, library):
     """
     creates library's vendor index based on rules/vendors.xml file
     the vendor index contains methods of identifying bibs to belong
-    to a particuar vendor, as well as preferred Sierra query methods
+    to a particuar vendor, as well as preferred Sierra query methods;
+    used only by CAT
 
     args:
         library str (nypl or bpl)
@@ -20,19 +21,18 @@ def vendor_index(vendor_fh, library, agent):
     ven_index = dict()
 
     for system in root.iter('system'):
-        if system.attrib['name'] == library and \
-                system.attrib['agent'] == agent:
+        if system.attrib['name'] == library:
+
             for vendor in system:
 
                 vids_dict = dict()
-                if agent == 'cat':
-                    # parse identification methods for cat bibs
-                    vids = vendor.findall('vendor_tag')
-                    for vid in vids:
-                        vids_dict[vid.attrib['tag']] = {
-                            'operator': vid.attrib['operator'],
-                            'type': vid.attrib['type'],
-                            'value': vid.text}
+                # parse identification methods for cat bibs
+                vids = vendor.findall('vendor_tag')
+                for vid in vids:
+                    vids_dict[vid.attrib['tag']] = {
+                        'operator': vid.attrib['operator'],
+                        'type': vid.attrib['type'],
+                        'value': vid.text}
 
                 # load applicable templates
                 tlist = []
@@ -51,6 +51,12 @@ def vendor_index(vendor_fh, library, agent):
                             'ind2': field.find('ind2').text,
                             'subfields': subfields_dict})
 
+                # parse treatment of existing Sierra ID
+                sid_action = 'keep'
+                sids = vendor.findall('existing_sierraId')
+                for sid in sids:
+                    sid_action = sid.text
+
                 # parse query points
                 query_dict = dict()
                 queries = vendor.findall('query_tag')
@@ -62,6 +68,7 @@ def vendor_index(vendor_fh, library, agent):
                 ven_index[vendor.attrib['name']] = dict(dict(
                     identification=vids_dict),
                     query=query_dict,
+                    existing_sierraId=sid_action,
                     bib_template=tlist)
     # module_logger.debug('Created vendor index from xml file: {}'.format(
     #     ven_index))
