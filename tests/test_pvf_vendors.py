@@ -10,8 +10,8 @@ from context import vendors
 class TestPVFvendorIndex(unittest.TestCase):
     def setUp(self):
         self.rules = '../overload/rules/vendors.xml'
-        self.nypl_data = vendors.vendor_index(self.rules, 'nypl', 'cat')
-        self.bpl_data = vendors.vendor_index(self.rules, 'bpl', 'cat')
+        self.nypl_data = vendors.vendor_index(self.rules, 'nypl')
+        self.bpl_data = vendors.vendor_index(self.rules, 'bpl')
 
     def test_vendor_index_returns_list(self):
         self.assertIs(type(self.nypl_data), dict)
@@ -30,7 +30,10 @@ class TestPVFvendorIndex(unittest.TestCase):
             self.assertIn('query', data)
             self.assertIn('identification', data)
             self.assertIn('primary', data['query'])
+            self.assertIn('existing_sierraId', data)
             self.assertIn('bib_template', data)
+
+            self.assertIn(data['existing_sierraId'], ('keep', 'remove_new'))
 
             for key, value in data['identification'].iteritems():
                 self.assertIn('operator', value)
@@ -38,7 +41,7 @@ class TestPVFvendorIndex(unittest.TestCase):
                 self.assertIn('value', value)
 
             for preference, details in data['query'].iteritems():
-                self.assertIn(preference, ('primary', 'secondary'))
+                self.assertIn(preference, ('primary', 'secondary', 'tertiary'))
                 self.assertIsInstance(
                     details, tuple)
                 self.assertIn(
