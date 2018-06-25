@@ -31,16 +31,18 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 -->
 
 <data>
-	<system name = "nypl" agent='cat'>
+	<system name = "nypl">
 		<vendor name = "UNKNOWN">
 			<vendor_tag type = "missing" tag = "" operator = "main"></vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 		</vendor>
 		<vendor name = "BT SERIES">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTSERIES</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -53,6 +55,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 		<vendor name = "BT PARADE">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">PARADE</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -67,6 +70,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "037b" operator = "alternative">Sulaiman</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -79,6 +83,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 		<vendor name = "BT ROMANCE">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTROMAN</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -91,6 +96,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 		<vendor name = "BT URBAN">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTURBN</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -104,6 +110,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTODC</vendor_tag>
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<existing_sierraId>remove_new</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -116,6 +123,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 		<vendor name = "BT LEASED">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">LEASED</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -128,9 +136,10 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 		<vendor name = "Midwest DVD">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">Midwest</vendor_tag>
 			<vendor_tag type = "standard" tag = "091f" operator = "main">DVD</vendor_tag>
-			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>024</query_tag>
+			<existing_sierraId>remove_new</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -143,9 +152,10 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 		<vendor name = "Midwest Blu-ray">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">Midwest</vendor_tag>
 			<vendor_tag type = "standard" tag = "091f" operator = "main">BLURAY</vendor_tag>
-			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>024</query_tag>
+			<existing_sierraId>remove_new</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -159,9 +169,10 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "901a" operator = "main">Midwest</vendor_tag>
 			<vendor_tag type = "standard" tag = "091f" operator = "main">CD</vendor_tag>
 			<vendor_tag type = "standard" tag = "336a" operator = "main">performed music</vendor_tag>
-			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>024</query_tag>
+			<existing_sierraId>remove_new</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -175,9 +186,10 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "901a" operator = "main">Midwest</vendor_tag>
 			<vendor_tag type = "standard" tag = "091f" operator = "main">CD</vendor_tag>
 			<vendor_tag type = "standard" tag = "336a" operator = "main">spoken word</vendor_tag>
-			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>024</query_tag>
+			<existing_sierraId>remove_new</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -188,16 +200,18 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			</bib_template>
 		</vendor>
 	</system>
-	<system name = "bpl" agent = 'cat'>
+	<system name = "bpl">
 		<vendor name = "UNKNOWN">
 			<vendor_tag type = "missing" tag = "" operator = "main"></vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 		</vendor>
 		<vendor name = "BT CLS">
 			<vendor_tag type = "standard" tag = "049a" operator = "main">BKLA</vendor_tag>
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>022</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -211,6 +225,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T SERIES</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T SERIES</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -224,6 +239,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T ROMANCE</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T ROMANCE</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -237,6 +253,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T URBAN</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T URBAN</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -250,6 +267,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T LEASE</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T LEASE</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -263,6 +281,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "037b" operator = "main">B&amp;T PBP</vendor_tag>
 			<vendor_tag type = "standard" tag = "947a" operator = "alternative">B&amp;T PBP</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -277,6 +296,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "099a" operator = "main">DVD</vendor_tag>
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -291,6 +311,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "099a" operator = "main">AUDIO</vendor_tag>
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -305,6 +326,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "099a" operator = "main">CD</vendor_tag>
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
