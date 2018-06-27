@@ -39,12 +39,12 @@
 		"file_size_pos": [29, 37],
 		"file_time_pos": [0, 16]
 	},
-	"ftp.amalivre.fr": {
-		"dir_mark": [],
-		"dir_handle": 0,
-		"file_mark": [],
-		"file_handle": 0,
-		"file_size_pos": [],
-		"file_time_pos": []
+	"ftp.midwesttapes.com": {
+		"dir_mark": ["dr", 0, 1],
+		"dir_handle": 62,
+		"file_mark": ["-r", 0, 1],
+		"file_handle": 62,
+		"file_size_pos": [36, 48],
+		"file_time_pos": [49, 61]
 	}
 }
