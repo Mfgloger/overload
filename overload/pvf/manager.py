@@ -12,6 +12,7 @@ from bibs.bibs import VendorBibMeta, read_marc21, \
     create_target_id_field, write_marc21, check_sierra_id_presence, \
     check_sierra_format_tag_presence, create_field_from_template, \
     db_template_to_960, db_template_to_961, db_template_to_949
+from bibs import patches
 from bibs.crosswalks import platform2meta, bibs2meta
 from platform_comms import open_platform_session, platform_queries_manager
 from z3950_comms import z3950_query_manager
@@ -310,9 +311,17 @@ def run_processing(
             elif system == 'bpl':
                 analysis = PVR_BPLReport(agent, meta_in, meta_out)
 
-            # save analysis to shelf
             module_logger.info('Analyzing query results and vendor bib')
             analysis = analysis.to_dict()
+
+            # apply patches if needed
+            try:
+                bib = patches.bib_patches(system, library, agent, vendor, bib)
+            except AssertionError as e:
+                module_logger.warning(
+                    'Unable to patch bib. Error: {}'.format(e))
+                analysis['callNo_match'] = False
+
             module_logger.info('Analysis results: {}'.format(analysis))
 
             # save analysis to shelf for statistical purposes
@@ -408,6 +417,7 @@ def run_processing(
                                 template['tag']))
                         new_field = create_field_from_template(template)
                         bib.add_field(new_field)
+
             elif agent in ('sel', 'acq'):
                 # batch template details should be retrieved instead for the
                 # whole batch = no need to pull it for each bib
