@@ -2426,6 +2426,13 @@ class ProcessVendorFiles(tk.Frame):
                 if self.callNos.size == 0:
                     self.reportDTxt.insert(tk.END, 'All clear\n')
                 else:
+                    if self.last_used_sys == 'BPL':
+                        self.reportDTxt.insert(
+                            tk.END,
+                            "Please note: in case of BT LEASED bibs without vendor "
+                            "supplied call number (None in column 'vendor_callNo')\n"
+                            "a cataloger must copy the call number from order's PO per line "
+                            "to the bib MARC field 099 supplying appropriate subfield codes.\n\n")
                     self.reportDTxt.insert(
                         tk.END, self.callNos.to_string() + '\n')
             else:
