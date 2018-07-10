@@ -4,6 +4,7 @@ from pymarc import MARCReader, JSONReader, MARCWriter, Field
 from pymarc.exceptions import RecordLengthInvalid
 import re
 from datetime import datetime
+from errors import OverloadError
 
 
 def parse_isbn(field):
@@ -132,7 +133,14 @@ def count_bibs(file):
             bib_count += 1
         return bib_count
     except RecordLengthInvalid:
-        raise
+        raise OverloadError(
+            'Attempted to process non-MARC file,\n'
+            'or invalid MARC file: {}'.format(file))
+    except UnicodeDecodeError:
+        raise OverloadError(
+            'Character encoding error in file:\n{}\n'
+            'Please convert character encoding to UTF-8\n'
+            'using MARCEdit program.'.format(file))
 
 
 def db_template_to_960(template, vendor_960):

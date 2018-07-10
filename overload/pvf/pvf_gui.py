@@ -9,7 +9,6 @@ import logging
 import os
 import time
 from datetime import date
-from pymarc.exceptions import RecordLengthInvalid
 from ftplib import error_perm
 
 
@@ -38,6 +37,7 @@ module_logger = logging.getLogger('overload_console.pvr_gui')
 
 class TransferFiles(tk.Frame):
     """GUI for connecting to vendor's FTPs"""
+
     def __init__(self, parent, system):
         self.parent = parent
         self.system = system
@@ -726,6 +726,7 @@ class TransferFiles(tk.Frame):
 
 class OrderTemplate(tk.Frame):
     """GUI for selection order templates"""
+
     def __init__(self, parent, **kwargs):
         self.parent = parent
         self.agent = kwargs['agent']
@@ -1968,12 +1969,10 @@ class ProcessVendorFiles(tk.Frame):
                 try:
                     bib_count = bibs.count_bibs(file)
                     total_bib_count += bib_count
-                except RecordLengthInvalid:
+                except OverloadError as e:
                     self.cur_manager.notbusy()
                     legal_files = False
-                    m = 'Attempted to process non-MARC file,\n' \
-                        'or invalid MARC file: {}'.format(file)
-                    tkMessageBox.showerror('Incorrect file', m)
+                    tkMessageBox.showerror('Incorrect file', e)
 
             if legal_files:
                 self.progbar['maximum'] = total_bib_count

@@ -27,6 +27,69 @@ from pvf.reports import cumulative_nypl_stats, cumulative_bpl_stats, \
     cumulative_vendor_stats
 
 
+def updates(manual=True):
+    with open('version.txt', 'r') as app_fh:
+        app_version = app_fh.readline()[9:].strip()
+        overload_logger.info(
+            'Checking for Overload updates. Current version: {}'.format(
+                app_version))
+
+    user_data = shelve.open(USER_DATA)
+    if 'update_dir' in user_data['paths']:
+        update_dir = user_data['paths']['update_dir']
+        overload_logger.info(
+            'Using update directory from user_data: {}'.format(
+                update_dir))
+        if os.path.isfile(update_dir + r'\version.txt'):
+            overload_logger.info(
+                'Found version.txt in update directory')
+            up_fh = update_dir + r'\version.txt'
+            with open(up_fh, 'r') as up_f:
+                update_version = up_f.readline()[9:].strip()
+                overload_logger.info(
+                    'Version available for download: {}'.format(
+                        update_version))
+                if app_version != update_version:
+                    overload_logger.debug(
+                        'Local and update directory versions are '
+                        'not the same. Launching update procedure.')
+                    m = 'A new version ({}) of Overload has been ' \
+                        'found.\nWould you like to run the ' \
+                        'update?'.format(update_version)
+                    if tkMessageBox.askyesno('Update Info', m):
+                        # launch updater & quit main app
+                        user_data.close()
+                        args = '{} "{}"'.format(
+                            'updater.exe', update_dir)
+                        CREATE_NO_WINDOW = 0x08000000
+                        subprocess.call(
+                            args, creationflags=CREATE_NO_WINDOW)
+                else:
+                    if manual:
+                        overload_logger.debug(
+                            'Local and update directory versions are '
+                            'the same.')
+                        m = 'Babel is up-to-date'
+                        tkMessageBox.showinfo('Info', m)
+        else:
+            overload_logger.info(
+                'Unable find version.txt in update directory ({})'.format(
+                    update_dir))
+            m = '"version.txt" file in update folder not found.\n' \
+                'Please provide update directory to correct folder\n' \
+                'Go to:\n' \
+                'settings>default directories>update folder'
+            tkMessageBox.showwarning('Missing Files', m)
+    else:
+        overload_logger.info(
+            'Update directory not setup in Settings.')
+        m = 'please provide update directory\n' \
+            'Go to:\n' \
+            'settings>default directories>update folder'
+        tkMessageBox.showwarning('Missing Directory', m)
+    user_data.close()
+
+
 class MainApplication(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -75,7 +138,7 @@ class MainApplication(tk.Tk):
         menubar.add_cascade(label='Reports', menu=report_menu)
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label='help index', command=None)
-        help_menu.add_command(label='updates', command=self.updates)
+        help_menu.add_command(label='updates', command=updates)
         help_menu.add_command(label='about...',
                               command=lambda: self.show_frame('About'))
         menubar.add_cascade(label='Help', menu=help_menu)
@@ -83,67 +146,6 @@ class MainApplication(tk.Tk):
 
         # lift to the top main window
         self.show_frame('Main')
-
-    def updates(self):
-        with open('version.txt', 'r') as app_fh:
-            app_version = app_fh.readline()[9:].strip()
-            overload_logger.info(
-                'Checking for Overload updates. Current version: {}'.format(
-                    app_version))
-
-        user_data = shelve.open(USER_DATA)
-        if 'update_dir' in user_data['paths']:
-            update_dir = user_data['paths']['update_dir']
-            overload_logger.info(
-                'Using update directory from user_data: {}'.format(
-                    update_dir))
-            if os.path.isfile(update_dir + r'\version.txt'):
-                overload_logger.info(
-                    'Found version.txt in update directory')
-                up_fh = update_dir + r'\version.txt'
-                with open(up_fh, 'r') as up_f:
-                    update_version = up_f.readline()[9:].strip()
-                    overload_logger.info(
-                        'Version available for download: {}'.format(
-                            update_version))
-                    if app_version != update_version:
-                        overload_logger.debug(
-                            'Local and update directory versions are '
-                            'not the same. Launching update procedure.')
-                        m = 'A new version ({}) of Overload has been ' \
-                            'found.\nWould you like to run the ' \
-                            'update?.'.format(update_version)
-                        if tkMessageBox.askyesno('Update Info', m):
-                            # launch updater & quit main app
-                            user_data.close()
-                            args = '{} "{}"'.format(
-                                'updater.exe', update_dir)
-                            CREATE_NO_WINDOW = 0x08000000
-                            subprocess.call(
-                                args, creationflags=CREATE_NO_WINDOW)
-                    else:
-                        overload_logger.debug(
-                            'Local and update directory versions are '
-                            'the same.')
-                        m = 'Babel is up-to-date'
-                        tkMessageBox.showinfo('Info', m)
-            else:
-                overload_logger.info(
-                    'Unable find version.txt in update directory ({})'.format(
-                        update_dir))
-                m = '"version.txt" file in update folder not found.\n' \
-                    'Please provide update directory to correct folder\n' \
-                    'Go to:\n' \
-                    'settings>default directories>update folder'
-                tkMessageBox.showwarning('Missing Files', m)
-        else:
-            overload_logger.info(
-                'Update directory not setup in Settings.')
-            m = 'please provide update directory\n' \
-                'Go to:\n' \
-                'settings>default directories>update folder'
-            tkMessageBox.showwarning('Missing Directory', m)
-        user_data.close()
 
     def show_frame(self, page_name):
         """show frame for the given page name"""
@@ -1816,5 +1818,7 @@ if __name__ == "__main__":
     s.configure('Bold.TLabel', font=('Helvetica', 12, 'bold'))
     s.configure('Small.TLabel', font=('Helvetica', 8))
     s.configure('Medium.Treeview', font=('Helvetica', 9))
+
+    updates(manual=False)
 
     app.mainloop()
