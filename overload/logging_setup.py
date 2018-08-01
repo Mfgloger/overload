@@ -23,13 +23,8 @@ LOGGING = {
         },
     },
     'loggers': {
-        'overload_main': {
-            'handlers': ['loggly'],
-            'level': 'DEBUG',
-            'propagate': True
-        },
         'overload_console': {
-            'handlers': ['console'],
+            'handlers': ['loggly', 'console'],
             'level': 'DEBUG',
             'propagate': True
         }
