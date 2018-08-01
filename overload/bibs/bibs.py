@@ -159,7 +159,7 @@ def db_template_to_960(template, vendor_960):
     # list of relevalnt to PVR subfields of 960
     pvr_subs = set(
         ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'm',
-        'v', 'w', 'x'])
+         'v', 'w', 'x'])
 
     # find extra subfields to be carried over to the new field
     nsub = []
@@ -526,21 +526,27 @@ class BibMeta:
 
         for field in bib.get_fields('020'):
             for subfield in field.get_subfields('a'):
-                self.t020.append(parse_isbn(subfield))
+                isbn = parse_isbn(subfield)
+                if isbn is not None:
+                    self.t020.append(isbn)
 
         for field in bib.get_fields('022'):
             for subfield in field.get_subfields('a'):
-                self.t022.append(parse_issn(subfield))
+                issn = parse_issn(subfield)
+                if issn is not None:
+                    self.t022.append(issn)
 
         for field in bib.get_fields('024'):
             for subfield in field.get_subfields('a'):
-                self.t024.append(
-                    parse_upc(subfield))
+                upc = parse_upc(subfield)
+                if upc is not None:
+                    self.t024.append(upc)
 
         for field in bib.get_fields('028'):
             for subfield in field.get_subfields('a'):
-                self.t028.append(
-                    parse_upc(subfield))
+                upc = parse_upc(subfield)
+                if upc is not None:
+                    self.t028.append(upc)
 
         for field in bib.get_fields('336'):
             for subfield in field.get_subfields('a'):
