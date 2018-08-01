@@ -44,11 +44,11 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<query_tag preference = "secondary" type = 'tag'>001</query_tag>
 			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>>
-				<field option = 'skip'>
+				<field option = "skip">
 					<tag>949</tag>
 					<ind1></ind1>
 					<ind2></ind2>
-					<subfield code = 'a'>*b2=a;</subfield>
+					<subfield code = "a">*b2=a;</subfield>
 				</field>
 			</bib_template>
 		</vendor>

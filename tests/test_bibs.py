@@ -2,10 +2,10 @@
 
 import unittest
 from pymarc import Record, Field, MARCReader, JSONReader
-from pymarc.exceptions import RecordLengthInvalid
 import os
 
 from context import bibs
+from context import OverloadError
 
 
 class TestUtils(unittest.TestCase):
@@ -56,12 +56,12 @@ class TestParseISSN(unittest.TestCase):
     def test_parsing_good_digit_only_ISSN(self):
         self.assertEqual(
             bibs.parse_issn('0378-5955'),
-            '0378-5955')
+            '03785955')
 
     def test_parsing_good_digit_x_ISSN(self):
         self.assertEqual(
             bibs.parse_issn('2434-561X'),
-            '2434-561X')
+            '2434561X')
 
     def test_parsing_incorrect_ISSN(self):
         self.assertIsNone(
@@ -134,8 +134,8 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertIs(type(reader), MARCReader)
 
     def test_count_bibs_when_not_marc_file(self):
-        with self.assertRaises(RecordLengthInvalid):
-            reader = bibs.count_bibs('test.json')
+        with self.assertRaises(OverloadError):
+            bibs.count_bibs('test.json')
 
     def test_read_from_json_retuns_pymarc_reader(self):
         reader = JSONReader('test.json')

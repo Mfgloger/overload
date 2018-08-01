@@ -1993,10 +1993,16 @@ class ProcessVendorFiles(tk.Frame):
             # run validation if one of the validations selected
             if marcval or locval:
                 try:
-                    valid_files = validate_files(self.files, marcval, locval)
+                    module_logger.info('Validating files.')
+                    valid_files = validate_files(
+                        self.system.get().lower(),
+                        self.agent.get()[:3],
+                        self.files, marcval, locval)
                     if valid_files:
+                        module_logger.info('Records are valid.')
                         self.validated.set('validation: records are A-OK!')
                     else:
+                        module_logger.info('Some records are not valid.')
                         self.cur_manager.notbusy()
                         self.validated.set('validation: !errors found!')
                         m = 'Some of the records in selected file(s) \n' \
@@ -2004,12 +2010,16 @@ class ProcessVendorFiles(tk.Frame):
                             'Please see error report for details.'
                         tkMessageBox.showerror('Validation', m)
                 except OverloadError as e:
+                    module_logger.error(
+                        'Error encountered while validating. Error: {}'.format(
+                            e))
                     valid_files = False
                     self.cur_manager.notbusy()
                     tkMessageBox.showerror('Validation', e)
 
             # allow processing if both validations skipped
             if not marcval and not locval:
+                module_logger.info('Validation skipped by user.')
                 valid_files = True
 
             if legal_files and valid_files:

@@ -1,0 +1,78 @@
+<?xml version = "1.0" encoding = "UTF-8" standalone = "yes"?>
+<!--BPL & NYPL vendor specification data-->
+<!--Use to encode local validation of vendor supplied records-->
+<!--Watch out for xml reserved characters!-->
+<!--########################################-->
+<!--pick the system ("nypl" or "bpl")-->
+<!--then enter agency for which validation will be performed (cat, sel, acq) -->
+<!-- #######################################-->
+<!--example of MARC tag coding -->
+<!--
+	<data>
+		<system name = "nypl">
+			<agent name = "cat">
+				<tag code = "095" indicators = "blank,1" mandatory = "n" repeatable = "y">
+					<sub code = "a" mandatory = "y" repeatable = "n" check = "list">value1,value2,value3</sub>
+					<sub code = "b" mandatory = "n" repeatable = "n" check = "none"></sub>
+				</tag>
+			</agent>
+		</system>
+	</data>
+-->
+<!--
+	* indicators format: use 'blank' for none, use coma without space to separate first from second
+	* mandatory: 'y' for yes or 'n' for no
+	* repeatable: 'y' if tag or subfield can repeat, 'n' if it is not permissable
+	* check: values - 'none', 'list', 'location', 'price', 'barcode'; use 'none' if validator should not check the subfield values, 'list' - validator will check subfield value against a list of permissable values in sub, use coma to separate the values - do not use space after coma; 'barcode' - validator checks if subfield value resembles a barcode (pattern check); 'location' - validator checks if first 2 characters are valid location codes (3 character item codes are ignored at the moment); 'price' - validator checks if price is encoded correctly (following Sierra rules) in the price subfield.
+ -->
+
+<data>
+	<system name = "nypl">
+		<agent name = 'cat'>
+			<tag code = "091" indicators = "blank,blank" mandatory = "n" repeatable = "n">
+				<sub code = "p" mandatory = "n" repeatable = "n" check = "none"></sub>
+				<sub code = "a" mandatory = "y" repeatable = "n" check = "none"></sub>
+				<sub code = "b" mandatory = "n" repeatable = "n" check = "none"></sub>
+				<sub code = "c" mandatory = "y" repeatable = "n" check = "none"></sub>
+			</tag>
+			<tag code = "901" indicators = "blank,blank" mandatory = "y" repeatable = "n">
+				<sub code = "a" mandatory = "y" repeatable = "n" check = "list">LEASED,PARADE,BTSERIES,BTROMAN,BTURBN,Midwest</sub>
+			</tag>
+			<tag code = "949" indicators = "blank,blank" mandatory = "y" repeatable = "n">
+				<sub code = "a" mandatory = "y" repeatable = "n" check = "list">*b2=a;,*b2=l;,*b2=i;,*b2=j;,*b2=u;,*b2=v;,*b2=y;,*b2=b;</sub>
+			</tag>
+			<tag code = "949" indicators = "blank,1" mandatory = "y" repeatable = "y">
+				<sub code = "i" mandatory = "y" repeatable = "n" check = "barcode"></sub>
+				<sub code = "l" mandatory = "y" repeatable = "n" check = "location"></sub>
+				<sub code = "p" mandatory = "y" repeatable = "n" check = "price"></sub>
+				<sub code = "t" mandatory = "y" repeatable = "n" check = "list">101,102,111,114,136,137,138,140,201,202,211,231,238</sub>
+				<sub code = "o" mandatory = "n" repeatable = "n" check = "list">b,l,f,y,i,n,g,w,e,x,5</sub>
+				<sub code = "u" mandatory = "n" repeatable = "n" check = "list">a,p</sub>
+				<sub code = "m" mandatory = "n" repeatable = "n" check = "none"></sub>
+				<sub code = "v" mandatory = "y" repeatable = "n" check = "list">LEASED,PARADE,BTSERIES,BTROMAN,BTURBN,Midwest</sub>
+			</tag>
+		</agent>
+	</system>
+	<system name = "bpl">
+		<agent name = 'cat'>
+			<tag code = "099" indicators = "blank,blank" mandatory = "n" repeatable = "n">
+				<sub code = "a" mandatory = "y" repeatable = "y" check = "none"></sub>
+			</tag>
+			<tag code = "947" indicators = "blank,blank" mandatory = "y" repeatable = "n">
+				<sub code = "a" mandatory = "y" repeatable = "n" check = "list">B&amp;T LEASE,B&amp;T PBP,B&amp;T SERIES,B&amp;T ROMANCE,B&amp;T URBAN,Midwest Tapes</sub>
+			</tag>
+			<tag code = "960" indicators = "blank,1" mandatory = "y" repeatable = "y">
+				<sub code = "i" mandatory = "y" repeatable = "n" check = "barcode"></sub>
+				<sub code = "l" mandatory = "y" repeatable = "n" check = "location"></sub>
+				<sub code = "p" mandatory = "y" repeatable = "n" check = "price"></sub>
+				<sub code = "q" mandatory = "y" repeatable = "n" check = "list">100,101,110,200,205,210,215,220,225,230,235,250,251,260,265,270,275,290,291,292,400,401,402,403,405,406,409,420,425,430,435,490,491,492,500,501,600,605,608,610,615,620,625,630,635,650,651,660,665,670,690,691,700,800,900</sub>
+				<sub code = "o" mandatory = "n" repeatable = "n" check = "list">a,b,d,e,f,g,j,k,l,m,n,s,t,u,v,w,y,z</sub>
+				<sub code = "t" mandatory = "y" repeatable = "n" check = "list">1,2,3,4,9,10,11,12,13,16,18,19,34,39,40,42,48,50</sub>
+				<sub code = "r" mandatory = "y" repeatable = "n" check = "list">a,b,c,d,e,h,j,k,l,m,n,q,s,t,u,v,w</sub>
+				<sub code = "s" mandatory = "y" repeatable = "n" check = "list">g</sub>
+				<sub code = "v" mandatory = "y" repeatable = "n" check = "location"></sub>
+				<sub code = "n" mandatory = "y" repeatable = "n" check = "list">B&amp;T LEASE,B&amp;T PBP,B&amp;T SERIES,B&amp;T ROMANCE,B&amp;T URBAN,B&amp;T,MWT</sub>
+			</tag>
+		</agent>
+	</system>
+</data>

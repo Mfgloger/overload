@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-import logging
+# import logging
 
 # module_logger = logging.getLogger('overload_console.vendors')
 

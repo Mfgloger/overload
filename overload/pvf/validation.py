@@ -1,13 +1,19 @@
 # runs MarcEdit and local validation
+import logging
 
-from validators import marcedit
+
+from validators import marcedit, local_specs
 from errors import OverloadError
 from setup_dirs import MVAL_REP
 
 
-def validate_files(files, marcval=False, locval=False):
+module_logger = logging.getLogger('overload_console.validation')
+
+
+def validate_files(system, agent, files, marcval=False, locval=False):
     valid_files = True
     if marcval:
+        module_logger.info('Running MARCEdit validation.')
         # make sure MARCEdit is installed on the machine
         val_engine = marcedit.get_engine()
         if val_engine is None:
@@ -38,8 +44,8 @@ def validate_files(files, marcval=False, locval=False):
                         '{}.\nNot able to validate in MARCEdit'.format(
                             file))
     if locval:
-        # placeholder; replace when local validation is developed
-        raise OverloadError(
-            'Local specs validation is still being developed.\n'
-            'Uncheck the box to not display this warning')
+        rules = './rules/vendor_specs.xml'
+        specs = local_specs.local_specs(system, agent, rules)
+        valid_files, report = local_specs.local_specs_validation(system, files, specs)
+        # save the report to a file so the last batch is always remembered.
     return valid_files
