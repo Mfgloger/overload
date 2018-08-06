@@ -10,8 +10,7 @@ from overload import setup_dirs
 from overload.connectors.sierra_z3950 import z3950_query
 from overload.connectors.platform import AuthorizeAccess, PlatformSession
 from overload.utils import *
-from overload.bibs import bibs, crosswalks
-from overload.bibs import patches
+from overload.bibs import bibs, crosswalks, patches, dedup
 from overload.pvf import vendors
 from overload.pvf.analyzer import PVRReport, PVR_NYPLReport
 from overload.pvf import reports

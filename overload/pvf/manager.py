@@ -14,6 +14,7 @@ from bibs.bibs import VendorBibMeta, read_marc21, \
     db_template_to_960, db_template_to_961, db_template_to_949
 from bibs import patches
 from bibs.crosswalks import platform2meta, bibs2meta
+from bibs.dedup import dedup_marc_file
 from platform_comms import open_platform_session, platform_queries_manager
 from z3950_comms import z3950_query_manager
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
@@ -468,6 +469,19 @@ def run_processing(
             # update progbar
             progbar['value'] = n
             progbar.update()
+
+    # dedup new cataloging file
+    if agent == 'cat' and os.path.isfile(fh_new):
+        deduped_fh = dedup_marc_file(fh_new)
+
+        # delete original file and rename deduped
+        if deduped_fh is not None:
+            try:
+                os.remove(fh_new)
+                os.rename(deduped_fh, fh_new)
+            except IOError:
+                raise OverloadError(
+                    'Unable to manipulate deduped file')
 
     processing_time = datetime.now() - batch['timestamp']
     module_logger.info(

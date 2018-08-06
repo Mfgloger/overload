@@ -2049,6 +2049,13 @@ class ProcessVendorFiles(tk.Frame):
                     self.cur_manager.notbusy()
                     tkMessageBox.showerror(
                         'Processing Error', e)
+                except Exception as e:
+                    self.cur_manager.notbusy()
+                    tkMessageBox.showerror(
+                        'Processing Error', e)
+                    module_logger.critical(
+                        'Unhandled error occurred: {}'.format(e),
+                        exc_info=True)
                 finally:
                     self.cur_manager.notbusy()
 
@@ -2178,7 +2185,7 @@ class ProcessVendorFiles(tk.Frame):
 
         if os.path.isfile(CVAL_REP):
             self.topV = tk.Toplevel(self, background='white')
-            self.topV.minsize(width=800, height=500)
+            # self.topV.minsize(width=800, height=500)
             self.topV.iconbitmap('./icons/report.ico')
             self.topV.title('Vendor files validation report')
 
@@ -2210,13 +2217,21 @@ class ProcessVendorFiles(tk.Frame):
             self.yscrollbarV.config(command=self.reportVTxt.yview)
             self.xscrollbarV.config(command=self.reportVTxt.xview)
 
-            tk.Button(
+            ttk.Button(
                 self.topV,
                 text='close',
                 width=12,
                 cursor='hand2',
                 command=self.topV.destroy).grid(
-                row=12, column=6, sticky='nw', padx=5)
+                row=12, column=6, sticky='ne', padx=5)
+
+            ttk.Button(
+                self.topV,
+                text='download',
+                width=12,
+                cursor='hand2',
+                command=self.download_validation).grid(
+                row=12, column=5, sticky='nw', padx=5)
 
             # generate report
             self.create_validation_report()
@@ -2415,6 +2430,10 @@ class ProcessVendorFiles(tk.Frame):
             if self.dups.size == 0:
                 self.reportDTxt.insert(tk.END, 'All clear\n')
             else:
+                dups_in_file = reports.report_deduped_bibs(
+                    self.last_used_sys, self.last_used_agent, df)
+                self.reportDTxt.insert(
+                    tk.END, 'Deduped bibs: {}\n'.format(dups_in_file))
                 self.reportDTxt.insert(tk.END, self.dups.to_string() + '\n')
         else:
             self.dups = None
@@ -2487,6 +2506,31 @@ class ProcessVendorFiles(tk.Frame):
 
         # prevent edits
         self.reportBTxt['state'] = tk.DISABLED
+
+    def download_validation(self):
+        date_today = date.today().strftime('%y%m%d')
+        fh = '{}-{}-pvr-validation-{}.txt'.format(
+            self.last_used_sys, self.last_used_lib, date_today)
+
+        dir_opt = {}
+        dir_opt['parent'] = self.topV
+        dir_opt['title'] = 'Save As'
+        dir_opt['initialdir'] = self.last_directory
+        dir_opt['initialfile'] = fh
+
+        fh = tkFileDialog.asksaveasfilename(**dir_opt)
+        try:
+            if fh != '':
+                shutil.copyfile(CVAL_REP, fh)
+                tkMessageBox.showinfo(
+                    'Download', 'Report saved successfully.', parent=self.topV)
+        except IOError as e:
+            module_logger.error(
+                'Unable to download validation report. Error: {}'.format(e))
+            tkMessageBox.showerror(
+                'Save Error',
+                'Encountered error while saving the report. Aborting.',
+                parent=self.topV)
 
     def download_errors(self):
         # suggested name
