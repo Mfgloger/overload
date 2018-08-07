@@ -268,6 +268,7 @@ class TransferFiles(tk.Frame):
             pass
         elif self.host.get() != '':
             try:
+                self.cur_manager.busy()
                 self.ftp = connect2ftp(
                     self.host.get(), self.user, self.password)
                 if self.ftp_directory:
@@ -284,6 +285,8 @@ class TransferFiles(tk.Frame):
             except OverloadError as e:
                 tkMessageBox.showerror(
                     'FTP Error', e, parent=self.top)
+            finally:
+                self.cur_manager.notbusy()
         else:
             tkMessageBox.showerror(
                 'FTP', 'Please select host to connect to')
@@ -698,6 +701,15 @@ class TransferFiles(tk.Frame):
             for d in sorted(dirs):
                 self.remTrv.insert(
                     '', tk.END, values=(d, '', ''), tags='d', open=False)
+
+            # temp solution sorting by date
+            file_dict = dict()
+            for f in files:
+                file_dict[f[0]] = (f[1], f[2])
+            files = []
+            for k, v in sorted(file_dict.iteritems()):
+                files.append((k, v[0], v[1]))
+
             for f in files:
                 try:
                     size = convert_file_size(int(f[1]))
