@@ -24,7 +24,7 @@ from manager import run_processing, save_stats, save_template, \
 from datastore import NYPLOrderTemplate, session_scope
 from db_worker import retrieve_record
 from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
-    BATCH_META, BATCH_STATS
+    LSPEC_REP, BATCH_META, BATCH_STATS
 import bibs.sierra_dicts as sd
 from ftp_manager import store_connection, delete_connection, \
     get_ftp_connections, get_connection_details, connect2ftp, \
@@ -1986,6 +1986,11 @@ class ProcessVendorFiles(tk.Frame):
             if self.locVal.get() == 1:
                 locval = True
             else:
+                # delete local spec report from the previous run
+                try:
+                    os.remove(LSPEC_REP)
+                except WindowsError:
+                    pass
                 msg = self.validated.get() + ', local specs check skipped'
                 self.validated.set(msg)
                 locval = False
@@ -2004,7 +2009,7 @@ class ProcessVendorFiles(tk.Frame):
                     else:
                         module_logger.info('Some records are not valid.')
                         self.cur_manager.notbusy()
-                        self.validated.set('validation: !errors found!')
+                        self.validated.set('validation: ERRORS FOUND!')
                         m = 'Some of the records in selected file(s) \n' \
                             'do not validate in MARCEdit.\n' \
                             'Please see error report for details.'
@@ -2183,7 +2188,7 @@ class ProcessVendorFiles(tk.Frame):
         # local specs validation will be saved in a different file
         # and displayed in a cumulative report
 
-        if os.path.isfile(CVAL_REP):
+        if os.path.isfile(CVAL_REP) or os.path.isfile(LSPEC_REP):
             self.topV = tk.Toplevel(self, background='white')
             # self.topV.minsize(width=800, height=500)
             self.topV.iconbitmap('./icons/report.ico')
@@ -2362,12 +2367,24 @@ class ProcessVendorFiles(tk.Frame):
         self.reportVTxt.delete(1.0, tk.END)
 
         # create new MARCEdit validation report
-        self.reportVTxt.insert(
-            tk.END, 'MARCEdit validation report(s):\n\n', 'red')
-        mReport = open(CVAL_REP, 'r')
-        for line in mReport:
-            self.reportVTxt.insert(tk.END, line)
-        mReport.close()
+        try:
+            with open(CVAL_REP, 'r') as mReport:
+                self.reportVTxt.insert(
+                    tk.END, 'MARCEdit validation report(s):\n\n', 'red')
+                for line in mReport:
+                    self.reportVTxt.insert(tk.END, line)
+        except IOError:
+            pass
+        try:
+            with open(LSPEC_REP, 'r') as lReport:
+                self.reportVTxt.insert(
+                    tk.END, 'Local specs validation report(s):\n\n', 'red')
+                for line in lReport:
+                    self.reportVTxt.insert(tk.END, line)
+
+        except IOError:
+            pass
+
         self.reportVTxt['state'] = tk.DISABLED
 
     def create_processing_report(self):
@@ -2521,9 +2538,20 @@ class ProcessVendorFiles(tk.Frame):
         fh = tkFileDialog.asksaveasfilename(**dir_opt)
         try:
             if fh != '':
-                shutil.copyfile(CVAL_REP, fh)
-                tkMessageBox.showinfo(
-                    'Download', 'Report saved successfully.', parent=self.topV)
+                content = False
+                if os.path.isfile(CVAL_REP):
+                    shutil.copyfile(CVAL_REP, fh)
+                    content = True
+                if os.path.isfile(fh):
+                    if os.path.isfile(LSPEC_REP):
+                        content = True
+                        with open(fh, 'a') as report:
+                            with open(LSPEC_REP, 'r') as lReport:
+                                for line in lReport:
+                                    report.write(line)
+                if content:
+                    tkMessageBox.showinfo(
+                        'Download', 'Report saved successfully.', parent=self.topV)
         except IOError as e:
             module_logger.error(
                 'Unable to download validation report. Error: {}'.format(e))

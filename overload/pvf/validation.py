@@ -4,7 +4,7 @@ import logging
 
 from validators import marcedit, local_specs
 from errors import OverloadError
-from setup_dirs import MVAL_REP
+from setup_dirs import MVAL_REP, CVAL_REP, LSPEC_REP
 
 
 module_logger = logging.getLogger('overload_console.validation')
@@ -44,8 +44,21 @@ def validate_files(system, agent, files, marcval=False, locval=False):
                         '{}.\nNot able to validate in MARCEdit'.format(
                             file))
     if locval:
+        module_logger.info('Local specs validation launch.')
         rules = './rules/vendor_specs.xml'
         specs = local_specs.local_specs(system, agent, rules)
-        valid_files, report = local_specs.local_specs_validation(system, files, specs)
+        valid_files, report = local_specs.local_specs_validation(
+            system, files, specs)
         # save the report to a file so the last batch is always remembered.
+        try:
+            with open(LSPEC_REP, 'w') as file:
+                file.write(report)
+        except IOError as e:
+            module_logger.error(
+                'Encountered error while creating local specs validation'
+                ' report. Error: {}'.format(
+                    e))
+            raise OverloadError(
+                'Unable to create local spec validation\nreport.')
+
     return valid_files

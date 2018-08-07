@@ -178,7 +178,7 @@ class Test_NYPL_CAT_Specs(unittest.TestCase):
             'nypl', ['specs_test.mrc'], self.ncl)
         self.assertFalse(passed)
         self.assertIn(
-            '"091  ": tag occurance 1:\n\t"p" subfield is not repeatable.',
+            '"091": tag occurance 1:\n\t"p" subfield is not repeatable.',
             report)
         self.assertIn(
             '"c" subfield is mandatory.',
@@ -527,7 +527,7 @@ class Test_NYPL_CAT_Specs(unittest.TestCase):
                 tag='949',
                 indicators=[' ', '1'],
                 subfields=[
-                    'i', '33333987654328']))
+                    'i', '34444987654328']))
         bibs.write_marc21('specs_test.mrc', b)
         passed, report = local_specs.local_specs_validation(
             'nypl', ['specs_test.mrc'], self.ncl)
@@ -559,7 +559,7 @@ class Test_NYPL_CAT_Specs(unittest.TestCase):
                 tag='949',
                 indicators=[' ', '1'],
                 subfields=[
-                    'i', '34444987954328']))
+                    'i', '33333987954328']))
         bibs.write_marc21('specs_test.mrc', b)
         passed, report = local_specs.local_specs_validation(
             'nypl', ['specs_test.mrc'], self.ncl)
@@ -1049,7 +1049,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
                 tag='960',
                 indicators=[' ', '1'],
                 subfields=[
-                    'i', '34444987654328']))
+                    'i', '33333987654328']))
         bibs.write_marc21('specs_test.mrc', b)
         passed, report = local_specs.local_specs_validation(
             'bpl', ['specs_test.mrc'], self.bcl)
@@ -1081,7 +1081,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
                 tag='960',
                 indicators=[' ', '1'],
                 subfields=[
-                    'i', '33333987954328']))
+                    'i', '34444987954328']))
         bibs.write_marc21('specs_test.mrc', b)
         passed, report = local_specs.local_specs_validation(
             'bpl', ['specs_test.mrc'], self.bcl)

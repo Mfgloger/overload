@@ -125,6 +125,7 @@ def local_specs_validation(system, files, specs):
     issues = []
     validates = True
     for file in files:
+        file_issues = []
         bib_count = 0
         reader = read_marc21(file)
         for bib in reader:
@@ -164,62 +165,59 @@ def local_specs_validation(system, files, specs):
                 # subfields checks
                 tag_issues = []
                 for i, tag in enumerate(bib.get_fields(spec['tag'])):
-                    tag_head = '"{}{}": tag occurance {}:'.format(
+                    tag_head = '"{}": tag occurance {}:'.format(
                         spec['tag'],
-                        ''.join(ind),
                         i + 1)
                     sub_issues = []
+                    if tag.indicators == ind:
 
-                    for sub in spec['subfields']:
-                        sub_check = sub['check']
-                        sub_value = sub['value']
-                        sub_mandat = sub['mandatory']
-                        sub_repeat = sub['repeatable']
+                        for sub in spec['subfields']:
+                            sub_check = sub['check']
+                            sub_value = sub['value']
+                            sub_mandat = sub['mandatory']
+                            sub_repeat = sub['repeatable']
 
-                        # check mandatory subfield criteria
-                        if sub_mandat == 'y':
-                            found = False
-                            if tag.indicators == ind:
+                            # check mandatory subfield criteria
+                            if sub_mandat == 'y':
+                                found = False
                                 if sub['code'] in tag.subfields:
                                     found = True
-                            if not found:
-                                sub_issues.append(
-                                    '\t"{}" subfield is mandatory.'.format(
-                                        sub['code']))
+                                if not found:
+                                    sub_issues.append(
+                                        '\t"{}" subfield is mandatory.'.format(
+                                            sub['code']))
 
-                        # check repeatable critera
-                        if sub_repeat == 'n':
-                            match_count = 0
-                            if tag.indicators == ind:
+                            # check repeatable critera
+                            if sub_repeat == 'n':
+                                match_count = 0
+
                                 for s in tag.get_subfields(sub['code']):
                                     match_count += 1
 
-                            if match_count > 1:
-                                sub_issues.append(
-                                    '\t"{}" subfield is not '
-                                    'repeatable.'.format(
-                                        sub['code']))
+                                if match_count > 1:
+                                    sub_issues.append(
+                                        '\t"{}" subfield is not '
+                                        'repeatable.'.format(
+                                            sub['code']))
 
-                        # specific value checks
-                        if sub_check == 'none':
-                            pass
-                        elif sub_check == 'list':
-                            if tag.indicators == ind:
+                            # specific value checks
+                            if sub_check == 'none':
+                                pass
+                            elif sub_check == 'list':
                                 for s in tag.get_subfields(sub['code']):
                                     if s not in sub_value:
                                         sub_issues.append(
                                             '\t"{}" subfield has '
                                             'incorrect value.'.format(
                                                 sub['code']))
-                        elif sub_check == 'barcode':
-                            if tag.indicators == ind:
+                            elif sub_check == 'barcode':
                                 for s in tag.get_subfields(sub['code']):
                                     found = False
                                     if system == 'nypl':
-                                        if s[:2] != '34':
+                                        if s[:2] != '33':
                                             found = True
                                     elif system == 'bpl':
-                                        if s[:2] != '33':
+                                        if s[:2] != '34':
                                             found = True
                                     if len(s) != 14:
                                         found = True
@@ -235,16 +233,14 @@ def local_specs_validation(system, files, specs):
                                             '\t"{}" subfield has incorrect '
                                             'barcode.'.format(
                                                 sub['code']))
-                        elif sub_check == 'location':
-                            if tag.indicators == ind:
+                            elif sub_check == 'location':
                                 for s in tag.get_subfields(sub['code']):
                                     if not location_check(system, s):
                                         sub_issues.append(
                                             '\t"{}" subfield has incorrect '
                                             'location code.'.format(
                                                 sub['code']))
-                        elif sub_check == 'price':
-                            if tag.indicators == ind:
+                            elif sub_check == 'price':
                                 for s in tag.get_subfields(sub['code']):
                                     if not price_check(s):
                                         sub_issues.append(
@@ -252,17 +248,22 @@ def local_specs_validation(system, files, specs):
                                             'price format.'.format(
                                                 sub['code']))
 
-                    if sub_issues != []:
-                        tag_issues.append(tag_head)
-                        tag_issues.append('\n'.join(sub_issues))
-                        bib_issues.append('\n'.join(tag_issues))
+                        if sub_issues != []:
+                            tag_issues.append(tag_head)
+                            tag_issues.append('\n'.join(sub_issues))
+                            bib_issues.append('\n'.join(tag_issues))
 
-            issues.append('\n'.join(bib_issues))
+            if bib_issues != []:
+                file_issues.append('\n'.join(bib_issues))
 
-    if issues != []:
-        validates = False
-        # print issues
-        issues = ['Record {}:\n{}\n'.format(i + 1, issue) for i, issue in enumerate(issues)]
-        issues = '\n'.join(issues)
+        issues.append('\nFile: {}\n{}'.format(file, '-' * 40))
+        if file_issues != []:
+            validates = False
+            file_issues = ['Record {}:\n{}\n'.format(i + 1, issue) for i, issue in enumerate(file_issues)]
+            issues.append('\n'.join(file_issues))
+        else:
+            issues.append('No errors found.')
+
+    issues = '\n'.join(issues)
 
     return (validates, issues)
