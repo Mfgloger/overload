@@ -61,7 +61,7 @@
 			<tag code = "947" indicators = "blank,blank" mandatory = "y" repeatable = "n">
 				<sub code = "a" mandatory = "y" repeatable = "n" check = "list">B&amp;T LEASE,B&amp;T PBP,B&amp;T SERIES,B&amp;T ROMANCE,B&amp;T URBAN,Midwest Tapes</sub>
 			</tag>
-			<tag code = "960" indicators = "blank,1" mandatory = "y" repeatable = "y">
+			<tag code = "960" indicators = "blank,blank" mandatory = "y" repeatable = "y">
 				<sub code = "i" mandatory = "y" repeatable = "n" check = "barcode"></sub>
 				<sub code = "l" mandatory = "y" repeatable = "n" check = "location"></sub>
 				<sub code = "p" mandatory = "y" repeatable = "n" check = "price"></sub>
