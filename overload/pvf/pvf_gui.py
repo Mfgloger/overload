@@ -1483,6 +1483,7 @@ class ProcessVendorFiles(tk.Frame):
         self.marcVal = tk.IntVar()
         self.locVal = tk.IntVar()
         self.processed = tk.StringVar()
+        self.current_process = tk.StringVar()
         self.archived = tk.StringVar()
         self.validated = tk.StringVar()
         self.last_directory_check = tk.IntVar()
@@ -1681,6 +1682,12 @@ class ProcessVendorFiles(tk.Frame):
             orient=tk.HORIZONTAL,)
         self.progbar.grid(
             row=13, column=2, sticky='snew', pady=10)
+
+        self.current_processLbl = ttk.Label(
+            self.baseFrm,
+            textvariable=self.current_process)
+        self.current_processLbl.grid(
+            row=13, column=3, columnspan=2, sticky='snw', padx=5, pady=10)
 
         # report layout
         self.reportFrm = ttk.Frame(
@@ -2011,6 +2018,7 @@ class ProcessVendorFiles(tk.Frame):
             if marcval or locval:
                 try:
                     module_logger.info('Validating files.')
+                    self.current_process.set('validating...')
                     valid_files = validate_files(
                         self.system.get().lower(),
                         self.agent.get()[:3],
@@ -2052,21 +2060,25 @@ class ProcessVendorFiles(tk.Frame):
                         self.target['method'], self.target['target'],
                         template,
                         self.last_directory,
-                        self.progbar)
+                        self.progbar, self.current_process)
 
                     # confirm files have been processed
                     self.processed.set(
                         'processed: {} file(s) including {} record(s)'.format(
                             len(self.files), total_bib_count))
 
+                    self.current_process.set('')
+
                     # launch processing report
                     self.batch_summary_window()
 
                 except OverloadError as e:
+                    self.current_process.set('interrupted...')
                     self.cur_manager.notbusy()
                     tkMessageBox.showerror(
                         'Processing Error', e)
                 except Exception as e:
+                    self.current_process.set('interrupted...')
                     self.cur_manager.notbusy()
                     tkMessageBox.showerror(
                         'Processing Error', e)
@@ -2656,6 +2668,7 @@ class ProcessVendorFiles(tk.Frame):
         self.validated.set('validation:')
         self.processed.set('processed:')
         self.archived.set('archived:')
+        self.current_process.set('')
         self.progbar['value'] = 0
 
     def set_logo(self):

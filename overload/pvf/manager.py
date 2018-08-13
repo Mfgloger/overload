@@ -42,7 +42,7 @@ def run_platform_queries(api_type, session, meta_in, matchpoint):
 
 def run_processing(
     files, system, library, agent, api_type, api_name,
-        template, output_directory, progbar):
+        template, output_directory, progbar, current_process_label):
 
     # agent argument is 3 letter code
 
@@ -144,6 +144,7 @@ def run_processing(
                 file))
         reader = read_marc21(file)
 
+        current_process_label.set('quering...')
         for bib in reader:
             n += 1
 
@@ -379,6 +380,8 @@ def run_processing(
                 'Adding template field(s) to the vendor record.')
             if agent == 'cat':
                 # delete present sierra id if specified
+                # this is to prevent overlaying research record by branch
+                # if vendor provides mixed or research bib number
                 if sierra_id_present and \
                         vx[vendor]['existing_sierraId'] == 'remove_new' and \
                         analysis['action'] == 'insert' and \
@@ -472,7 +475,9 @@ def run_processing(
 
     # dedup new cataloging file
     if agent == 'cat' and os.path.isfile(fh_new):
-        deduped_fh = dedup_marc_file(fh_new)
+        current_process_label.set('deduping...')
+
+        deduped_fh = dedup_marc_file(fh_new, progbar)
 
         # delete original file and rename deduped
         if deduped_fh is not None:
