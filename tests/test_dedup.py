@@ -14,11 +14,13 @@ class TestDedup_MARC_File(unittest.TestCase):
 
     def setUp(self):
         self.fh = 'dups.mrc'
+        self.fh_no_dups = 'no_dups.mrc'
         self.ind = {
             0: 'bl2017023500',
             1: 'bl2017023505',
             2: 'bl2017023500',
-            3: 'bl2017023500'}
+            3: 'bl2017023500',
+        }
 
     def tearDown(self):
         try:
@@ -28,8 +30,10 @@ class TestDedup_MARC_File(unittest.TestCase):
 
     def test_find_duplicates(self):
         d = {'bl2017023500': [0, 2, 3]}
+        dups, skip_bibs = dedup._find_duplicates(self.ind)
         self.assertEqual(
-            dedup.find_duplicates(self.ind), d)
+            dups, d)
+        self.assertEqual(skip_bibs, [0, 2, 3])
 
     def test_find_duplicates_when_001_is_None(self):
         ind1 = {
@@ -38,15 +42,39 @@ class TestDedup_MARC_File(unittest.TestCase):
             2: None,
             3: 'bl2017023500'}
         d = {'bl2017023500': [0, 3]}
+        dups, skip_bibs = dedup._find_duplicates(ind1)
         self.assertEqual(
-            dedup.find_duplicates(ind1), d)
+            dups, d)
+        self.assertEqual(
+            skip_bibs, [0, 3])
 
-    def test_dedup_marc_file_correct_return(self):
+    def test_merge_bibs_combine_items(self):
+        bib_list = [1, 2, 3]
+        combined_barcodes = [
+            '33333849044546',
+            '33333846242796',
+            '33333846242804',
+            '33333849044553',
+            '33333846242812',
+            '33333846242846'
+        ]
+        new_record, dedup_count = dedup.merge_bibs_combine_items(
+            self.fh, bib_list)
         self.assertEqual(
-            dedup.dedup_marc_file(self.fh), 3)
+            dedup_count, 3)
+        self.assertEqual(
+            new_record['001'].data, 'bl2017023534')
+        for tag in new_record.get_fields('949'):
+            if tag.indicators == [' ', '1']:
+                for sub in tag.get_subfields('i'):
+                    self.assertIn(sub, combined_barcodes)
+
+    def test_dedup_marc_file_returns_none(self):
+        self.assertIsNone(
+            dedup.dedup_marc_file(self.fh_no_dups))
 
     def test_dedup_marc_file_detailed(self):
-        dedup.dedup_marc_file(self.fh)
+        deduped_fh = dedup.dedup_marc_file(self.fh)
         dup_barcodes = [
             '33333849044538',
             '33333846242770',
@@ -54,7 +82,7 @@ class TestDedup_MARC_File(unittest.TestCase):
             '33333849044553',
             '33333846242812',
             '33333846242846']
-        reader = bibs.read_marc21(self.fh[:-4] + '-DEDUPED.mrc')
+        reader = bibs.read_marc21(deduped_fh)
         barcode_counter = 0
         record_counter = 0
 
