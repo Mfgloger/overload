@@ -13,6 +13,7 @@ class AuthorizeAccess:
     return:
         token {id: id, expires_on: timestamp}
     """
+
     def __init__(self, client_id=None, client_secret=None,
                  oauth_server=None):
 
