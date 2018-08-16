@@ -22,6 +22,7 @@ from pvf import reports
 from analyzer import PVR_NYPLReport, PVR_BPLReport
 from setup_dirs import BATCH_STATS, BATCH_META, USER_DATA
 from errors import OverloadError, APITokenExpiredError
+from utils import remove_files
 from datastore import session_scope, Vendor, \
     PVR_Batch, PVR_File, NYPLOrderTemplate
 from db_worker import insert_or_ignore, retrieve_values, \
@@ -88,6 +89,39 @@ def run_processing(
     stats.clear()
     module_logger.debug(
         'BATCH_STATS has been emptied from previous content.')
+
+    # determine output mrc files namehandles
+    if agent == 'cat':
+        date_today = date.today().strftime('%y%m%d')
+        fh_dups = os.path.join(
+            output_directory, '{}.DUP-0.mrc'.format(
+                date_today))
+        fh_new = os.path.join(
+            output_directory,
+            '{}.NEW-0.mrc'.format(
+                date_today))
+
+        # delete existing files to start over from scratch
+        if not remove_files([fh_new, fh_dups]):
+            module_logger.error(
+                'Unable to delete output files from previous batch.')
+            raise OverloadError(
+                'Unable to delete output files from previous batch.')
+
+    elif agent in ('sel', 'acq'):
+        # remove mrc extention if exists
+        tail = os.path.split(files[0])[1]
+        if tail[-4:] == '.mrc':
+            tail = tail[:-4]
+        tail = '{}.PRC-0.mrc'.format(tail)
+        fh = os.path.join(output_directory, tail)
+
+        # delete existing files to start over from scratch
+        if not remove_files([fh]):
+            module_logger.error(
+                'Unable to delete output files from previous batch.')
+            raise OverloadError(
+                'Unable to delete output files from previous batch.')
 
     # create reference index
     module_logger.debug(
@@ -329,24 +363,6 @@ def run_processing(
             # save analysis to shelf for statistical purposes
             stats[str(n)] = analysis
 
-            # determine mrc files namehandles
-            date_today = date.today().strftime('%y%m%d')
-            if agent == 'cat':
-                fh_dups = os.path.join(
-                    output_directory, '{}.DUP-0.mrc'.format(
-                        date_today))
-                fh_new = os.path.join(
-                    output_directory,
-                    '{}.NEW-0.mrc'.format(
-                        date_today))
-            elif agent in ('sel', 'acq'):
-                # remove mrc extention if exists
-                tail = os.path.split(file)[1]
-                if tail[-4:] == '.mrc':
-                    tail = tail[:-4]
-                tail = '{}.PRC-0.mrc'.format(tail)
-                fh = os.path.join(output_directory, tail)
-
             # output processed records according to analysis
             # add Sierra bib id if matched
 
@@ -484,7 +500,7 @@ def run_processing(
             try:
                 os.remove(fh_new)
                 os.rename(deduped_fh, fh_new)
-            except IOError:
+            except WindowsError:
                 raise OverloadError(
                     'Unable to manipulate deduped file')
 

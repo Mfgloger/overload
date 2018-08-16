@@ -1,5 +1,6 @@
 import hashlib
 import math
+import os
 
 
 def md5(text):
@@ -15,3 +16,19 @@ def convert_file_size(size_bytes):
     p = math.pow(1024, i)
     s = round(size_bytes / p, 2)
     return "{}{}".format(s, size_name[i])
+
+
+def remove_files(fhs):
+    removed = True
+    if type(fhs) == str:
+        fhs = [fhs]
+    try:
+        for fh in fhs:
+            if os.path.isfile(fh):
+                os.remove(fh)
+    except WindowsError:
+        removed = False
+    except TypeError:
+        removed = False
+    finally:
+        return removed
