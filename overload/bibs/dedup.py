@@ -1,4 +1,3 @@
-import os
 import logging
 
 from bibs import read_marc21, write_marc21, BibMeta
