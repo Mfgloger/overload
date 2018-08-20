@@ -24,7 +24,7 @@ from manager import run_processing, save_stats, save_template, \
 from datastore import NYPLOrderTemplate, session_scope
 from db_worker import retrieve_record
 from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
-    LSPEC_REP, BATCH_META, BATCH_STATS
+    LSPEC_REP, DVAL_REP, BATCH_META, BATCH_STATS
 import bibs.sierra_dicts as sd
 from ftp_manager import store_connection, delete_connection, \
     get_ftp_connections, get_connection_details, connect2ftp, \
@@ -2005,47 +2005,37 @@ class ProcessVendorFiles(tk.Frame):
             if self.locVal.get() == 1:
                 locval = True
             else:
-                # delete local spec report from the previous run
-                try:
-                    os.remove(LSPEC_REP)
-                except WindowsError:
-                    pass
                 msg = self.validated.get() + ', local specs check skipped'
                 self.validated.set(msg)
                 locval = False
 
-            # run validation if one of the validations selected
-            if marcval or locval:
-                try:
-                    module_logger.info('Validating files.')
-                    self.current_process.set('validating...')
-                    valid_files = validate_files(
-                        self.system.get().lower(),
-                        self.agent.get()[:3],
-                        self.files, marcval, locval)
-                    if valid_files:
-                        module_logger.info('Records are valid.')
-                        self.validated.set('validation: records are A-OK!')
-                    else:
-                        module_logger.info('Some records are not valid.')
-                        self.cur_manager.notbusy()
-                        self.validated.set('validation: ERRORS FOUND!')
-                        m = 'Some of the records in selected file(s) \n' \
-                            'do not validate in MARCEdit.\n' \
-                            'Please see error report for details.'
-                        tkMessageBox.showerror('Validation', m)
-                except OverloadError as e:
-                    module_logger.error(
-                        'Error encountered while validating. Error: {}'.format(
-                            e))
-                    valid_files = False
-                    self.cur_manager.notbusy()
-                    tkMessageBox.showerror('Validation', e)
+            # run validation
+            try:
+                module_logger.info('Validating files.')
+                self.current_process.set('validating...')
+                valid_files = validate_files(
+                    self.system.get().lower(),
+                    self.agent.get()[:3],
+                    self.files, marcval, locval)
 
-            # allow processing if both validations skipped
-            if not marcval and not locval:
-                module_logger.info('Validation skipped by user.')
-                valid_files = True
+                if valid_files:
+                    module_logger.info('Records are valid.')
+                    self.validated.set('validation: records are A-OK!')
+                else:
+                    module_logger.info('Some records are not valid.')
+                    self.cur_manager.notbusy()
+                    self.validated.set('validation: ERRORS FOUND!')
+                    m = 'Some of the records in selected file(s) \n' \
+                        'do not validate in MARCEdit.\n' \
+                        'Please see error report for details.'
+                    tkMessageBox.showerror('Validation', m)
+            except OverloadError as e:
+                module_logger.error(
+                    'Error encountered while validating. Error: {}'.format(
+                        e))
+                valid_files = False
+                self.cur_manager.notbusy()
+                tkMessageBox.showerror('Validation', e)
 
             if legal_files and valid_files:
                 if self.template.get() == '':
@@ -2212,7 +2202,8 @@ class ProcessVendorFiles(tk.Frame):
         # local specs validation will be saved in a different file
         # and displayed in a cumulative report
 
-        if os.path.isfile(CVAL_REP) or os.path.isfile(LSPEC_REP):
+        if os.path.isfile(CVAL_REP) or os.path.isfile(LSPEC_REP) or \
+                os.path.isfile(DVAL_REP):
             self.topV = tk.Toplevel(self, background='white')
             # self.topV.minsize(width=800, height=500)
             self.topV.iconbitmap('./icons/report.ico')
@@ -2392,9 +2383,18 @@ class ProcessVendorFiles(tk.Frame):
 
         # create new MARCEdit validation report
         try:
+            with open(DVAL_REP, 'r') as dReport:
+                self.reportVTxt.insert(
+                    tk.END, 'Default validation report(s):\n', 'red')
+                for line in dReport:
+                    self.reportVTxt.insert(tk.END, line)
+        except IOError:
+            pass
+
+        try:
             with open(CVAL_REP, 'r') as mReport:
                 self.reportVTxt.insert(
-                    tk.END, 'MARCEdit validation report(s):\n\n', 'red')
+                    tk.END, '\n\nMARCEdit validation report(s):\n\n', 'red')
                 for line in mReport:
                     self.reportVTxt.insert(tk.END, line)
         except IOError:

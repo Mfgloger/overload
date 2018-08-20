@@ -2,9 +2,9 @@
 import logging
 
 
-from validators import marcedit, local_specs
+from validators import marcedit, local_specs, default
 from errors import OverloadError
-from setup_dirs import MVAL_REP, CVAL_REP, LSPEC_REP
+from setup_dirs import MVAL_REP, LSPEC_REP, DVAL_REP
 
 
 module_logger = logging.getLogger('overload_console.validation')
@@ -12,6 +12,13 @@ module_logger = logging.getLogger('overload_console.validation')
 
 def validate_files(system, agent, files, marcval=False, locval=False):
     valid_files = True
+    # mandatory, default validation
+    dup_barcodes = default.barcode_duplicates(files, system)
+    if dup_barcodes != {}:
+        valid_files = False
+        default.save_report(dup_barcodes, DVAL_REP)
+
+    # MARCEdit MARC syntax validation
     if marcval:
         module_logger.info('Running MARCEdit validation.')
         # make sure MARCEdit is installed on the machine
@@ -43,12 +50,16 @@ def validate_files(system, agent, files, marcval=False, locval=False):
                         'Encounted a problem with the file:\n'
                         '{}.\nNot able to validate in MARCEdit'.format(
                             file))
+    # local specification validation
     if locval:
         module_logger.info('Local specs validation launch.')
         rules = './rules/vendor_specs.xml'
         specs = local_specs.local_specs(system, agent, rules)
-        valid_files, report = local_specs.local_specs_validation(
+        locval_passed, report = local_specs.local_specs_validation(
             system, files, specs)
+        if not locval_passed:
+            valid_files = False
+
         # save the report to a file so the last batch is always remembered.
         try:
             with open(LSPEC_REP, 'w') as file:

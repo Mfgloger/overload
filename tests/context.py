@@ -15,4 +15,4 @@ from overload.pvf import vendors
 from overload.pvf.analyzer import PVRReport, PVR_NYPLReport
 from overload.pvf import reports
 from overload.errors import OverloadError, APITokenError, APITokenExpiredError
-from overload.validators import local_specs
+from overload.validators import local_specs, default
