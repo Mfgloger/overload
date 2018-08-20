@@ -476,6 +476,11 @@ class TestBibsPatches(unittest.TestCase):
 
 
 class TestRemovingOCLCPrefix(unittest.TestCase):
+    def test_remove_oclc_prefix_when_no_001_tag(self):
+        changed, newControlNo = patches.remove_oclc_prefix(None)
+        self.assertFalse(changed)
+        self.assertIsNone(newControlNo)
+
     def test_remove_oclc_prefix_ocm(self):
         controlNo = 'ocm00000001'
         changed, newControlNo = patches.remove_oclc_prefix(controlNo)
@@ -603,6 +608,24 @@ class TestRemovingOCLCPrefix(unittest.TestCase):
         self.assertEqual(
             mod_bib.get_fields('001')[0].data,
             'bl00000001')
+
+    # def test_bib_no_control_tag(self):
+    #     bib = Record()
+    #     bib.leader = '00000nam a2200000u  4500'
+    #     tags = []
+    #     tags.append(
+    #         Field(tag='245',
+    #               indicators=['0', '0'],
+    #               subfields=['a', 'Test title']))
+    #     tags.append(
+    #         Field(tag='091',
+    #               indicators=[' ', ' '],
+    #               subfields=['a', 'GRAPHIC GN FIC COMPOUND NAME']))
+    #     for tag in tags:
+    #         bib.add_ordered_field(tag)
+
+    #     self.assertIsNone(patches.bib_patches(
+    #         'nypl', 'branches', 'cat', 'Amalivre', bib))
 
 
 

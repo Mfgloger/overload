@@ -133,7 +133,7 @@ class Test_Reports(unittest.TestCase):
 
     def test_callNo_issues(self):
         df = reports.shelf2dataframe('temp', 'bpl')
-        callNo = reports.report_callNo_issues(df)
+        callNo = reports.report_callNo_issues(df, 'cat')
         self.assertEqual(
             list(callNo.columns.values),
                 ['vendor', 'vendor_id', 'target_id', 'vendor_callNo', 'target_callNo', 'duplicate bibs'])

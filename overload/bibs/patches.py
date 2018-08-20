@@ -5,13 +5,17 @@ from pymarc import Field
 
 def remove_oclc_prefix(controlNo):
     changed = False
-    if controlNo[:3] == 'ocm' or controlNo[:3] == 'ocn':
-        changed = True
-        controlNo = controlNo[3:]
-    elif controlNo[:2] == 'on':
-        changed = True
-        controlNo = controlNo[2:]
-    return changed, controlNo
+    try:
+        if controlNo[:3] == 'ocm' or controlNo[:3] == 'ocn':
+            changed = True
+            controlNo = controlNo[3:]
+        elif controlNo[:2] == 'on':
+            changed = True
+            controlNo = controlNo[2:]
+    except TypeError:
+        pass
+    finally:
+        return changed, controlNo
 
 
 def bib_patches(system, library, agent, vendor, bib):

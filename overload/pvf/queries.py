@@ -4,6 +4,7 @@ from pymarc import Record
 
 
 from connectors.sierra_z3950 import Z3950_QUALIFIERS, z3950_query
+from bibs.patches import remove_oclc_prefix
 
 
 module_logger = logging.getLogger('overload_console.pvr_queries')
@@ -90,7 +91,14 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
                 'keywords (001): {}'.format(
                     bibmeta.t001))
             if bibmeta.t001 is not None:
-                response = session.query_bibControlNo(keywords=[bibmeta.t001])
+                stripped, controlNo_without_prefix = remove_oclc_prefix(
+                    bibmeta.t001)
+                if stripped:
+                    keywords = [bibmeta.t001, controlNo_without_prefix]
+                else:
+                    keywords = [bibmeta.t001]
+                response = session.query_bibControlNo(
+                    keywords=keywords)
             else:
                 response = None
         else:
