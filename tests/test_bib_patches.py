@@ -475,5 +475,136 @@ class TestBibsPatches(unittest.TestCase):
             mod_bib.get_fields('091')[0].subfields)
 
 
+class TestRemovingOCLCPrefix(unittest.TestCase):
+    def test_remove_oclc_prefix_ocm(self):
+        controlNo = 'ocm00000001'
+        changed, newControlNo = patches.remove_oclc_prefix(controlNo)
+        self.assertTrue(changed)
+        self.assertEqual(
+            newControlNo,
+            '00000001')
+
+    def test_remove_oclc_prefix_ocn(self):
+        controlNo = 'ocn000000001'
+        changed, newControlNo = patches.remove_oclc_prefix(controlNo)
+        self.assertTrue(changed)
+        self.assertEqual(
+            newControlNo,
+            '000000001')
+
+    def test_remove_oclc_prefix_on(self):
+        controlNo = 'on0000000001'
+        changed, newControlNo = patches.remove_oclc_prefix(controlNo)
+        self.assertTrue(changed)
+        self.assertEqual(
+            newControlNo,
+            '0000000001')
+
+    def test_remove_oclc_prefix_not_applicable(self):
+        controlNo = '0000000001'
+        changed, newControlNo = patches.remove_oclc_prefix(controlNo)
+        self.assertFalse(changed)
+        self.assertEqual(
+            newControlNo,
+            '0000000001')
+
+    def test_bib_with_removed_oclc_prefix_on(self):
+        bib = Record()
+        bib.leader = '00000nam a2200000u  4500'
+        tags = []
+        tags.append(
+            Field(tag='001', data='on000000001'))
+        tags.append(
+            Field(tag='245',
+                  indicators=['0', '0'],
+                  subfields=['a', 'Test title']))
+        tags.append(
+            Field(tag='091',
+                  indicators=[' ', ' '],
+                  subfields=['a', 'GRAPHIC GN FIC COMPOUND NAME']))
+        for tag in tags:
+            bib.add_ordered_field(tag)
+
+        mod_bib = patches.bib_patches(
+            'nypl', 'branches', 'cat', 'Amalivre', bib)
+
+        self.assertEqual(
+            mod_bib.get_fields('001')[0].data,
+            '000000001')
+
+    def test_bib_with_removed_oclc_prefix_ocn(self):
+        bib = Record()
+        bib.leader = '00000nam a2200000u  4500'
+        tags = []
+        tags.append(
+            Field(tag='001', data='ocn00000001'))
+        tags.append(
+            Field(tag='245',
+                  indicators=['0', '0'],
+                  subfields=['a', 'Test title']))
+        tags.append(
+            Field(tag='091',
+                  indicators=[' ', ' '],
+                  subfields=['a', 'GRAPHIC GN FIC COMPOUND NAME']))
+        for tag in tags:
+            bib.add_ordered_field(tag)
+
+        mod_bib = patches.bib_patches(
+            'nypl', 'branches', 'cat', 'Amalivre', bib)
+
+        self.assertEqual(
+            mod_bib.get_fields('001')[0].data,
+            '00000001')
+
+    def test_bib_with_removed_oclc_prefix_ocm(self):
+        bib = Record()
+        bib.leader = '00000nam a2200000u  4500'
+        tags = []
+        tags.append(
+            Field(tag='001', data='ocm00000001'))
+        tags.append(
+            Field(tag='245',
+                  indicators=['0', '0'],
+                  subfields=['a', 'Test title']))
+        tags.append(
+            Field(tag='091',
+                  indicators=[' ', ' '],
+                  subfields=['a', 'GRAPHIC GN FIC COMPOUND NAME']))
+        for tag in tags:
+            bib.add_ordered_field(tag)
+
+        mod_bib = patches.bib_patches(
+            'nypl', 'research', 'cat', 'Amalivre', bib)
+
+        self.assertEqual(
+            mod_bib.get_fields('001')[0].data,
+            '00000001')
+
+    def test_bib_no_oclc_prefix(self):
+        bib = Record()
+        bib.leader = '00000nam a2200000u  4500'
+        tags = []
+        tags.append(
+            Field(tag='001', data='bl00000001'))
+        tags.append(
+            Field(tag='245',
+                  indicators=['0', '0'],
+                  subfields=['a', 'Test title']))
+        tags.append(
+            Field(tag='091',
+                  indicators=[' ', ' '],
+                  subfields=['a', 'GRAPHIC GN FIC COMPOUND NAME']))
+        for tag in tags:
+            bib.add_ordered_field(tag)
+
+        mod_bib = patches.bib_patches(
+            'nypl', 'branches', 'cat', 'Amalivre', bib)
+
+        self.assertEqual(
+            mod_bib.get_fields('001')[0].data,
+            'bl00000001')
+
+
+
 if __name__ == '__main__':
     unittest.main()

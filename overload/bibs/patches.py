@@ -3,10 +3,33 @@
 from pymarc import Field
 
 
+def remove_oclc_prefix(controlNo):
+    changed = False
+    if controlNo[:3] == 'ocm' or controlNo[:3] == 'ocn':
+        changed = True
+        controlNo = controlNo[3:]
+    elif controlNo[:2] == 'on':
+        changed = True
+        controlNo = controlNo[2:]
+    return changed, controlNo
+
+
 def bib_patches(system, library, agent, vendor, bib):
     """
     Treatment of specific records; special cases
     """
+
+    # nypl remove OCLC prefix
+    if system == 'nypl':
+        if '001' in bib:
+            controlNo = bib.get_fields('001')[0].data
+            changed, controlNo = remove_oclc_prefix(controlNo)
+            if changed:
+                bib.remove_fields('001')
+                field = Field(
+                    tag='001',
+                    data=controlNo)
+                bib.add_ordered_field(field)
 
     # nypl branches cat patch for BT Series
     if system == 'nypl' and library == 'branches' and \
@@ -65,4 +88,5 @@ def bib_patches(system, library, agent, vendor, bib):
                 # if correct remove the original and replace with new
                 bib.remove_fields('091')
                 bib.add_ordered_field(field)
+
     return bib
