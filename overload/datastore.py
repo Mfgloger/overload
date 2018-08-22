@@ -85,6 +85,7 @@ class NYPLOrderTemplate(Base):
     code2 = Column(String)
     code3 = Column(String)
     code4 = Column(String)
+    raction = Column(String)
     form = Column(String)
     orderNote = Column(String)
     orderType = Column(String)
@@ -112,14 +113,15 @@ class NYPLOrderTemplate(Base):
     def __repr__(self):
         return "<NyplOrderTemplate(otid='%s', tName='%s', acqType='%s', " \
             "claim='%s', code1='%s', code2='%s', code3='%s', code4='%s', " \
-            "form='%s', orderType='%s', orderNote='%s', status='%s', " \
-            "vendor='%s', lang='%s', country='%s', identity='%s', " \
-            "generalNote='%s', internalNote='%s', oldOrdNo='%s', " \
-            "selector='%s', venAddr='%s', venNote='%s', venTitleNo='%s', " \
-            "blanketPO='%s', paidNote='%s', shipTo='%s', requestor='%s', " \
-            "bibFormat='%s, match1st='%s', match2nd='%s', match3rd='%s')>" % (
+            "raction='%s', form='%s', orderType='%s', orderNote='%s', " \
+            "status='%s', vendor='%s', lang='%s', country='%s', " \
+            "identity='%s', generalNote='%s', internalNote='%s', " \
+            "oldOrdNo='%s', selector='%s', venAddr='%s', venNote='%s', " \
+            "venTitleNo='%s', blanketPO='%s', paidNote='%s', shipTo='%s', " \
+            "requestor='%s', bibFormat='%s, match1st='%s', match2nd='%s', " \
+            "match3rd='%s')>" % (
                 self.otid, self.tName, self.acqType, self.claim,
-                self.code1, self.code2, self.code3, self.code4,
+                self.code1, self.code2, self.code3, self.code4, self.raction,
                 self.form, self.orderType, self.orderNote, self.status,
                 self.vendor, self.lang, self.country,
                 self.identity, self.generalNote, self.internalNote,

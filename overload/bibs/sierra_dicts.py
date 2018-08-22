@@ -51,6 +51,7 @@ NORDER_CODE2 = {
     'r': 'research',
     'c': 'branch',
     '-': '-',
+    'd': 'department',
     'x': 'batch research',
     'y': 'batch branch',
     'e': 'doe educator'
@@ -66,7 +67,10 @@ NORDER_CODE3 = {
 # nypl order code 4
 NORDER_CODE4 = {
     '-': '---',
-    'n': 'suppress'
+    'n': 'suppress',
+    'a': 'adult',
+    'j': 'juvenile',
+    'y': 'young adult'
 }
 
 # nypl order item format
@@ -143,6 +147,16 @@ N_OSTATUS = {
     '2': 'approval rej',
     'd': 'serial paid',
     'f': 'serial no enc'
+}
+
+# nypl Recv Action
+NRACTION = {
+    '-': '---',
+    'a': 'attention',
+    'n': 'notify',
+    'r': 'rush',
+    'i': 'rush special instr.',
+    's': 'special instr.'
 }
 
 # languages

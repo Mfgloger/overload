@@ -763,6 +763,7 @@ class OrderTemplate(tk.Frame):
         self.vendor = tk.StringVar()
         self.lang = tk.StringVar()
         self.country = tk.StringVar()
+        self.raction = tk.StringVar()
         self.identity = tk.StringVar()
         self.genNote = tk.StringVar()
         self.intNote = tk.StringVar()
@@ -782,9 +783,9 @@ class OrderTemplate(tk.Frame):
 
         # layout of the main frame
         self.top.columnconfigure(0, minsize=5)
-        self.top.columnconfigure(1, minsize=200)
+        self.top.columnconfigure(1, minsize=250)
         self.top.columnconfigure(9, minsize=5)
-        self.top.columnconfigure(15, minsize=5)
+        self.top.columnconfigure(16, minsize=5)
         self.top.rowconfigure(21, minsize=5)
         self.top.rowconfigure(23, minsize=10)
 
@@ -818,113 +819,123 @@ class OrderTemplate(tk.Frame):
         self.fixedFrm.grid(
             row=1, rowspan=12, column=4, columnspan=5,
             sticky='snew', padx=5, pady=5)
-        self.fixedFrm.columnconfigure(2, minsize=5)
-        self.fixedFrm.rowconfigure(12, minsize=5)
+        self.fixedFrm.columnconfigure(0, minsize=5)
+        self.fixedFrm.columnconfigure(3, minsize=25)
+        self.fixedFrm.rowconfigure(14, minsize=5)
 
         # fixed fields widgets
         ttk.Label(self.fixedFrm, text='ACQ Type', style='Small.TLabel').grid(
-            row=0, column=0, columnspan=2, sticky='sw')
+            row=0, column=1, columnspan=2, sticky='sw')
         self.acqTypeCbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.acqType)
         self.acqTypeCbx.grid(
-            row=1, column=0, columnspan=2, sticky='sew')
+            row=1, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(self.fixedFrm, text='Claim', style='Small.TLabel').grid(
-            row=2, column=0, columnspan=2, sticky='sw')
+            row=2, column=1, columnspan=2, sticky='sw')
         self.claimCbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.claim)
         self.claimCbx.grid(
-            row=3, column=0, columnspan=2, sticky='sew')
+            row=3, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='OrderCode 1',
             style='Small.TLabel').grid(
-            row=4, column=0, sticky='sw')
+            row=4, column=1, sticky='sw')
         self.oCode1Cbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.oCode1)
         self.oCode1Cbx.grid(
-            row=5, column=0, columnspan=2, sticky='sew')
+            row=5, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='OrderCode 2',
             style='Small.TLabel').grid(
-            row=6, column=0, columnspan=2, sticky='sw')
+            row=6, column=1, columnspan=2, sticky='sw')
         self.oCode2Cbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.oCode2)
         self.oCode2Cbx.grid(
-            row=7, column=0, columnspan=2, sticky='sew')
+            row=7, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='OrderCode 3',
             style='Small.TLabel').grid(
-            row=8, column=0, columnspan=2, sticky='sw')
+            row=8, column=1, columnspan=2, sticky='sw')
         self.oCode3Cbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.oCode3)
         self.oCode3Cbx.grid(
-            row=9, column=0, columnspan=2, sticky='sew')
+            row=9, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='OrderCode 4',
             style='Small.TLabel').grid(
-            row=10, column=0, columnspan=2, sticky='sw')
+            row=10, column=1, columnspan=2, sticky='sw')
         self.oCode4Cbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.oCode4)
         self.oCode4Cbx.grid(
-            row=11, column=0, columnspan=2, sticky='sew')
+            row=11, column=1, columnspan=2, sticky='sew')
+
+        ttk.Label(
+            self.fixedFrm, text='Recv Action',
+            style='Small.TLabel').grid(
+            row=12, column=1, columnspan=2, sticky='sw')
+        self.ractionCbx = ttk.Combobox(
+            self.fixedFrm, textvariable=self.raction)
+        self.ractionCbx.grid(
+            row=13, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='Form',
             style='Small.TLabel').grid(
-            row=0, column=3, columnspan=2, sticky='sw')
+            row=0, column=4, columnspan=2, sticky='sw')
         self.oFormCbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.oForm)
         self.oFormCbx.grid(
-            row=1, column=3, columnspan=2, sticky='sew')
+            row=1, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='Order Note',
             style='Small.TLabel').grid(
-            row=2, column=3, columnspan=2, sticky='sw')
+            row=2, column=4, columnspan=2, sticky='sw')
         self.oNoteCbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.oNote)
         self.oNoteCbx.grid(
-            row=3, column=3, columnspan=2, sticky='sew')
+            row=3, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='Order Type',
             style='Small.TLabel').grid(
-            row=4, column=3, columnspan=2, sticky='sw')
+            row=4, column=4, columnspan=2, sticky='sw')
         self.oTypeCbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.oType)
         self.oTypeCbx.grid(
-            row=5, column=3, columnspan=2, sticky='sew')
+            row=5, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='Vendor',
             style='Small.TLabel').grid(
-            row=6, column=3, columnspan=2, sticky='sw')
+            row=6, column=4, columnspan=2, sticky='sw')
         self.vendorEnt = ttk.Entry(
             self.fixedFrm, textvariable=self.vendor)
         self.vendorEnt.grid(
-            row=7, column=3, columnspan=2, sticky='sew')
+            row=7, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='Language',
             style='Small.TLabel').grid(
-            row=8, column=3, columnspan=2, sticky='sw')
+            row=8, column=4, columnspan=2, sticky='sw')
         self.langCbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.lang)
         self.langCbx.grid(
-            row=9, column=3, columnspan=2, sticky='sew')
+            row=9, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.fixedFrm, text='Country',
             style='Small.TLabel').grid(
-            row=10, column=3, columnspan=2, sticky='sw')
+            row=10, column=4, columnspan=2, sticky='sw')
         self.countryCbx = ttk.Combobox(
             self.fixedFrm, textvariable=self.country)
         self.countryCbx.grid(
-            row=11, column=3, columnspan=2, sticky='sew')
+            row=11, column=4, columnspan=2, sticky='sew')
 
         # variable fields frame
         self.varFrm = ttk.LabelFrame(
@@ -933,134 +944,137 @@ class OrderTemplate(tk.Frame):
         self.varFrm.grid(
             row=1, rowspan=12, column=10, columnspan=5,
             sticky='snew', padx=5, pady=5)
-        self.varFrm.columnconfigure(2, minsize=5)
-        self.varFrm.rowconfigure(12, minsize=5)
+        self.varFrm.columnconfigure(0, minsize=5)
+        self.varFrm.columnconfigure(3, minsize=25)
+        self.varFrm.rowconfigure(14, minsize=5)
 
         # variable field widgets
         ttk.Label(self.varFrm, text='Identity', style='Small.TLabel').grid(
-            row=0, column=0, columnspan=2, sticky='sw')
+            row=0, column=1, columnspan=2, sticky='sw')
         self.identityEnt = ttk.Entry(
             self.varFrm, textvariable=self.identity)
         self.identityEnt.grid(
-            row=1, column=0, columnspan=2, sticky='sew')
+            row=1, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='General Note',
             style='Small.TLabel').grid(
-            row=2, column=0, columnspan=2, sticky='sw')
+            row=2, column=1, columnspan=2, sticky='sw')
         self.genNoteEnt = ttk.Entry(
             self.varFrm, textvariable=self.genNote)
         self.genNoteEnt.grid(
-            row=3, column=0, columnspan=2, sticky='sew')
+            row=3, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Internal Note',
             style='Small.TLabel').grid(
-            row=4, column=0, columnspan=2, sticky='sw')
+            row=4, column=1, columnspan=2, sticky='sw')
         self.intNoteEnt = ttk.Entry(
             self.varFrm, textvariable=self.intNote)
         self.intNoteEnt.grid(
-            row=5, column=0, columnspan=2, sticky='sew')
+            row=5, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Old Order No.',
             style='Small.TLabel').grid(
-            row=6, column=0, columnspan=2, sticky='sw')
+            row=6, column=1, columnspan=2, sticky='sw')
         self.oldOrdNoEnt = ttk.Entry(
             self.varFrm, textvariable=self.oldOrdNo)
         self.oldOrdNoEnt.grid(
-            row=7, column=0, columnspan=2, sticky='sew')
+            row=7, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Selector',
             style='Small.TLabel').grid(
-            row=8, column=0, columnspan=2, sticky='sw')
+            row=8, column=1, columnspan=2, sticky='sw')
         self.selectorEnt = ttk.Entry(
             self.varFrm, textvariable=self.selector)
         self.selectorEnt.grid(
-            row=9, column=0, columnspan=2, sticky='sew')
+            row=9, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Vendor Addr',
             style='Small.TLabel').grid(
-            row=10, column=0, columnspan=2, sticky='sw')
+            row=10, column=1, columnspan=2, sticky='sw')
         self.venAddrEnt = ttk.Entry(
             self.varFrm, textvariable=self.venAddr)
         self.venAddrEnt.grid(
-            row=11, column=0, columnspan=2, sticky='sew')
+            row=11, column=1, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Vendor Note',
             style='Small.TLabel').grid(
-            row=0, column=3, columnspan=2, sticky='sw')
+            row=0, column=4, columnspan=2, sticky='sw')
         self.venNoteEnt = ttk.Entry(
             self.varFrm, textvariable=self.venNote)
         self.venNoteEnt.grid(
-            row=1, column=3, columnspan=2, sticky='sew')
+            row=1, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Vendor Title No.',
             style='Small.TLabel').grid(
-            row=2, column=3, columnspan=2, sticky='sw')
+            row=2, column=4, columnspan=2, sticky='sw')
         self.venTitleNoEnt = ttk.Entry(
             self.varFrm, textvariable=self.venTitleNo)
         self.venTitleNoEnt.grid(
-            row=3, column=3, columnspan=2, sticky='sew')
+            row=3, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Blanket PO',
             style='Small.TLabel').grid(
-            row=4, column=3, columnspan=2, sticky='sw')
+            row=4, column=4, columnspan=2, sticky='sw')
         self.blanketPOEnt = ttk.Entry(
             self.varFrm, textvariable=self.blanketPO)
         self.blanketPOEnt.grid(
-            row=5, column=3, columnspan=2, sticky='sew')
+            row=5, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Ship To', style='Small.TLabel').grid(
-            row=6, column=3, columnspan=2, sticky='sw')
+            row=6, column=4, columnspan=2, sticky='sw')
         self.shipToEnt = ttk.Entry(
             self.varFrm, textvariable=self.shipTo)
         self.shipToEnt.grid(
-            row=7, column=3, columnspan=2, sticky='sew')
+            row=7, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Requestor', style='Small.TLabel').grid(
-            row=8, column=3, columnspan=2, sticky='sw')
+            row=8, column=4, columnspan=2, sticky='sw')
         self.requestorEnt = ttk.Entry(
             self.varFrm, textvariable=self.requestor)
         self.requestorEnt.grid(
-            row=9, column=3, columnspan=2, sticky='sew')
+            row=9, column=4, columnspan=2, sticky='sew')
 
         ttk.Label(
             self.varFrm, text='Paid Note', style='Small.TLabel').grid(
-            row=10, column=3, columnspan=2, sticky='sw')
+            row=10, column=4, columnspan=2, sticky='sw')
         self.paidNoteEnt = ttk.Entry(
             self.varFrm, textvariable=self.paidNote)
         self.paidNoteEnt.grid(
-            row=11, column=3, columnspan=2, sticky='sew')
+            row=11, column=4, columnspan=2, sticky='sew')
 
         # sierra bibliographic format frame
         self.bibFrm = ttk.LabelFrame(
             self.top, text='sierra bib format')
         self.bibFrm.grid(
-            row=20, column=4, sticky='snew', padx=10, pady=10)
+            row=20, column=4, sticky='snew', padx=5, pady=10)
+        self.bibFrm.columnconfigure(0, minsize=5)
+        self.bibFrm.columnconfigure(3, minsize=5)
         self.bibFrm.rowconfigure(2, minsize=5)
 
         ttk.Label(
             self.bibFrm, text='Material Form',
             style='Small.TLabel').grid(
-            row=0, column=0, columnspan=2, sticky='sw')
+            row=0, column=1, columnspan=2, sticky='sw')
         self.bibMatFormCbx = ttk.Combobox(
             self.bibFrm, textvariable=self.bibMatForm)
         self.bibMatFormCbx.grid(
-            row=1, column=0, sticky='sew')
+            row=1, column=1, sticky='sew')
 
         # matchpoints frame
         self.matchFrm = ttk.LabelFrame(
             self.top, text='sierra matchpoints')
         self.matchFrm.grid(
-            row=20, column=6, columnspan=9, sticky='snew', padx=10, pady=10)
+            row=20, column=6, columnspan=9, sticky='snew', padx=5, pady=10)
 
         ttk.Label(
             self.matchFrm, text='primary',
@@ -1101,7 +1115,7 @@ class OrderTemplate(tk.Frame):
             text='new',
             command=self.reset)
         self.newBtn.grid(
-            row=22, column=1, columnspan=3, sticky='swe', padx=50, pady=5)
+            row=22, column=1, columnspan=3, sticky='swe', padx=70, pady=5)
 
         self.saveBtn = ttk.Button(
             self.top,
@@ -1109,7 +1123,7 @@ class OrderTemplate(tk.Frame):
             # width=8,
             command=self.save_template)
         self.saveBtn.grid(
-            row=22, column=4, sticky='nwe', padx=10, pady=5)
+            row=22, column=4, sticky='nwe', padx=25, pady=5)
 
         self.deleteBtn = ttk.Button(
             self.top,
@@ -1231,6 +1245,7 @@ class OrderTemplate(tk.Frame):
             code2=self.oCode2.get(),
             code3=self.oCode3.get(),
             code4=self.oCode4.get(),
+            raction=self.raction.get(),
             form=self.oForm.get(),
             orderNote=self.oNote.get(),
             orderType=self.oType.get(),
@@ -1395,6 +1410,9 @@ class OrderTemplate(tk.Frame):
             '{} ({})'.format(x, y) for x, y in sorted(
                 sd.NORDER_CODE4.iteritems())]
         self.oCode4Cbx['values'] = self.oCode4Cbx['values'] + ('', )
+        self.ractionCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(sd.NRACTION.iteritems())]
+        self.ractionCbx['values'] = self.ractionCbx['values'] + ('', )
         self.oFormCbx['values'] = [
             '{} ({})'.format(x, y) for x, y in sorted(
                 sd.N_OFORM.iteritems())]
@@ -1437,6 +1455,7 @@ class OrderTemplate(tk.Frame):
         self.oCode2.set('')
         self.oCode3.set('')
         self.oCode4.set('')
+        self.raction.set('')
         self.oForm.set('')
         self.oNote.set('')
         self.oType.set('')
