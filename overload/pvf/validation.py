@@ -4,6 +4,7 @@ import logging
 
 from validators import marcedit, local_specs, default
 from errors import OverloadError
+from utils import remove_files
 from setup_dirs import MVAL_REP, LSPEC_REP, DVAL_REP
 
 
@@ -11,12 +12,20 @@ module_logger = logging.getLogger('overload_console.validation')
 
 
 def validate_files(system, agent, files, marcval=False, locval=False):
+
     valid_files = True
     # mandatory, default validation
-    dup_barcodes = default.barcode_duplicates(files, system)
-    if dup_barcodes != {}:
-        valid_files = False
+
+    try:
+        dup_barcodes = default.barcode_duplicates(files, system)
+        if dup_barcodes != {}:
+            valid_files = False
         default.save_report(dup_barcodes, DVAL_REP)
+    except OverloadError as e:
+        module_logger.error(
+            'Unable to create default validation report. '
+            'Error: {}'.format(e))
+        raise OverloadError(e)
 
     # MARCEdit MARC syntax validation
     if marcval:
@@ -50,6 +59,14 @@ def validate_files(system, agent, files, marcval=False, locval=False):
                         'Encounted a problem with the file:\n'
                         '{}.\nNot able to validate in MARCEdit'.format(
                             file))
+
+    # delete previous local spec report
+    if not remove_files([LSPEC_REP]):
+        module_logger.error(
+            'Unable to delete pevious local spec validation report.')
+        raise OverloadError(
+            'Unable to remove previous local spec validation report.')
+
     # local specification validation
     if locval:
         module_logger.info('Local specs validation launch.')

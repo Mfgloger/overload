@@ -1,6 +1,9 @@
 # mandatory, default validation
 
+
 from bibs.bibs import read_marc21
+from errors import OverloadError
+from utils import remove_files
 
 
 def barcode_duplicates(batch, system):
@@ -49,6 +52,12 @@ def barcode_duplicates(batch, system):
 
 
 def save_report(data, outfile):
+    # delete previous report
+    if not remove_files([outfile]):
+        raise OverloadError(
+            'Unable to delete previous default '
+            'validation report: {}.'.format(outfile))
+
     report = []
     for k, v in data.iteritems():
         report.append('\n{} - barcode dups:'.format(k))
@@ -59,5 +68,10 @@ def save_report(data, outfile):
 
     if report == []:
         report = ['No errors found']
-    with open(outfile, 'w') as file:
-        file.write('\n'.join(report))
+    try:
+        with open(outfile, 'w') as file:
+            file.write('\n'.join(report))
+    except IOError as e:
+        raise OverloadError(
+            'Unable to create a new default validation report. '
+            'Error: {}'.format(e))
