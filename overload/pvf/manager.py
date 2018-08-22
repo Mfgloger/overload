@@ -72,7 +72,6 @@ def run_processing(
     # clean-up batch metadata & stats
     module_logger.debug('Opening BATCH_META.')
     batch = shelve.open(BATCH_META, writeback=True)
-    batch.clear()
     module_logger.debug(
         'BATCH_META has been emptied from previous content.')
     timestamp = datetime.now()

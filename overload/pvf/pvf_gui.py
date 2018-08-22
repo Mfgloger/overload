@@ -2000,6 +2000,15 @@ class ProcessVendorFiles(tk.Frame):
             # run process
             self.cur_manager.busy()
 
+            # clear batch summary and stats from previous run
+            batch = shelve.open(BATCH_META)
+            batch.clear()
+            batch.close()
+
+            stats = shelve.open(BATCH_STATS)
+            stats.clear()
+            stats.close()
+
             # calculate maximum for progbar
             legal_files = True
             total_bib_count = 0
@@ -2043,10 +2052,11 @@ class ProcessVendorFiles(tk.Frame):
                     self.validated.set('validation: records are A-OK!')
                 else:
                     module_logger.info('Some records are not valid.')
+                    self.current_process.set('')
                     self.cur_manager.notbusy()
                     self.validated.set('validation: ERRORS FOUND!')
                     m = 'Some of the records in selected file(s) \n' \
-                        'do not validate in MARCEdit.\n' \
+                        'are not valid.\n' \
                         'Please see error report for details.'
                     tkMessageBox.showerror('Validation', m)
             except OverloadError as e:
