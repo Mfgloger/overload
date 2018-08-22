@@ -199,6 +199,34 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 				</field>
 			</bib_template>
 		</vendor>
+		<vendor name = "Amalivre">
+			<vendor_tag type = "standard" tag = "901a" operator = "main">AUXAM</vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>001</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<existing_sierraId>remove_new</existing_sierraId>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
+		<vendor name = "Ingram">
+			<vendor_tag type = "standard" tag = "901a" operator = "main">INGRAM</vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>001</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<existing_sierraId>remove_new</existing_sierraId>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
 	</system>
 	<system name = "bpl">
 		<vendor name = "UNKNOWN">
