@@ -108,6 +108,31 @@ class TestBibsUtilities(unittest.TestCase):
             Field(tag='245',
                   indicators=['0', '0'],
                   subfields=['a', 'Test title']))
+        tags.append(
+            Field(tag='949',
+                  indicators=[' ', '1'],
+                  subfields=['i', '33333818132462',
+                             'l', 'fea0f',
+                             'p', '9.99',
+                             't', '102',
+                             'v', 'AMALIVRE']))
+        tags.append(
+            Field(tag='949',
+                  indicators=[' ', '1'],
+                  subfields=['i', '33333818132464',
+                             'l', 'fea0f',
+                             'p', '9.99',
+                             't', '102',
+                             'v', 'AMALIVRE']))
+
+        tags.append(
+            Field(tag='960',
+                  indicators=[' ', '1'],
+                  subfields=['i', '33333818132466',
+                             'l', 'fea0f',
+                             'p', '9.99',
+                             't', '102',
+                             'v', 'AMALIVRE']))
         for tag in tags:
             self.marc_bib.add_ordered_field(tag)
 
@@ -126,16 +151,16 @@ class TestBibsUtilities(unittest.TestCase):
         contents = open(self.fh_out).read()
         self.assertEqual(
             contents,
-            u'00089nam a2200049u  45000010024000002450015000240001-test-control_field00aTest title')
+            u'00266nam a2200085u  4500001002400000245001500024949004700039949004700086960004700133\x1e0001-test-control_field\x1e00\x1faTest title\x1e 1\x1fi33333818132462\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e 1\x1fi33333818132464\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e 1\x1fi33333818132466\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e\x1d')
 
     def test_read_marc21_returns_pymarc_reader(self):
         # should return an instance of pymarc reader
         reader = bibs.read_marc21('test.mrc')
         self.assertIs(type(reader), MARCReader)
 
-    def test_count_bibs_when_not_marc_file(self):
-        with self.assertRaises(OverloadError):
-            bibs.count_bibs('test.json')
+    # def test_count_bibs_when_not_marc_file(self):
+    #     with self.assertRaises(OverloadError):
+    #         bibs.count_bibs('test.json')
 
     def test_read_from_json_retuns_pymarc_reader(self):
         reader = JSONReader('test.json')
@@ -267,6 +292,7 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(meta.rCallNumber, [])
         self.assertEqual(meta.vendor, 'Amalivre')
         self.assertEqual(meta.dstLibrary, 'rl')
+        self.assertEqual(meta.barcodes, ['33333818132462', '33333818132464', '33333818132466'])
 
     def test_vendor_bibmeta_object_when_sierra_id_is_provided(self):
         # nypl scenario
