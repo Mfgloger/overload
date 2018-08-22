@@ -612,12 +612,25 @@ class VendorBibMeta(BibMeta):
         BibMeta.__init__(self, bib)
         self.vendor = vendor
         self.dstLibrary = dstLibrary
+        self.barcodes = []
+
+        # NYPL item records
+        for tag in bib.get_fields('949'):
+            if tag.indicators == [' ', '1']:
+                for barcode in tag.get_subfields('i'):
+                    self.barcodes.append(barcode)
+
+        # BPL item records
+        for tag in bib.get_fields('960'):
+            if tag.indicators == [' ', '1']:
+                for barcode in tag.get_subfields('i'):
+                    self.barcodes.append(barcode)
 
     def __repr__(self):
         return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
             "024:{}, 028:{}, 336:{}, 901:{}, 947:{}, " \
             "sierraId:{}, bCallNumber:{}, rCallNumber:{}, " \
-            "vendor:{}, dstLibrary:{})>".format(
+            "vendor:{}, dstLibrary:{}, barcodes:{})>".format(
                 self.t001,
                 self.t003,
                 self.t005,
@@ -632,7 +645,8 @@ class VendorBibMeta(BibMeta):
                 self.bCallNumber,
                 self.rCallNumber,
                 self.vendor,
-                self.dstLibrary)
+                self.dstLibrary,
+                self.barcodes)
 
 
 class InhouseBibMeta(BibMeta):
