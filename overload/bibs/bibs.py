@@ -618,13 +618,13 @@ class VendorBibMeta(BibMeta):
         for tag in bib.get_fields('949'):
             if tag.indicators == [' ', '1']:
                 for barcode in tag.get_subfields('i'):
-                    self.barcodes.append(barcode)
+                    self.barcodes.append(str(barcode))
 
         # BPL item records
         for tag in bib.get_fields('960'):
             if tag.indicators == [' ', '1']:
                 for barcode in tag.get_subfields('i'):
-                    self.barcodes.append(barcode)
+                    self.barcodes.append(str(barcode))
 
     def __repr__(self):
         return "<VendorBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \
