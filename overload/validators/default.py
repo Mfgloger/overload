@@ -75,3 +75,32 @@ def save_report(data, outfile):
         raise OverloadError(
             'Unable to create a new default validation report. '
             'Error: {}'.format(e))
+
+
+def validate_processed_files_integrity(files, barcodes_fh):
+    valid = True
+    proc_barcodes = []
+    with open(barcodes_fh, 'r') as file:
+        orig_barcodes = sorted([line.strip() for line in file])
+    for file in files:
+        reader = read_marc21(file)
+        for bib in reader:
+            for tag in bib.get_fields('960'):
+                if tag.indicators == [' ', '1']:
+                    for barcode in tag.get_subfields('i'):
+                        proc_barcodes.append(str(barcode))
+            for tag in bib.get_fields('949'):
+                if tag.indicators == [' ', '1']:
+                    for barcode in tag.get_subfields('i'):
+                        proc_barcodes.append(str(barcode))
+
+    missing_barcodes = set()
+    for barcode in orig_barcodes:
+        if barcode not in proc_barcodes:
+            valid = False
+            missing_barcodes.add(barcode)
+
+    if sorted(orig_barcodes) != sorted(proc_barcodes):
+        valid = False
+
+    return valid, missing_barcodes

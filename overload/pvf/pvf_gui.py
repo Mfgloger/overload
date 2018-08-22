@@ -2021,6 +2021,7 @@ class ProcessVendorFiles(tk.Frame):
             else:
                 marcval = False
                 self.validated.set('validation: MARC syntax check skipped')
+
             if self.locVal.get() == 1:
                 locval = True
             else:
@@ -2049,6 +2050,7 @@ class ProcessVendorFiles(tk.Frame):
                         'Please see error report for details.'
                     tkMessageBox.showerror('Validation', m)
             except OverloadError as e:
+                self.current_process.set('')
                 module_logger.error(
                     'Error encountered while validating. Error: {}'.format(
                         e))
@@ -2437,7 +2439,7 @@ class ProcessVendorFiles(tk.Frame):
         # generate summary
         try:
             self.last_used_sys, self.last_used_lib, \
-            self.last_used_agent, summary = \
+                self.last_used_agent, summary = \
                 reports.generate_processing_summary(
                     BATCH_META)
             for line in summary:

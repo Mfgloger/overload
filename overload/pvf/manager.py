@@ -20,13 +20,14 @@ from z3950_comms import z3950_query_manager
 from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
 from pvf import reports
 from analyzer import PVR_NYPLReport, PVR_BPLReport
-from setup_dirs import BATCH_STATS, BATCH_META, USER_DATA
+from setup_dirs import BATCH_STATS, BATCH_META, USER_DATA, BARCODES
 from errors import OverloadError, APITokenExpiredError
 from utils import remove_files
 from datastore import session_scope, Vendor, \
     PVR_Batch, PVR_File, NYPLOrderTemplate
 from db_worker import insert_or_ignore, retrieve_values, \
     retrieve_record, update_nypl_template, delete_record
+from validators.default import validate_processed_files_integrity
 
 
 module_logger = logging.getLogger('overload_console.pvr_manager')
@@ -81,12 +82,17 @@ def run_processing(
     batch['agent'] = agent
     batch['template'] = template
     batch['file_names'] = files
+    batch.close()
     module_logger.debug(
         'BATCH_META new data: {}, {}, {}, {}, {}, {}'.format(
             timestamp, system, library, agent, template, files))
 
     stats = shelve.open(BATCH_STATS, writeback=True)
     stats.clear()
+    if not remove_files(BARCODES):
+        module_logger.error('Unable to delete barcodes from previous batch.')
+        raise OverloadError('Unable to delete barcodes from previous batch.')
+
     module_logger.debug(
         'BATCH_STATS has been emptied from previous content.')
 
@@ -214,6 +220,12 @@ def run_processing(
             # determine vendor bib meta
             meta_in = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
             module_logger.debug('Vendor bib meta: {}'.format(str(meta_in)))
+
+            # store barcodes found in vendor files for verification
+            module_logger.debug('Storing barcodes for verification.')
+            with open(BARCODES, 'a') as barcodes_file:
+                for b in meta_in.barcodes:
+                    barcodes_file.write(b + '\n')
 
             # Platform API workflow
             if api_type == 'Platform API':
@@ -504,6 +516,18 @@ def run_processing(
                 raise OverloadError(
                     'Unable to manipulate deduped file')
 
+    # validate intergrity of process files for cataloging
+    files = []
+    if agent == 'cat':
+        if os.path.isfile(fh_dups):
+            files.append(fh_dups)
+        if os.path.isfile(fh_new):
+            files.append(fh_new)
+
+        valid, missing_barcodes = validate_processed_files_integrity(
+            files, BARCODES)
+
+    batch = shelve.open(BATCH_META, writeback=True)
     processing_time = datetime.now() - batch['timestamp']
     module_logger.info(
         'Batch stats: {} files, {} records, '
@@ -512,6 +536,9 @@ def run_processing(
     batch['processing_time'] = processing_time
     batch['processed_files'] = f
     batch['processed_bibs'] = n
+    if agent == 'cat':
+        batch['processed_integrity'] = valid
+        batch['missing_barcodes'] = missing_barcodes
     batch.close()
     stats.close()
 
@@ -520,6 +547,10 @@ def run_processing(
     if api_type in ('Platform API', 'Sierra API') and session is not None:
         session.close()
         module_logger.info('Closing API session.')
+
+    if agent == 'cat' and not valid:
+        raise OverloadError(
+            'Duplicate or missing barcodes found in processed files.')
 
 
 def save_stats():

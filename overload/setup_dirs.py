@@ -2,14 +2,15 @@
 
 import os
 
-APP_DIR = os.environ['APPDATA'] + r'\Overload'
+APP_DIR = os.path.join(os.environ['APPDATA'], 'Overload')
 MY_DOCS = os.path.expanduser(os.sep.join(["~", "Documents"]))
-TEMP_DIR = APP_DIR + r'\temp'
-USER_DATA = APP_DIR + r'\user_data'
-DATASTORE = APP_DIR + r'\datastore.db'  # move some user_data here
-BATCH_STATS = TEMP_DIR + r'\batch_stats'
-BATCH_META = TEMP_DIR + r'\batch_meta'
-MVAL_REP = TEMP_DIR + r'\marcedit_validation_report.txt'
-CVAL_REP = TEMP_DIR + r'\combined_validation_report.txt'
-LSPEC_REP = TEMP_DIR + r'\local_specs_report.txt'
-DVAL_REP = TEMP_DIR + r'\default_validation_report.txt'
+TEMP_DIR = os.path.join(APP_DIR, 'temp')
+BARCODES = os.path.join(TEMP_DIR, 'batch_barcodes.txt')
+USER_DATA = os.path.join(APP_DIR, 'user_data')
+DATASTORE = os.path.join(APP_DIR, 'datastore.db')  # move some user_data here
+BATCH_STATS = os.path.join(TEMP_DIR, 'batch_stats')
+BATCH_META = os.path.join(TEMP_DIR, 'batch_meta')
+MVAL_REP = os.path.join(TEMP_DIR, 'marcedit_validation_report.txt')
+CVAL_REP = os.path.join(TEMP_DIR, 'combined_validation_report.txt')
+LSPEC_REP = os.path.join(TEMP_DIR, 'local_specs_report.txt')
+DVAL_REP = os.path.join(TEMP_DIR, 'default_validation_report.txt')
