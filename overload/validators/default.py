@@ -82,6 +82,9 @@ def validate_processed_files_integrity(files, barcodes_fh):
     proc_barcodes = []
     with open(barcodes_fh, 'r') as file:
         orig_barcodes = sorted([line.strip() for line in file])
+        # original barcodes cannot include duplicates, because
+        # batch with duplicates never will be processed - error
+        # is raised in default validation
     for file in files:
         reader = read_marc21(file)
         for bib in reader:
@@ -93,7 +96,6 @@ def validate_processed_files_integrity(files, barcodes_fh):
                 if tag.indicators == [' ', '1']:
                     for barcode in tag.get_subfields('i'):
                         proc_barcodes.append(str(barcode))
-
     missing_barcodes = set()
     for barcode in orig_barcodes:
         if barcode not in proc_barcodes:

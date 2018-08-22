@@ -526,6 +526,13 @@ def run_processing(
 
         valid, missing_barcodes = validate_processed_files_integrity(
             files, BARCODES)
+        module_logger.debug(
+            'Integrity validation: {}, missing_barcodes: {}'.format(
+                valid, missing_barcodes))
+        if not valid:
+            module_logger.error(
+                'Integrity barcode error: {}'.format(
+                    missing_barcodes))
 
     batch = shelve.open(BATCH_META, writeback=True)
     processing_time = datetime.now() - batch['timestamp']
