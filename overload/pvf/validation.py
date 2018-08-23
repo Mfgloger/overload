@@ -70,8 +70,18 @@ def validate_files(system, agent, files, marcval=False, locval=False):
     # local specification validation
     if locval:
         module_logger.info('Local specs validation launch.')
-        rules = './rules/vendor_specs.xml'
-        specs = local_specs.local_specs(system, agent, rules)
+
+        # define local specs rules for each system, agent, and vendor
+        try:
+            rules = './rules/vendor_specs.xml'
+            specs = local_specs.local_specs(system, agent, rules)
+        except AttributeError as e:
+            module_logger.error(
+                'Unable to parse local specs rules.'
+                'Error: {}'.format(e))
+            raise OverloadError(e)
+
+        # run the local specs validation
         locval_passed, report = local_specs.local_specs_validation(
             system, files, specs)
         if not locval_passed:
