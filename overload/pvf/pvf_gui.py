@@ -2433,7 +2433,7 @@ class ProcessVendorFiles(tk.Frame):
         try:
             with open(LSPEC_REP, 'r') as lReport:
                 self.reportVTxt.insert(
-                    tk.END, 'Local specs validation report(s):\n\n', 'red')
+                    tk.END, '\n\nLocal specs validation report(s):\n\n', 'red')
                 for line in lReport:
                     self.reportVTxt.insert(tk.END, line)
 
@@ -2526,13 +2526,15 @@ class ProcessVendorFiles(tk.Frame):
                 if self.callNos.size == 0:
                     self.reportDTxt.insert(tk.END, 'All clear\n')
                 else:
-                    if self.last_used_sys == 'BPL':
+                    if self.last_used_agent == 'cat':
                         self.reportDTxt.insert(
                             tk.END,
                             "Please note: in case of BT LEASED bibs without vendor "
                             "supplied call number (None in column 'vendor_callNo')\n"
                             "a cataloger must copy the call number from order's PO per line "
-                            "to the bib MARC field 099 supplying appropriate subfield codes.\n\n")
+                            "to the bib MARC field '{}' and supply appropriate subfield "
+                            "codes.\n\n".format(
+                                '091' if self.last_used_sys == 'NYPL' else '099'))
                     self.reportDTxt.insert(
                         tk.END, self.callNos.to_string() + '\n')
             else:
@@ -2593,20 +2595,30 @@ class ProcessVendorFiles(tk.Frame):
         fh = tkFileDialog.asksaveasfilename(**dir_opt)
         try:
             if fh != '':
-                content = False
-                if os.path.isfile(CVAL_REP):
-                    shutil.copyfile(CVAL_REP, fh)
-                    content = True
-                if os.path.isfile(fh):
+                sep = '{}\n'.format('#' * 50)
+                with open(fh, 'w') as report:
+                    if os.path.isfile(DVAL_REP):
+                        with open(DVAL_REP, 'r') as dReport:
+                            report.write(sep)
+                            report.write('Default validation:\n')
+                            for line in dReport:
+                                report.write(line)
+                    if os.path.isfile(CVAL_REP):
+                        with open(CVAL_REP, 'r') as mReport:
+                            report.write('\n\n' + sep)
+                            report.write('MARCEdit validation:\n')
+                            for line in mReport:
+                                report.write(line)
                     if os.path.isfile(LSPEC_REP):
-                        content = True
-                        with open(fh, 'a') as report:
-                            with open(LSPEC_REP, 'r') as lReport:
-                                for line in lReport:
-                                    report.write(line)
-                if content:
-                    tkMessageBox.showinfo(
-                        'Download', 'Report saved successfully.', parent=self.topV)
+                        with open(LSPEC_REP, 'r') as lReport:
+                            report.write('\n\n' + sep)
+                            report.write('Local specs validation:\n')
+                            for line in lReport:
+                                report.write(line)
+
+                tkMessageBox.showinfo(
+                    'Download', 'Report saved successfully.', parent=self.topV)
+
         except IOError as e:
             module_logger.error(
                 'Unable to download validation report. Error: {}'.format(e))
@@ -2827,4 +2839,15 @@ class ProcessVendorFiles(tk.Frame):
                 self.agent.set(user_data['pvr_agent'])
             if 'pvr_template' in user_data:
                 self.template.set(user_data['pvr_template'])
+
             user_data.close()
+
+            # last used
+            try:
+                meta = shelve.open(BATCH_META)
+                self.last_used_sys = meta['system']
+                self.last_used_lib = meta['library']
+                self.last_used_agent = meta['agent']
+                meta.close()
+            except KeyError:
+                pass
