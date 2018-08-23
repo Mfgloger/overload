@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 def vendor_index(vendor_fh, library):
     """
-    creates library's vendor index based on rules/vendors.xml file
+    creates library's vendor index based on rules/cat_rules.xml file
     the vendor index contains methods of identifying bibs to belong
     to a particuar vendor, as well as preferred Sierra query methods;
     used only by CAT
