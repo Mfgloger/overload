@@ -89,7 +89,7 @@ def validate_processed_files_integrity(files, barcodes_fh):
         reader = read_marc21(file)
         for bib in reader:
             for tag in bib.get_fields('960'):
-                if tag.indicators == [' ', '1']:
+                if tag.indicators == [' ', ' ']:
                     for barcode in tag.get_subfields('i'):
                         proc_barcodes.append(str(barcode))
             for tag in bib.get_fields('949'):

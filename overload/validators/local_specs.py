@@ -163,14 +163,13 @@ def local_specs_validation(system, files, specs):
                                 ''.join(ind)))
 
                 # subfields checks
-                tag_issues = []
                 for i, tag in enumerate(bib.get_fields(spec['tag'])):
+                    tag_issues = []
                     tag_head = '"{}": tag occurance {}:'.format(
                         spec['tag'],
                         i + 1)
                     sub_issues = []
                     if tag.indicators == ind:
-
                         for sub in spec['subfields']:
                             sub_check = sub['check']
                             sub_value = sub['value']
@@ -254,12 +253,12 @@ def local_specs_validation(system, files, specs):
                             bib_issues.append('\n'.join(tag_issues))
 
             if bib_issues != []:
+                bib_issues.insert(0, 'Record {}'.format(bib_count))
                 file_issues.append('\n'.join(bib_issues))
 
         issues.append('\nFile: {}\n{}'.format(file, '-' * 40))
         if file_issues != []:
             validates = False
-            file_issues = ['Record {}:\n{}\n'.format(i + 1, issue) for i, issue in enumerate(file_issues)]
             issues.append('\n'.join(file_issues))
         else:
             issues.append('No errors found.')

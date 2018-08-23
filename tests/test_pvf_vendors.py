@@ -9,7 +9,7 @@ from context import vendors
 
 class TestPVFvendorIndex(unittest.TestCase):
     def setUp(self):
-        self.rules = '../overload/rules/vendors.xml'
+        self.rules = '../overload/rules/cat_rules.xml'
         self.nypl_data = vendors.vendor_index(self.rules, 'nypl')
         self.bpl_data = vendors.vendor_index(self.rules, 'bpl')
 

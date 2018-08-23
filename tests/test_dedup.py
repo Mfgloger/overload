@@ -69,12 +69,13 @@ class TestDedup_MARC_File(unittest.TestCase):
                 for sub in tag.get_subfields('i'):
                     self.assertIn(sub, combined_barcodes)
 
-    def test_dedup_marc_file_returns_none(self):
-        self.assertIsNone(
-            dedup.dedup_marc_file(self.fh_no_dups))
+    def test_dedup_marc_file_no_dups_return(self):
+        self.assertEqual(
+            dedup.dedup_marc_file(self.fh_no_dups),
+            (0, None))
 
     def test_dedup_marc_file_detailed(self):
-        deduped_fh = dedup.dedup_marc_file(self.fh)
+        dedup_count, deduped_fh = dedup.dedup_marc_file(self.fh)
         dup_barcodes = [
             '33333849044538',
             '33333846242770',
@@ -84,10 +85,8 @@ class TestDedup_MARC_File(unittest.TestCase):
             '33333846242846']
         reader = bibs.read_marc21(deduped_fh)
         barcode_counter = 0
-        record_counter = 0
 
         for record in reader:
-            record_counter += 1
             if record['001'] == 'bl2017023500':
                 for tag in record.get_fields('949'):
                     if tag.indicators == [' ', '1']:
@@ -116,7 +115,7 @@ class TestDedup_MARC_File(unittest.TestCase):
 
                 self.assertEqual(
                     barcode_counter, len(other_barcodes))
-        self.assertEqual(record_counter, 2)
+        self.assertEqual(dedup_count, 5)
 
 
 if __name__ == '__main__':

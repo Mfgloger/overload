@@ -569,6 +569,7 @@ NYPL_BRANCHES = {
     "br": "George Bruce",
     "bt": "Battery Park",
     "ca": "Cathedral, T. C. Cooke",
+    "cc": "SASB",
     "ch": "Chatham Square",
     "ci": "City Island",
     "cl": "Morningside Heights",

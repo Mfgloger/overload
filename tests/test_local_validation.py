@@ -673,6 +673,87 @@ class Test_NYPL_CAT_Specs(unittest.TestCase):
             '"t" subfield has incorrect value.',
             report)
 
+    def test_dvd_case1(self):
+        b = Record()
+        b.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', '1'],
+                subfields=[
+                    'i', '33333306093499',
+                    'l', 'mya0v',
+                    'p', '24.99',
+                    't', '111',
+                    'v', 'Midwest',
+                    'n', 'o24643440',
+                    'q', '10001']))
+        b.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', '1'],
+                subfields=[
+                    'i', '33333306093481',
+                    'l', 'bta0v',
+                    'p', '24.99',
+                    't', '111',
+                    'v', 'Midwest',
+                    'n', 'o24643440',
+                    'q', '10001']))
+        b.add_field(
+            Field(
+                tag='901',
+                indicators=[' ', ' '],
+                subfields=['a', 'Midwest']))
+        b.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', ' '],
+                subfields=['a', '*b2=v;']))
+
+        bibs.write_marc21('specs_test.mrc', b)
+
+        b = Record()
+        b.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', '1'],
+                subfields=[
+                    'i', '33333306093457',
+                    'l', 'mya0v',
+                    'p', '14.99',
+                    't', '206',
+                    'v', 'Midwest',
+                    'n', 'o24643282',
+                    'q', '10001']))
+        b.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', '1'],
+                subfields=[
+                    'i', '33333306093432',
+                    'l', 'bca0v',
+                    'p', '14.99',
+                    't', '206',
+                    'v', 'Midwest',
+                    'n', 'o24643282',
+                    'q', '10001']))
+        b.add_field(
+            Field(
+                tag='901',
+                indicators=[' ', ' '],
+                subfields=['a', 'Midwest']))
+        b.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', ' '],
+                subfields=['a', '*b2=v;']))
+
+        bibs.write_marc21('specs_test.mrc', b)
+
+        passed, report = local_specs.local_specs_validation(
+            'nypl', ['specs_test.mrc'], self.ncl)
+        self.assertTrue(passed)
+
 
 class Test_BPL_CAT_Specs(unittest.TestCase):
     """
@@ -839,7 +920,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
             'bpl', ['specs_test.mrc'], self.bcl)
         self.assertFalse(passed)
         self.assertIn(
-            '"960 1" mandatory tag not found.',
+            '"960  " mandatory tag not found.',
             report)
 
     def test_960_repeatable(self):
@@ -891,7 +972,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', ' '],
+                indicators=[' ', '1'],
                 subfields=[
                     'a', 'TEST']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -899,7 +980,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
             'bpl', ['specs_test.mrc'], self.bcl)
         self.assertFalse(passed)
         self.assertIn(
-            '"960 1" mandatory tag not found.',
+            '"960  " mandatory tag not found.',
             report)
 
     def test_960_items_mandatory_subfields(self):
@@ -907,7 +988,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'a', 'TEST']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -950,7 +1031,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'i', 'TEST',
                     'i', 'TEST',
@@ -973,8 +1054,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
                     'n', 'TEST',
                     'n', 'TEST',
                     'v', 'TEST',
-                    'v', 'TEST',
-                    ]))
+                    'v', 'TEST']))
         bibs.write_marc21('specs_test.mrc', b)
         passed, report = local_specs.local_specs_validation(
             'bpl', ['specs_test.mrc'], self.bcl)
@@ -1015,7 +1095,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'i', 'TEST']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1031,7 +1111,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'i', '3333398765432']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1047,7 +1127,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'i', '33333987654328']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1063,7 +1143,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'i', '34444987l54328']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1094,7 +1174,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'l', 'mma0l']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1110,7 +1190,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'l', '']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1125,7 +1205,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'p', '']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1140,7 +1220,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'p', '9999']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1185,7 +1265,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'q', '']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1200,7 +1280,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'q', '999']))
         bibs.write_marc21('specs_test.mrc', b)
@@ -1215,7 +1295,7 @@ class Test_BPL_CAT_Specs(unittest.TestCase):
         b.add_field(
             Field(
                 tag='960',
-                indicators=[' ', '1'],
+                indicators=[' ', ' '],
                 subfields=[
                     'r', 'z']))
         bibs.write_marc21('specs_test.mrc', b)
