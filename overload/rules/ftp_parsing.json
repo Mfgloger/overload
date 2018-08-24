@@ -5,7 +5,8 @@
 		"file_mark": ["     ", 24, 28],
 		"file_handle": 39,
 		"file_size_pos": [29, 37],
-		"file_time_pos": [0, 16]
+		"file_time_pos": [0, 16],
+		"time_patterns": []
 	},
 	"66.220.9.50": {
 		"file_time_pos": [39, 50],
@@ -13,7 +14,8 @@
 		"file_size_pos": [23, 37],
 		"file_mark": ["-r", 0, 1],
 		"dir_mark": ["dr", 0, 1],
-		"dir_handle": 52
+		"dir_handle": 52,
+		"time_patterns": []
 	},
 	"ftp.ybp.com": {
 		"dir_mark": ["dr", 0, 1],
@@ -21,7 +23,8 @@
 		"file_mark": ["-r", 0, 1],
 		"file_handle": 59,
 		"file_size_pos": [29, 45],
-		"file_time_pos": [46, 58]
+		"file_time_pos": [46, 58],
+		"time_patterns": []
 	},
 	"ftp2.puvill.com": {
 		"dir_mark": ["dr", 0, 1],
@@ -29,7 +32,8 @@
 		"file_mark": ["-r", 0, 1],
 		"file_handle": 56,
 		"file_size_pos": [28, 42],
-		"file_time_pos": [43, 54]
+		"file_time_pos": [43, 54],
+		"time_patterns": []
 	},
 	"ftp.casalini.it": {
 		"dir_mark": ["<DIR>", 24, 28],
@@ -37,7 +41,8 @@
 		"file_mark": ["     ", 24, 28],
 		"file_handle": 39,
 		"file_size_pos": [29, 37],
-		"file_time_pos": [0, 16]
+		"file_time_pos": [0, 16],
+		"time_patterns": []
 	},
 	"ftp.midwesttapes.com": {
 		"dir_mark": ["dr", 0, 1],
@@ -45,6 +50,7 @@
 		"file_mark": ["-r", 0, 1],
 		"file_handle": 62,
 		"file_size_pos": [36, 48],
-		"file_time_pos": [49, 61]
+		"file_time_pos": [49, 61],
+		"time_patterns": ["%b %d %Y", "%b %d %H:%S"]
 	}
 }
