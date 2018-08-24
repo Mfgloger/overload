@@ -573,8 +573,11 @@ class TransferFiles(tk.Frame):
 
     def retrieve_last_local_directory(self):
         user_data = shelve.open(USER_DATA)
-        self.local_directory = user_data['paths']['pvr_last_open_dir']
-        disp_dir = self.shorten_directory(self.local_directory)
+        if 'pvr_last_open_dir' in user_data['paths']:
+            self.local_directory = user_data['paths']['pvr_last_open_dir']
+            disp_dir = self.shorten_directory(self.local_directory)
+        else:
+            self.local_directory = MY_DOCS
         self.local_directoryDsp.set('local: {}'.format(
             disp_dir))
         user_data.close()
