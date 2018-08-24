@@ -30,5 +30,6 @@ def remove_files(fhs):
         removed = False
     except TypeError:
         removed = False
+
     finally:
         return removed
