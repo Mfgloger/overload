@@ -172,7 +172,7 @@ class Test_NYPL_CAT_Specs(unittest.TestCase):
                 subfields=[
                     'p', 'TEST',
                     'p', 'TEST',
-                    'a', 'TEST']))
+                    'c', 'TEST']))
         bibs.write_marc21('specs_test.mrc', b)
         passed, report = local_specs.local_specs_validation(
             'nypl', ['specs_test.mrc'], self.ncl)
@@ -181,7 +181,7 @@ class Test_NYPL_CAT_Specs(unittest.TestCase):
             '"091": tag occurance 1:\n\t"p" subfield is not repeatable.',
             report)
         self.assertIn(
-            '"c" subfield is mandatory.',
+            '"a" subfield is mandatory.',
             report)
 
     def test_901_mandatory(self):
