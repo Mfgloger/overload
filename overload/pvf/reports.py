@@ -47,16 +47,25 @@ def generate_processing_summary(batch_meta):
         'processing time: {}\n'.format(
             meta['processing_time']))
     if agent == 'cat':
-        summary.append(
-            'integrity of processed files: {}\n'.format(
-                meta['processed_integrity']))
-        summary.append(
-            'missing barcodes in processed files: {}\n'.format(
-                meta['missing_barcodes']))
+        try:
+            summary.append(
+                'integrity of processed files: {}\n'.format(
+                    meta['processed_integrity']))
+            summary.append(
+                'missing barcodes in processed files: {}\n'.format(
+                    meta['missing_barcodes']))
+        except KeyError:
+            pass
+        try:
+            summary.append(
+                'duplicates: {}\n'.format(meta['duplicate_bibs']))
+        except KeyError:
+            pass
 
     meta.close()
     module_logger.debug('Processing summary: {}'.format(
         summary))
+
     return system, library, agent, summary
 
 

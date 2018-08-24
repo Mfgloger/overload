@@ -72,10 +72,11 @@ class TestDedup_MARC_File(unittest.TestCase):
     def test_dedup_marc_file_no_dups_return(self):
         self.assertEqual(
             dedup.dedup_marc_file(self.fh_no_dups),
-            (0, None))
+            (0, 0, None))
 
     def test_dedup_marc_file_detailed(self):
-        dedup_count, deduped_fh = dedup.dedup_marc_file(self.fh)
+        dedup_count, combined_count, deduped_fh = dedup.dedup_marc_file(
+            self.fh)
         dup_barcodes = [
             '33333849044538',
             '33333846242770',
@@ -116,6 +117,7 @@ class TestDedup_MARC_File(unittest.TestCase):
                 self.assertEqual(
                     barcode_counter, len(other_barcodes))
         self.assertEqual(dedup_count, 5)
+        self.assertEqual(combined_count, 1)
 
 
 if __name__ == '__main__':

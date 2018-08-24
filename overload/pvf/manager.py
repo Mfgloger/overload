@@ -133,7 +133,7 @@ def run_processing(
         'Creatig vendor index data for {}-{}'.format(
             system, agent))
     if agent == 'cat':
-        rules = './rules/vendors.xml'
+        rules = './rules/cat_rules.xml'
         vx = vendor_index(rules, system)  # wrap in exception?
     elif agent in ('sel', 'acq'):
         if system == 'nypl':
@@ -504,7 +504,13 @@ def run_processing(
     if agent == 'cat' and os.path.isfile(fh_new):
         current_process_label.set('deduping...')
 
-        deduped_fh = dedup_marc_file(fh_new, progbar)
+        dups, combined_count, deduped_fh = dedup_marc_file(
+            fh_new, progbar)
+
+        batch = shelve.open(BATCH_META, writeback=True)
+        batch['duplicate_bibs'] = '{} dups merged into {} bibs'.format(
+            dups, combined_count)
+        batch.close()
 
         # delete original file and rename deduped
         if deduped_fh is not None:

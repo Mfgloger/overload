@@ -44,23 +44,23 @@ def merge_bibs_combine_items(file, bib_list):
 
     reader = read_marc21(file)
     counter = -1
-    dedup_count = 0
+    dedup_add = 0
     for record in reader:
         counter += 1
         if counter == bib_list[0]:
             # use first record in file as a base
             new_record = record
-            dedup_count += 1
+            dedup_add += 1
         elif counter in bib_list:
             # for the following dups copy item 949 and
             # add to merged record
-            dedup_count += 1
+            dedup_add += 1
             tags = record.get_fields('949')
             for tag in tags:
                 if tag.indicators == [' ', '1']:
                     new_record.add_ordered_field(tag)
 
-    return new_record, dedup_count
+    return new_record, dedup_add
 
 
 def dedup_marc_file(file, progbar=None):
@@ -70,7 +70,7 @@ def dedup_marc_file(file, progbar=None):
     args:
         marc file handle
     returns:
-        file_handle of deduped file
+        dup records count, combined records count, file_handle of deduped file
     """
 
     module_logger.info('Deduping processed file {}'.format(
@@ -107,6 +107,7 @@ def dedup_marc_file(file, progbar=None):
         # save files that do not have duplicates
         n = 0
         reader = read_marc21(file)
+        dedup_count = 0
         for record in reader:
             if n not in skip_bibs:
                 write_marc21(fh_deduped, record)
@@ -116,8 +117,12 @@ def dedup_marc_file(file, progbar=None):
 
         for key, bib_list in dups.iteritems():
             n += (c * len(bib_list))
-            new_record, dedup_count = merge_bibs_combine_items(
+            new_record, dedup_add = merge_bibs_combine_items(
                 file, bib_list)
+
+            # add to deduped count
+            dedup_count += dedup_add
+
             # save new merged record
             write_marc21(fh_deduped, new_record)
 
@@ -125,8 +130,10 @@ def dedup_marc_file(file, progbar=None):
                 progbar['value'] = n
                 progbar.update()
 
-        module_logger.info('Merged {} duplicate bibs in file {}'.format(
-            dedup_count, file))
+        module_logger.info(
+            'Merged {} duplicate bibs into {} in file {}'.format(
+                dedup_count, len(dups), file))
+
     else:
         if progbar is not None:
             progbar['value'] = progbar['maximum']
@@ -134,4 +141,4 @@ def dedup_marc_file(file, progbar=None):
         module_logger.debug('No duplicates found in file: {}'.format(
             file))
 
-    return fh_deduped
+    return dedup_count, len(dups), fh_deduped
