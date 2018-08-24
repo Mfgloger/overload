@@ -1,6 +1,6 @@
 import hashlib
-import math
 import os
+from datetime import datetime
 
 
 def md5(text):
@@ -9,13 +9,7 @@ def md5(text):
 
 
 def convert_file_size(size_bytes):
-    if size_bytes == 0:
-        return "0B"
-    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
-    i = int(math.floor(math.log(size_bytes, 1024)))
-    p = math.pow(1024, i)
-    s = round(size_bytes / p, 2)
-    return "{}{}".format(s, size_name[i])
+    return '%.1f' % (float(size_bytes) / float(1024)) + 'KB'
 
 
 def remove_files(fhs):
@@ -33,3 +27,10 @@ def remove_files(fhs):
 
     finally:
         return removed
+
+
+def convert2date_obj(str, pattern):
+    stamp = datetime.strptime(str, pattern)
+    if stamp.year == 1900:
+        stamp = stamp.replace(year = datetime.today().year)
+    return stamp

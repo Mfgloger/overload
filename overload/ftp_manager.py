@@ -1,5 +1,6 @@
 import json
 import base64
+
 from ftplib import FTP, all_errors
 import logging
 from sqlalchemy.exc import IntegrityError
@@ -9,6 +10,7 @@ from datastore import FTPs, session_scope
 from db_worker import insert_or_ignore, retrieve_values, retrieve_record, \
     delete_record
 from errors import OverloadError
+from utils import convert2date_obj
 
 module_logger = logging.getLogger('overload_console.ftp_manager')
 
@@ -173,8 +175,17 @@ def read_ftp_content(ftp, host):
                     f = l[m['file_handle']:].strip()
                     s = l[m['file_size_pos'][0]:m[
                         'file_size_pos'][1] + 1].strip()
+
+                    # timestamp 
                     t = l[m['file_time_pos'][0]:m[
                         'file_time_pos'][1] + 1].strip()
+                    patterns = m['time_patterns']
+                    for p in patterns:
+                        try:
+                            t = convert2date_obj(t, p)
+                            break
+                        except ValueError:
+                            pass
                     files.append((f, s, t))
             return (dirs, files)
         except KeyError as e:

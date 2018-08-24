@@ -145,6 +145,8 @@ class TransferFiles(tk.Frame):
         self.locLbl.grid(
             row=2, column=1, columnspan=5, sticky='sw', padx=10)
 
+        columns = ('name', 'size', 'date')
+
         # local frame
         self.locFrm = ttk.Frame(
             self.top)
@@ -153,23 +155,30 @@ class TransferFiles(tk.Frame):
 
         self.locTrv = ttk.Treeview(
             self.locFrm,
-            columns=('name', 'size', 'date'),
+            columns=columns,
             displaycolumns='#all',
+            # show='headings',
             selectmode='browse',
             style='Medium.Treeview')
 
         self.locTrv.bind('<Double-Button-1>', self.change_loc_directory)
 
+        # sorting columns functionality
+        for col in columns:
+            self.locTrv.heading(
+                col,
+                text=col,
+                command=lambda _col=col: self.treeview_sort_column(
+                    self.locTrv, _col, False))
+
         self.locTrv.column('#0', width=36)
         self.locTrv.column('name', width=250)
-        self.locTrv.heading('name', text='name')
         self.locTrv.column('size', width=60)
-        self.locTrv.heading('size', text='size')
         self.locTrv.column('date', width=110)
-        self.locTrv.heading('date', text='date')
         self.locTrv.tag_configure('d', image=self.dir_ico)
         self.locTrv.tag_configure('f', image=self.file_ico)
         self.locTrv.tag_configure('o', image=self.back_ico)
+
         self.locTrv.grid(
             row=0, column=0, columnspan=5, sticky='snew')
 
@@ -201,13 +210,18 @@ class TransferFiles(tk.Frame):
 
         self.remTrv.bind('<Double-Button-1>', self.change_rem_directory)
 
+        # sorting columns functionality
+        for col in columns:
+            self.remTrv.heading(
+                col,
+                text=col,
+                command=lambda _col=col: self.treeview_sort_column(
+                    self.remTrv, _col, False))
+
         self.remTrv.column('#0', width=36)
         self.remTrv.column('name', width=250)
-        self.remTrv.heading('name', text='name')
         self.remTrv.column('size', width=60)
-        self.remTrv.heading('size', text='size')
         self.remTrv.column('date', width=110)
-        self.remTrv.heading('date', text='date')
         self.remTrv.tag_configure('d', image=self.dir_ico)
         self.remTrv.tag_configure('f', image=self.file_ico)
         self.remTrv.tag_configure('o', image=self.back_ico)
@@ -571,6 +585,19 @@ class TransferFiles(tk.Frame):
         else:
             return '/'.join(dlist)
 
+    def treeview_sort_column(self, tv, col, reverse):
+        tree_list = [(tv.set(k, col), k) for k in tv.get_children('')]
+        tree_list.sort(reverse=reverse)
+
+        # rearrange items in sorted positions
+        for index, (val, k) in enumerate(tree_list):
+            tv.move(k, '', index)
+
+        # reverse sort next time
+        tv.heading(
+            col,
+            command=lambda: self.treeview_sort_column(tv, col, not reverse))
+
     def retrieve_last_local_directory(self):
         user_data = shelve.open(USER_DATA)
         if 'pvr_last_open_dir' in user_data['paths']:
@@ -720,6 +747,8 @@ class TransferFiles(tk.Frame):
                     self.remTrv.insert(
                         '', tk.END, values=(f, '', ''),
                         tags='d', open=False)
+
+                mtime = f[2]
 
                 self.remTrv.insert(
                     '', tk.END,
