@@ -622,7 +622,7 @@ class VendorBibMeta(BibMeta):
 
         # BPL item records
         for tag in bib.get_fields('960'):
-            if tag.indicators == [' ', '1']:
+            if tag.indicators == [' ', ' ']:
                 for barcode in tag.get_subfields('i'):
                     self.barcodes.append(str(barcode))
 

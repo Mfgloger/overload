@@ -55,9 +55,16 @@ def merge_bibs_combine_items(file, bib_list):
             # for the following dups copy item 949 and
             # add to merged record
             dedup_add += 1
+
+            # NYPL
             tags = record.get_fields('949')
             for tag in tags:
                 if tag.indicators == [' ', '1']:
+                    new_record.add_ordered_field(tag)
+            # BPL
+            tags = record.get_fields('960')
+            for tag in tags:
+                if tag.indicators == [' ', ' ']:
                     new_record.add_ordered_field(tag)
 
     return new_record, dedup_add
