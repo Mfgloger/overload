@@ -481,6 +481,8 @@ def run_processing(
                             agent == 'sel':
                         new_field = db_template_to_949(trec.bibFormat)
                         bib.add_field(new_field)
+                        # it's safer for acquisition to skip command in 949 -
+                        # there are conflicts with Import Invoices load table
 
             # append to appropirate output file
             if agent == 'cat':
