@@ -32,5 +32,5 @@ def remove_files(fhs):
 def convert2date_obj(str, pattern):
     stamp = datetime.strptime(str, pattern)
     if stamp.year == 1900:
-        stamp = stamp.replace(year = datetime.today().year)
+        stamp = stamp.replace(year=datetime.today().year)
     return stamp
