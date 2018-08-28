@@ -50,8 +50,9 @@ class TransferFiles(tk.Frame):
 
         # variable
         self.ftp = None
-        self.host = tk.StringVar()
-        self.host.trace('w', self.set_host_details)
+        self.name = tk.StringVar()
+        self.name.trace('w', self.set_host_details)
+        self.host = None
         self.user = None
         self.password = None
         self.files = None
@@ -82,12 +83,12 @@ class TransferFiles(tk.Frame):
         # widgets
         ttk.Label(self.top, text='host:').grid(
             row=1, column=1, sticky='ne', padx=10, pady=10)
-        self.hostCbx = ttk.Combobox(
-            self.top, textvariable=self.host,
+        self.nameCbx = ttk.Combobox(
+            self.top, textvariable=self.name,
             postcommand=self.get_available_connections)
-        self.hostCbx.grid(
+        self.nameCbx.grid(
             row=1, column=2, columnspan=3, sticky='snew', pady=10)
-        self.hostCbx['state'] = 'readonly'
+        self.nameCbx['state'] = 'readonly'
 
         self.connBtn = ttk.Button(
             self.top,
@@ -274,17 +275,17 @@ class TransferFiles(tk.Frame):
 
     def get_available_connections(self):
         conns = get_ftp_connections(self.system)
-        self.hostCbx['values'] = conns
-        self.hostCbx['state'] = 'readonly'
+        self.nameCbx['values'] = conns
+        self.nameCbx['state'] = 'readonly'
 
     def connect(self):
         if self.ftp:
             pass
-        elif self.host.get() != '':
+        elif self.name.get() != '':
             try:
                 self.cur_manager.busy()
                 self.ftp = connect2ftp(
-                    self.host.get(), self.user, self.password)
+                    self.host, self.user, self.password)
                 if self.ftp_directory:
                     self.ftp.cwd(self.ftp_directory)
                     self.ftp_directoryDsp.set(
@@ -303,7 +304,8 @@ class TransferFiles(tk.Frame):
                 self.cur_manager.notbusy()
         else:
             tkMessageBox.showerror(
-                'FTP', 'Please select host to connect to')
+                'FTP', 'Please select host to connect to',
+                parent=self.top)
 
     def disconnect(self):
         if self.ftp:
@@ -316,6 +318,7 @@ class TransferFiles(tk.Frame):
         self.conn_top = tk.Toplevel(self, background='white')
         self.conn_top.iconbitmap('./icons/settings.ico')
         self.conn_top.title('FTP setup')
+        self.new_name = tk.StringVar()
         self.new_host = tk.StringVar()
         self.new_user = tk.StringVar()
         self.new_password = tk.StringVar()
@@ -326,47 +329,55 @@ class TransferFiles(tk.Frame):
         self.conn_top.rowconfigure(0, minsize=5)
         self.conn_top.rowconfigure(4, minsize=5)
 
-        ttk.Label(self.conn_top, text='host').grid(
+        ttk.Label(self.conn_top, text='name').grid(
             row=1, column=1, sticky='nw', padx=10, pady=10)
+        nameEnt = ttk.Entry(
+            self.conn_top, textvariable=self.new_name)
+        nameEnt.grid(
+            row=1, column=2, sticky='ne', pady=10)
+
+        ttk.Label(self.conn_top, text='host').grid(
+            row=2, column=1, sticky='nw', padx=10, pady=10)
         hostEnt = ttk.Entry(
             self.conn_top, textvariable=self.new_host)
         hostEnt.grid(
-            row=1, column=2, sticky='ne', pady=10)
+            row=2, column=2, sticky='ne', pady=10)
 
         ttk.Label(self.conn_top, text='folder').grid(
-            row=2, column=1, sticky='nw', padx=10, pady=10)
+            row=3, column=1, sticky='nw', padx=10, pady=10)
         folderEnt = ttk.Entry(
             self.conn_top, textvariable=self.new_folder)
         folderEnt.grid(
-            row=2, column=2, sticky='ne', pady=10)
+            row=3, column=2, sticky='ne', pady=10)
 
         ttk.Label(self.conn_top, text='user').grid(
-            row=3, column=1, sticky='nw', padx=10, pady=10)
+            row=4, column=1, sticky='nw', padx=10, pady=10)
         userEnt = ttk.Entry(
             self.conn_top, textvariable=self.new_user)
         userEnt.grid(
-            row=3, column=2, sticky='snew', pady=10)
+            row=4, column=2, sticky='snew', pady=10)
 
         ttk.Label(self.conn_top, text='password').grid(
-            row=4, column=1, sticky='nw', padx=10, pady=10)
+            row=5, column=1, sticky='nw', padx=10, pady=10)
         passEnt = ttk.Entry(
             self.conn_top, textvariable=self.new_password, show='*')
         passEnt.grid(
-            row=4, column=2, sticky='snew', pady=10)
+            row=5, column=2, sticky='snew', pady=10)
 
         saveBtn = ttk.Button(
             self.conn_top, text='save',
             command=self.save)
         saveBtn.grid(
-            row=5, column=1, columnspan=2, sticky='snew', padx=50, pady=10)
+            row=6, column=1, columnspan=2, sticky='snew', padx=50, pady=10)
 
     def save(self):
         try:
             store_connection(
-                self.new_host.get(),
-                self.new_folder.get(),
-                self.new_user.get(),
-                self.new_password.get(),
+                self.new_name.get().strip(),
+                self.new_host.get().strip(),
+                self.new_folder.get().strip(),
+                self.new_user.get().strip(),
+                self.new_password.get().strip(),
                 self.system)
             tkMessageBox.showinfo(
                 'Datastore', 'Connection details saved.',
@@ -378,11 +389,12 @@ class TransferFiles(tk.Frame):
     def delete(self):
         proceed = tkMessageBox.askokcancel(
             'FTP details', 'Delete {} FTP details?'.format(
-                self.host.get()))
+                self.name.get()))
+        self.reset()
         if proceed:
             try:
-                delete_connection(self.host.get(), self.system)
-                self.host.set('')
+                delete_connection(self.name.get(), self.system)
+                self.name.set('')
             except OverloadError as e:
                 tkMessageBox.showerror(
                     'Datastore', e,
@@ -487,7 +499,7 @@ class TransferFiles(tk.Frame):
                 self.cur_manager.busy()
                 try:
                     move2local(
-                        self.host.get(), self.ftp, remote_fh, lfh,
+                        self.host, self.ftp, remote_fh, lfh,
                         self.transfer_type.get())
                     transfered = True
                 except OverloadError as e:
@@ -526,7 +538,7 @@ class TransferFiles(tk.Frame):
                 self.cur_manager.busy()
                 try:
                     move2ftp(
-                        self.host.get(), self.ftp, lfh, fh,
+                        self.host, self.ftp, lfh, fh,
                         self.transfer_type.get())
                     transfered = True
                 except OverloadError as e:
@@ -560,12 +572,10 @@ class TransferFiles(tk.Frame):
 
     def set_host_details(self, *args):
         self.disconnect()
-        if self.host.get() != '':
-            details = get_connection_details(
-                self.host.get(), self.system)
-            self.user = details[0]
-            self.password = details[1]
-            self.ftp_directory = details[2]
+        if self.name.get() != '':
+            self.host, self.user, self.password, \
+                self.ftp_directory = get_connection_details(
+                    self.name.get(), self.system)
 
     def _delete_window(self):
         try:
@@ -655,10 +665,13 @@ class TransferFiles(tk.Frame):
         except error_perm as e:
             module_logger.error(
                 'Unable to access FTP directory: {}, {}. Error: {}'.format(
-                    self.host.get(), self.ftp_directory, e))
+                    self.host, self.ftp_directory, e))
             tkMessageBox.showerror(
                 'FTP Error', 'Unable to change the FTP directory',
                 parent=self.top)
+        except IndexError:
+            # incorrect item double-clicked
+            pass
 
     def populate_local_panel(self):
         # empty current list
@@ -718,7 +731,7 @@ class TransferFiles(tk.Frame):
 
         show = True
         try:
-            dirs, files = read_ftp_content(self.ftp, self.host.get())
+            dirs, files = read_ftp_content(self.ftp, self.host)
         except OverloadError as e:
             tkMessageBox.showerror(
                 'FTP Error', e, parent=self.top)
@@ -754,6 +767,12 @@ class TransferFiles(tk.Frame):
                     '', tk.END,
                     values=(f[0], size, f[2]),
                     tags='f', open=False)
+
+    def reset(self):
+        self.host = None
+        self.user = None
+        self.password = None
+        self.ftp_directory = None
 
     def createToolTip(self, widget, text):
         toolTip = ToolTip(widget)
@@ -1475,7 +1494,8 @@ class OrderTemplate(tk.Frame):
         self.bibMatFormCbx['values'] = [
             '{} ({})'.format(x, y) for x, y in sorted(
                 sd.N_MATFORM.iteritems())]
-        self.bibMatFormCbx['values'] = self.bibMatFormCbx['values'] + ('', )
+        self.bibMatFormCbx['values'] = self.bibMatFormCbx[
+            'values'] + ('', )
         self.bibMatFormCbx['state'] = 'readonly'
 
     def reset(self):

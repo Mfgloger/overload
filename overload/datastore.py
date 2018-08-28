@@ -1,6 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (Column, ForeignKey, Integer, String,
                         create_engine)
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import relationship, sessionmaker
 from datetime import datetime
 from contextlib import contextmanager
@@ -14,6 +15,7 @@ conn_string = 'sqlite:///{}'.format(DATASTORE)
 
 class PVR_Batch(Base):
     """PVR module batch information"""
+
     __tablename__ = 'pvr_batch'
     bid = Column(Integer, primary_key=True)
     timestamp = Column(String, default=datetime.now())
@@ -38,6 +40,7 @@ class PVR_Batch(Base):
 
 class PVR_File(Base):
     """PVR module file stats"""
+
     __tablename__ = 'pvr_file'
     fid = Column(Integer, primary_key=True)
     bid = Column(Integer, ForeignKey('pvr_batch.bid'), nullable=False)
@@ -62,6 +65,7 @@ class PVR_File(Base):
 
 class Vendor(Base):
     """PVR module vendor data"""
+
     __tablename__ = 'vendor'
     vid = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, default='UNKNOWN')
@@ -134,18 +138,21 @@ class NYPLOrderTemplate(Base):
 
 class FTPs(Base):
     """Stores vendor FTP details"""
+
     __tablename__ = 'ftps'
     fid = Column(Integer, primary_key=True)
-    host = Column(String, nullable=False, unique=True)
+    name = Column(String, nullable=False)
+    host = Column(String, nullable=False)
     folder = Column(String)
     user = Column(String)
     password = Column(String)
     system = Column(String, nullable=False)
+    __table_args__ = (UniqueConstraint('name', 'system'),)
 
     def __repr__(self):
-        return "<FTPs(fid='%s', host='%s', folder='%s', user='%s', " \
-               "password='%s', system='%s')>" % (
-                   self.fid, self.host, self.folder,
+        return "<FTPs(fid='%s', name='%s', host='%s', folder='%s', " \
+               "user='%s', password='%s', system='%s')>" % (
+                   self.fid, self.name, self.host, self.folder,
                    self.user, self.password, self.system)
 
 

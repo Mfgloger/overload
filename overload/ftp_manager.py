@@ -15,7 +15,9 @@ from utils import convert2date_obj
 module_logger = logging.getLogger('overload_console.ftp_manager')
 
 
-def store_connection(host, folder, user, password, system):
+def store_connection(name, host, folder, user, password, system):
+    if name == '':
+        name = None
     if host == '':
         host = None
     if folder == '':
@@ -36,6 +38,7 @@ def store_connection(host, folder, user, password, system):
             insert_or_ignore(
                 db_session,
                 FTPs,
+                name=name,
                 host=host,
                 folder=folder,
                 user=user,
@@ -44,16 +47,18 @@ def store_connection(host, folder, user, password, system):
     except IntegrityError as e:
         module_logger.error(e)
         raise OverloadError(
-            'Please provide missing host address')
+            'Error. The name of the new connection is\n.'
+            'already used or some of the required elements\n'
+            'are missing')
 
 
-def delete_connection(host, system):
+def delete_connection(name, system):
     with session_scope() as db_session:
         try:
             delete_record(
                 db_session,
                 FTPs,
-                host=host,
+                name=name,
                 system=system)
         except Exception as e:
             module_logger.error(e)
@@ -67,15 +72,15 @@ def get_ftp_connections(system):
             FTPs,
             'host',
             system=system)
-        return [x.host for x in names]
+        return [x.name for x in names]
 
 
-def get_connection_details(host, system):
+def get_connection_details(name, system):
     with session_scope() as db_session:
         record = retrieve_record(
             db_session,
             FTPs,
-            host=host,
+            name=name,
             system=system)
         if record.user:
             user = base64.b64decode(record.user)
@@ -86,7 +91,7 @@ def get_connection_details(host, system):
         else:
             password = ''
 
-        return (user, password, record.folder)
+        return (record.host, user, password, record.folder)
 
 
 def connect2ftp(host, user, password):
@@ -176,7 +181,7 @@ def read_ftp_content(ftp, host):
                     s = l[m['file_size_pos'][0]:m[
                         'file_size_pos'][1] + 1].strip()
 
-                    # timestamp 
+                    # timestamp
                     t = l[m['file_time_pos'][0]:m[
                         'file_time_pos'][1] + 1].strip()
                     patterns = m['time_patterns']
