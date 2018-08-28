@@ -18,3 +18,5 @@ SELECTION:
 ACQUISITION:
 ------------
 -print materials: primary 020
+-Sierra bib format option is inactive due to conflicts with Import Invoices
+load tables (setting it has no effect)
