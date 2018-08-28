@@ -92,7 +92,7 @@ def check_sierra_id_presence(system, bib):
     return found
 
 
-def check_sierra_format_tag_presence(bib):
+def sierra_format_tag(bib):
     found = False
     try:
         if '949' in bib:

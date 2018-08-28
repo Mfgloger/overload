@@ -10,7 +10,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from bibs.bibs import VendorBibMeta, read_marc21, \
     create_target_id_field, write_marc21, check_sierra_id_presence, \
-    check_sierra_format_tag_presence, create_field_from_template, \
+    sierra_format_tag, create_field_from_template, \
     db_template_to_960, db_template_to_961, db_template_to_949
 from bibs import patches
 from bibs.crosswalks import platform2meta, bibs2meta
@@ -477,7 +477,8 @@ def run_processing(
                         bib.add_field(field)
 
                     if trec.bibFormat and \
-                            not check_sierra_format_tag_presence(bib):
+                            not sierra_format_tag(bib) and \
+                            agent == 'sel':
                         new_field = db_template_to_949(trec.bibFormat)
                         bib.add_field(new_field)
 

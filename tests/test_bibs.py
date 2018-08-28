@@ -127,7 +127,7 @@ class TestBibsUtilities(unittest.TestCase):
 
         tags.append(
             Field(tag='960',
-                  indicators=[' ', '1'],
+                  indicators=[' ', ' '],
                   subfields=['i', '33333818132466',
                              'l', 'fea0f',
                              'p', '9.99',
@@ -151,7 +151,7 @@ class TestBibsUtilities(unittest.TestCase):
         contents = open(self.fh_out).read()
         self.assertEqual(
             contents,
-            u'00266nam a2200085u  4500001002400000245001500024949004700039949004700086960004700133\x1e0001-test-control_field\x1e00\x1faTest title\x1e 1\x1fi33333818132462\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e 1\x1fi33333818132464\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e 1\x1fi33333818132466\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e\x1d')
+            u'00266nam a2200085u  4500001002400000245001500024949004700039949004700086960004700133\x1e0001-test-control_field\x1e00\x1faTest title\x1e 1\x1fi33333818132462\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e 1\x1fi33333818132464\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e  \x1fi33333818132466\x1flfea0f\x1fp9.99\x1ft102\x1fvAMALIVRE\x1e\x1d')
 
     def test_read_marc21_returns_pymarc_reader(self):
         # should return an instance of pymarc reader
@@ -218,7 +218,7 @@ class TestBibsUtilities(unittest.TestCase):
 
     def test_check_sierra_format_tag_presence_False(self):
         self.assertFalse(
-            bibs.check_sierra_format_tag_presence(self.marc_bib))
+            bibs.sierra_format_tag(self.marc_bib))
         self.marc_bib.add_field(
             Field(
                 tag='949',
@@ -230,7 +230,7 @@ class TestBibsUtilities(unittest.TestCase):
                 indicators=[' ', ' '],
                 subfields=['b', "*b2=a;"]))
         self.assertFalse(
-            bibs.check_sierra_format_tag_presence(self.marc_bib))
+            bibs.sierra_format_tag(self.marc_bib))
 
     def test_check_sierra_format_tag_presence_True(self):
         self.marc_bib.add_field(
@@ -239,7 +239,7 @@ class TestBibsUtilities(unittest.TestCase):
                 indicators=[' ', ' '],
                 subfields=['a', "*b2=a;"]))
         self.assertTrue(
-            bibs.check_sierra_format_tag_presence(self.marc_bib))
+            bibs.sierra_format_tag(self.marc_bib))
 
     def test_check_sierra_format_tag_presence_exception(self):
         self.marc_bib.add_field(
@@ -248,7 +248,7 @@ class TestBibsUtilities(unittest.TestCase):
                 indicators=[' ', ' '],
                 subfields=['a', '']))
         with self.assertRaises(IndexError):
-            bibs.check_sierra_format_tag_presence(self.marc_bib)
+            bibs.sierra_format_tag(self.marc_bib)
 
     def test_create_field_from_template(self):
         template = dict(
