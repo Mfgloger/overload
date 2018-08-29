@@ -106,3 +106,5 @@ platform_res*.json
 
 # Z3950 logs
 PyZ3950_parsetab.py
+updater/raction_db.py
+updater/datastore.db
