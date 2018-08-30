@@ -40,7 +40,7 @@ NORDER_CODE1 = {
     'a': 'Marie-Agnes',
     'p': 'Pascale',
     'd': 'Douglas',
-    'j': 'Jeaanette',
+    'j': 'Jeanette',
     'm': 'Marilin',
     's': 'serials project',
     'e': 'Eddie'
