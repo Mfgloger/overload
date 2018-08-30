@@ -134,16 +134,6 @@ def create_stats(system, df):
     return df_rep
 
 
-def report_deduped_bibs(system, agent, df):
-    """
-    calculates how many bibs have been mereged because they are duplicates
-    """
-    if system == 'NYPL' and agent == 'cat':
-        new_bibs = df[df['action'] == 'insert']
-        duplicated = new_bibs.duplicated(subset='vendor_id', keep=False)
-        return duplicated.size
-
-
 def report_dups(system, library, df):
     if system == 'NYPL':
         if library == 'branches':

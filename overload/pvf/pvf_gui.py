@@ -2554,10 +2554,6 @@ class ProcessVendorFiles(tk.Frame):
             if self.dups.size == 0:
                 self.reportDTxt.insert(tk.END, 'All clear\n')
             else:
-                dups_in_file = reports.report_deduped_bibs(
-                    self.last_used_sys, self.last_used_agent, df)
-                self.reportDTxt.insert(
-                    tk.END, 'Deduped bibs: {}\n'.format(dups_in_file))
                 self.reportDTxt.insert(tk.END, self.dups.to_string() + '\n')
         else:
             self.dups = None
