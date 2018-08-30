@@ -2698,8 +2698,8 @@ class ProcessVendorFiles(tk.Frame):
                     with open(fh, 'a') as file:
                         file.write('\nCall Number Report:\n')
                     self.callNos.to_csv(fh, index=False, mode='a')
-            tkMessageBox.showinfo(
-                'Download', 'Report saved successfully.', parent=self.topD)
+                tkMessageBox.showinfo(
+                    'Download', 'Report saved successfully.', parent=self.topD)
         except IOError as e:
             module_logger.error(
                 'Unable to download report. Error: {}'.format(e))
