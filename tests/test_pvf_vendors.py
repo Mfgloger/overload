@@ -154,6 +154,10 @@ class TestParseIdentificationMethod(unittest.TestCase):
 
 class TestIdentifyVendor(unittest.TestCase):
     def setUp(self):
+        self.rules = '../overload/rules/cat_rules.xml'
+        self.nypl_rules = vendors.vendor_index(self.rules, 'nypl')
+        self.bpl_rules = vendors.vendor_index(self.rules, 'bpl')
+
         self.bib1 = Record()
         self.bib1.add_field(
             Field(
@@ -234,6 +238,24 @@ class TestIdentifyVendor(unittest.TestCase):
                     'i', '33334',
                     'n', 'B&T']))
 
+        self.bib5 = Record()
+        self.bib5.add_field(
+            Field(
+                tag='245',
+                indicators=['0', '0'],
+                subfields=[
+                    'a', 'Test1'
+                ]))
+        self.bib5.add_field(
+            Field(
+                tag='037',
+                indicators=[' ', ' '],
+                subfields=[
+                    'a', 'id number',
+                    'b', "Sulaiman's Bookshop, Beirut, Lebanon,",
+                    'c', '18.00'
+                ]))
+
         self.vendor_index = {
             'TEST VENDOR1': {
                 'query': {
@@ -289,6 +311,10 @@ class TestIdentifyVendor(unittest.TestCase):
             vendors.identify_vendor(
                 self.bib3, self.vendor_index), 'UNKNOWN')
 
+    def test_Sulaiman_based_on_cat_rules(self):
+        self.assertEqual(
+            vendors.identify_vendor(
+                self.bib5, self.nypl_rules), 'Sulaiman')
 
 if __name__ == '__main__':
     unittest.main()

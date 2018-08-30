@@ -96,7 +96,7 @@ def find_matches(bib, conditions):
             for field in fields:
                 if condition[1] is not None:
                     # module_logger.debug(
-                    #     'Cheking subfield matches on value {}.'.format(
+                    #   'Cheking subfield matches on value {}.'.format(
                     #         condition[1]))
                     for subfield in field.get_subfields(condition[1]):
                         if condition[2].lower() in subfield.lower():

@@ -65,21 +65,6 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 				</field>
 			</bib_template>
 		</vendor>
-		<vendor name = "SULAIMAN">
-			<vendor_tag type = "control_field" tag = "003" operator = "main">LB-BrSB</vendor_tag>
-			<vendor_tag type = "standard" tag = "037b" operator = "alternative">Sulaiman</vendor_tag>
-			<query_tag preference = "primary" type = 'tag'>001</query_tag>
-			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
-			<existing_sierraId>keep</existing_sierraId>
-			<bib_template>
-				<field option = 'skip'>
-					<tag>949</tag>
-					<ind1></ind1>
-					<ind2></ind2>
-					<subfield code = 'a'>*b2=a;</subfield>
-				</field>
-			</bib_template>
-		</vendor>
 		<vendor name = "BT ROMANCE">
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTROMAN</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
@@ -224,6 +209,26 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 					<ind1></ind1>
 					<ind2></ind2>
 					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
+		<vendor name = "Sulaiman">
+			<vendor_tag type = "standard" tag = "037b" operator = "main">Sulaiman</vendor_tag>
+			<query_tag preference = "primary" type = 'tag'>001</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
+			<bib_template>
+				<field option = 'skip'>
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>*b2=a;</subfield>
+				</field>
+				<field option = 'skip'>
+					<tag>901</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = 'a'>SULAIMAN</subfield>
 				</field>
 			</bib_template>
 		</vendor>
