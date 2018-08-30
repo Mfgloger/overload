@@ -1427,7 +1427,7 @@ class OrderTemplate(tk.Frame):
     def update_template_lst(self):
         self.templateLst.delete(0, tk.END)
         names = get_template_names(self.agent[:3])
-        for name in names:
+        for name in sorted(names):
             self.templateLst.insert(tk.END, name)
 
     def populate_cbxs(self):
