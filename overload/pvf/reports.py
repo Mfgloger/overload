@@ -146,12 +146,12 @@ def report_dups(system, library, df):
             # research reports are simpler since
             # PVR always inserts bibs
             df_rep = df[[
-                'vendor', 'vendor_id',
+                'vendor', 'vendor_id', 'target_sierraId',
                 'inhouse_dups', 'mixed', 'other']]
             df_rep = df_rep[
                 df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
             df_rep.columns = [
-                'vendor', 'vendor_id',
+                'vendor', 'vendor_id', 'target_it',
                 dups, 'mixed', other]
         else:
             df_rep = df[[
@@ -209,11 +209,13 @@ def report_details(system, library, df):
         else:
             other = 'branches bibs'
             df = df[[
-                'vendor', 'vendor_id', 'action',
-                'vendor_callNo', 'inhouse_dups', 'mixed', 'other']]
+                'vendor', 'vendor_id', 'action', 'target_sierraId',
+                'updated_by_vendor', 'callNo_match', 'vendor_callNo',
+                'target_callNo', 'inhouse_dups', 'mixed', 'other']]
             df.columns = [
-                'vendor', 'vendor_id', 'action',
-                'vendor_callNo', dups, 'mixed bibs', other]
+                'vendor', 'vendor_id', 'action', 'target_sierraId',
+                'updated', 'callNo_match', 'vendor_callNo',
+                'target_callNo', dups, 'mixed bibs', other]
     else:
         # bpl stats
         df = df[[
