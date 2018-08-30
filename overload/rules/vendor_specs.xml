@@ -45,7 +45,7 @@
 				<sub code = "i" mandatory = "y" repeatable = "n" check = "barcode"></sub>
 				<sub code = "l" mandatory = "y" repeatable = "n" check = "location"></sub>
 				<sub code = "p" mandatory = "y" repeatable = "n" check = "price"></sub>
-				<sub code = "t" mandatory = "y" repeatable = "n" check = "list">101,102,111,114,136,137,138,140,201,202,206,211,231,238</sub>
+				<sub code = "t" mandatory = "y" repeatable = "n" check = "list">101,102,111,114,118,136,137,138,140,201,202,206,211,231,238</sub>
 				<sub code = "o" mandatory = "n" repeatable = "n" check = "list">,,b,l,f,y,i,n,g,w,e,x,5</sub>
 				<sub code = "u" mandatory = "n" repeatable = "n" check = "list">,,-,c,r,x,z,s,a,p,y</sub>
 				<sub code = "m" mandatory = "n" repeatable = "n" check = "none"></sub>
