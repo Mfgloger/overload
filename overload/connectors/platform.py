@@ -71,6 +71,7 @@ class PlatformSession(requests.Session):
         token (dict token obj {id: token_id, expires_on: datetime}
     creates requests.Session object tailored to NYPL Platform
     """
+
     def __init__(self, base_url=None, token=None):
         requests.Session.__init__(self)
         self.base_url = base_url
@@ -103,6 +104,7 @@ class PlatformSession(requests.Session):
         return:
             results
         """
+
         self._validate_token()
 
         # prep request
@@ -135,6 +137,7 @@ class PlatformSession(requests.Session):
         return:
             results
         """
+
         self._validate_token()
 
         # prep request
@@ -167,6 +170,7 @@ class PlatformSession(requests.Session):
         return:
             response
         """
+
         self._validate_token()
         endpoint = self.base_url + '/bibs'
         payload = dict(
@@ -198,6 +202,7 @@ class PlatformSession(requests.Session):
         return:
             results
         """
+
         self._validate_token()
         endpoint = self.base_url + '/bibs'
         payload = dict(
@@ -229,6 +234,7 @@ class PlatformSession(requests.Session):
         return:
             results
         """
+
         self._validate_token()
         endpoint = self.base_url + '/bibs'
         payload = dict(
@@ -257,6 +263,7 @@ class PlatformSession(requests.Session):
         return:
             response
         """
+
         self._validate_token()
         endpoint = self.base_url + '/bibs/{}/{}/items'.format(
             source, keyword)
@@ -284,6 +291,7 @@ class PlatformSession(requests.Session):
         return:
             response
         """
+
         self._validate_token()
         endpoint = self.base_url + '/items'
         payload = dict(
@@ -315,6 +323,7 @@ class PlatformSession(requests.Session):
         return:
             response
         """
+
         self._validate_token()
         endpoint = self.base_url + '/items'
         payload = dict(
@@ -346,6 +355,7 @@ class PlatformSession(requests.Session):
         return:
             response
         """
+
         self._validate_token()
         endpoint = self.base_url + '/items'
         payload = dict(
@@ -378,6 +388,7 @@ class PlatformSession(requests.Session):
         return:
             results
         """
+
         self._validate_token()
         endpoint = self.base_url + '/items'
         payload = dict(
@@ -410,6 +421,7 @@ class PlatformSession(requests.Session):
         return:
             results
         """
+
         self._validate_token()
         endpoint = self.base_url + '/items'
         payload = dict(
@@ -438,6 +450,7 @@ class PlatformSession(requests.Session):
         return:
             response
         """
+
         self._validate_token()
         endpoint = self.base_url + '/items/{}/{}'.format(
             source, keyword)
