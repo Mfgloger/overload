@@ -247,10 +247,10 @@ def local_specs_validation(system, files, specs):
                                             'price format.'.format(
                                                 sub['code']))
 
-                        if sub_issues != []:
-                            tag_issues.append(tag_head)
-                            tag_issues.append('\n'.join(sub_issues))
-                            bib_issues.append('\n'.join(tag_issues))
+                    if sub_issues != []:
+                        tag_issues.append(tag_head)
+                        tag_issues.append('\n'.join(sub_issues))
+                        bib_issues.append('\n'.join(tag_issues))
 
             if bib_issues != []:
                 bib_issues.insert(0, 'Record {}'.format(bib_count))

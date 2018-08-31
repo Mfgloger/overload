@@ -445,6 +445,25 @@ class Test_NYPL_CAT_Specs(unittest.TestCase):
             '"v" subfield is mandatory.',
             report)
 
+    def test_949_items_location_mandatory(self):
+        b = Record()
+        b.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', '1'],
+                subfields=[
+                    'i', '33333700904853',
+                    'p', '4.99',
+                    't', '211',
+                    'v', 'BTSERIES']))
+        bibs.write_marc21('specs_test.mrc', b)
+        passed, report = local_specs.local_specs_validation(
+            'nypl', ['specs_test.mrc'], self.ncl)
+        self.assertFalse(passed)
+        self.assertIn(
+            '"l" subfield is mandatory.',
+            report)
+
     def test_949_items_nonrepeatable_subfields(self):
         b = Record()
         b.add_field(
