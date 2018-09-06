@@ -86,6 +86,12 @@ class TestParseSierraID(unittest.TestCase):
     def test_wrong_id_number_parsing(self):
         self.assertIsNone(bibs.parse_sierra_id('349876789087'))
 
+    def test_None_id_parsing(self):
+        self.assertIsNone(bibs.parse_sierra_id(None))
+
+    def test_empty_string_parsing(self):
+        self.assertIsNone(bibs.parse_sierra_id(''))
+
 
 class TestBibsUtilities(unittest.TestCase):
     """
@@ -108,6 +114,7 @@ class TestBibsUtilities(unittest.TestCase):
             Field(tag='245',
                   indicators=['0', '0'],
                   subfields=['a', 'Test title']))
+
         tags.append(
             Field(tag='949',
                   indicators=[' ', '1'],
@@ -279,8 +286,14 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(meta.rCallNumber, [])
 
     def test_vendor_bibmeta_object(self):
+        self.marc_bib.add_field(
+            Field(
+                tag='945',
+                indicators=[' ', ' '],
+                subfields=['a', '.b01234569a']))
         meta = bibs.VendorBibMeta(
             self.marc_bib, vendor='Amalivre', dstLibrary='rl')
+
         self.assertIsInstance(meta, bibs.VendorBibMeta)
         self.assertEqual(meta.t001, '0001-test-control_field')
         self.assertIsNone(meta.t005)
@@ -292,6 +305,7 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(meta.rCallNumber, [])
         self.assertEqual(meta.vendor, 'Amalivre')
         self.assertEqual(meta.dstLibrary, 'rl')
+        self.assertEqual(meta.sierraId, '01234569')
         self.assertEqual(meta.barcodes, ['33333818132462', '33333818132464', '33333818132466'])
 
     def test_vendor_bibmeta_object_when_sierra_id_is_provided(self):
