@@ -6,6 +6,7 @@ class PVRReport:
     A general analysis report class.
     Use analysis classes specific to each system.
     """
+
     def __init__(self, meta_vendor, meta_inhouse):
         self._meta_vendor = meta_vendor
         self._meta_inhouse = meta_inhouse
@@ -21,7 +22,7 @@ class PVRReport:
 
         self._determine_resource_id()
         self._determine_vendor_callNo()
-        self._order_inhouse_meta()
+        self._sort_inhouse_meta()
 
     def _determine_resource_id(self):
         if self._meta_vendor.t001 is not None:
@@ -40,7 +41,7 @@ class PVRReport:
             except IndexError:
                 self.vendor_callNo = None
 
-    def _order_inhouse_meta(self):
+    def _sort_inhouse_meta(self):
         # will remove any duplicates from the Sierra results
         # order from the newest bib to the oldest
         descending_order = []
