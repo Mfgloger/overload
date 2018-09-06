@@ -19,7 +19,7 @@ def platform_status_interpreter(response=None):
     return:
         (status, response) tuple (str, dict)
     """
-    module_logger.info('Interpreting response status code')
+    module_logger.info('Interpreting response status code.')
     if response is not None:
         code = response.status_code
         module_logger.debug(
@@ -45,6 +45,8 @@ def platform_status_interpreter(response=None):
                     response.text))
             status = None
     else:
+        module_logger.debug(
+            'No data to query. Skipping request.')
         status = 'nohit'
     return status
 
