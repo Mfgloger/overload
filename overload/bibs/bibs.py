@@ -32,12 +32,15 @@ def parse_upc(field):
 
 
 def parse_sierra_id(field):
-    p = re.compile(r'\.b\d{8}.|\.o\d{7}.')
+    try:
+        p = re.compile(r'\.b\d{8}.|\.o\d{7}.')
 
-    m = re.match(p, field)
-    if m:
-        return str(m.group())[2:-1]
-    else:
+        m = re.match(p, field)
+        if m:
+            return str(m.group())[2:-1]
+        else:
+            return None
+    except TypeError:
         return None
 
 
