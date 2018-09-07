@@ -30,19 +30,22 @@ def barcode_duplicates(batch, system):
         item_tag_sub = 'i'
 
     for fh in batch:
-        reader = read_marc21(fh)
-        pos = 0
-        for record in reader:
-            pos += 1
-            for tag in record.get_fields(item_tag):
-                if tag.indicators == item_tag_ind:
-                    for b in tag.get_subfields(item_tag_sub):
-                        if b in barcodes:
-                            new_value = barcodes[b]
-                            new_value.append((fh, pos))
-                            barcodes[b] = new_value
-                        else:
-                            barcodes[b] = [(fh, pos)]
+        try:
+            reader = read_marc21(fh)
+            pos = 0
+            for record in reader:
+                pos += 1
+                for tag in record.get_fields(item_tag):
+                    if tag.indicators == item_tag_ind:
+                        for b in tag.get_subfields(item_tag_sub):
+                            if b in barcodes:
+                                new_value = barcodes[b]
+                                new_value.append((fh, pos))
+                                barcodes[b] = new_value
+                            else:
+                                barcodes[b] = [(fh, pos)]
+        except UnicodeDecodeError as e:
+            raise OverloadError(e)
 
     for k, v in barcodes.iteritems():
         if len(v) > 1:
