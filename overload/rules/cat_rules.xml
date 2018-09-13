@@ -95,7 +95,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "901a" operator = "main">BTODC</vendor_tag>
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
-			<existing_sierraId>remove_new</existing_sierraId>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -124,7 +124,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>024</query_tag>
-			<existing_sierraId>remove_new</existing_sierraId>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -140,7 +140,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>024</query_tag>
-			<existing_sierraId>remove_new</existing_sierraId>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -157,7 +157,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>024</query_tag>
-			<existing_sierraId>remove_new</existing_sierraId>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -174,7 +174,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>024</query_tag>
-			<existing_sierraId>remove_new</existing_sierraId>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -188,7 +188,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "901a" operator = "main">AUXAM</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
-			<existing_sierraId>remove_new</existing_sierraId>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
@@ -202,7 +202,7 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<vendor_tag type = "standard" tag = "901a" operator = "main">INGRAM</vendor_tag>
 			<query_tag preference = "primary" type = 'tag'>001</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
-			<existing_sierraId>remove_new</existing_sierraId>
+			<existing_sierraId>keep</existing_sierraId>
 			<bib_template>
 				<field option = 'skip'>
 					<tag>949</tag>
