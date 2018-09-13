@@ -15,7 +15,7 @@ class PVRReport:
         self.updated_by_vendor = False
         self.callNo_match = False
         self.vendor_callNo = meta_vendor.bCallNumber
-        self.target_sierraId = None
+        self.target_sierraId = meta_vendor.sierraId
         self.target_callNo = None
         self.inhouse_dups = []
         self.action = 'insert'
@@ -75,6 +75,10 @@ class PVRReport:
                 match = True
         return match
 
+    def _set_target_id(self, proposed_id):
+        if self.target_sierraId is None:
+            self.target_sierraId = proposed_id
+
 
 class PVR_NYPLReport(PVRReport):
     """
@@ -119,15 +123,15 @@ class PVR_NYPLReport(PVRReport):
             c = 0
             for meta in self._matched:
                 c += 1
+                # full record scenario
                 if meta.bCallNumber is not None or \
                         len(meta.rCallNumber) > 0:
-                    # full record
                     if self._meta_vendor.dstLibrary == 'branches':
                         # check if call number matches
                         call_match = self._determine_callNo_match(meta)
                         if call_match:
                             self.callNo_match = True
-                            self.target_sierraId = meta.sierraId
+                            self._set_target_id(meta.sierraId)
                             self.target_callNo = meta.bCallNumber
                             if meta.catSource == 'inhouse':
                                 self.action = 'attach'
@@ -142,7 +146,7 @@ class PVR_NYPLReport(PVRReport):
                             break
                         else:
                             if c == n:
-                                self.target_sierraId = meta.sierraId
+                                self._set_target_id(meta.sierraId)
                                 self.target_callNo = meta.bCallNumber
                                 if meta.catSource == 'inhouse':
                                     self.action = 'attach'
@@ -157,7 +161,8 @@ class PVR_NYPLReport(PVRReport):
                     else:
                         # research path, no callNo match checking
                         self.callNo_match = True
-                        self.target_sierraId = meta.sierraId
+                        # set_target_id
+                        self._set_target_id(meta.sierraId)
                         self.target_callNo = ','.join(meta.rCallNumber)
                         if meta.catSource == 'inhouse':
                             self.action = 'attach'
@@ -175,7 +180,7 @@ class PVR_NYPLReport(PVRReport):
                     if c == n:
                         # no other bibs to consider
                         self.callNo_match = True
-                        self.target_sierraId = meta.sierraId
+                        self._set_target_id(meta.sierraId)
                         self.action = 'overlay'
         if n > 1:
             self.inhouse_dups = [meta.sierraId for meta in self._matched]

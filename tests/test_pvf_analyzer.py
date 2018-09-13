@@ -81,9 +81,28 @@ class Test_PVRReport(unittest.TestCase):
             rCallNumber=['JFE 03-7401'],
             catSource='inhouse',
             ownLibrary='research')
+        attrs5 = dict(
+            t001='bl41266045',
+            t003=None,
+            t005=datetime.strptime(
+                '20120731084140.9',
+                '%Y%m%d%H%M%S.%f'),
+            t020=['0439136350', '9780439136358'],
+            t022=[],
+            t024=[],
+            t028=[],
+            t901=[u'BTSERIES'],
+            t947=[],
+            sierraId='o1234578',
+            bCallNumber='FIC ROWLING',
+            rCallNumber=[],
+            vendor='BTSERIES',
+            dstLibrary='branches')
 
-        self.vendor_meta = MagicMock()
-        self.vendor_meta.configure_mock(**attrs1)
+        self.vendor_meta1 = MagicMock()
+        self.vendor_meta1.configure_mock(**attrs1)
+        self.vendor_meta2 = MagicMock()
+        self.vendor_meta2.configure_mock(**attrs5)
         self.inhouse_meta1 = MagicMock()
         self.inhouse_meta1.configure_mock(**attrs2)
         self.inhouse_meta2 = MagicMock()
@@ -93,94 +112,117 @@ class Test_PVRReport(unittest.TestCase):
 
     def test_determine_resource_id(self):
         # if control field
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.vendor_id, 'bl41266045')
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
+        self.assertEquals(report.vendor_id, 'bl41266045')
 
         # if no control field
-        self.vendor_meta.t001 = None
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.vendor_id, '0439136350')
+        self.vendor_meta1.t001 = None
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
+        self.assertEquals(report.vendor_id, '0439136350')
 
         # if only 024 present
-        self.vendor_meta.t020 = []
-        self.vendor_meta.t024 = ['12345']
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
-        self.assertEqual(report.vendor_id, '12345')
+        self.vendor_meta1.t020 = []
+        self.vendor_meta1.t024 = ['12345']
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
+        self.assertEquals(report.vendor_id, '12345')
 
     def test_determine_vendor_callNo(self):
-        self.vendor_meta.dstLibrary = 'research'
-        self.vendor_meta.bCallNumber = None
-        self.vendor_meta.rCallNumber = ['JEF 1234']
-        self.vendor_meta.vendor = 'Sulaiman'
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta3])
+        self.vendor_meta1.dstLibrary = 'research'
+        self.vendor_meta1.bCallNumber = None
+        self.vendor_meta1.rCallNumber = ['JEF 1234']
+        self.vendor_meta1.vendor = 'Sulaiman'
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta3])
         self.assertEquals(report.vendor_callNo, 'JEF 1234')
 
         # if rCallNumber is None
-        self.vendor_meta.rCallNumber = []
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta3])
+        self.vendor_meta1.rCallNumber = []
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta3])
         self.assertIsNone(report.vendor_callNo)
 
     def test_compare_update_timestamp(self):
         # vendor bib not updated - same date in 005
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
         self.assertFalse(
             report._compare_update_timestamp(
                 self.inhouse_meta1))
 
         # vendor bib has newer date in 005 (updated)
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta2])
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta2])
         self.assertTrue(
             report._compare_update_timestamp(
                 self.inhouse_meta2))
 
         # if vedor bib updated and inhouse bib doesn't have 005
         self.inhouse_meta1.t005 = None
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
         self.assertTrue(
             report._compare_update_timestamp(
                 self.inhouse_meta1))
 
         # if vendor bib doesn't have 005
-        self.vendor_meta.t005 = None
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
+        self.vendor_meta1.t005 = None
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
         self.assertFalse(
             report._compare_update_timestamp(
                 self.inhouse_meta2))
 
     def test_determine_callNo_match(self):
         # match
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
         self.assertTrue(
             report._determine_callNo_match(
                 self.inhouse_meta1))
         # no match
         self.inhouse_meta1.bCallNumber = 'J FIC ROWLING'
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
         self.assertFalse(
             report._determine_callNo_match(
                 self.inhouse_meta1))
 
         # inhouse bib lacks call number
         self.inhouse_meta1.bCallNumber = None
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
         self.assertTrue(
             report._determine_callNo_match(
                 self.inhouse_meta1))
 
         # vendor callNo is not provided
-        self.vendor_meta.bCallNumber = None
-        report = PVRReport(self.vendor_meta, [self.inhouse_meta1])
+        self.vendor_meta1.bCallNumber = None
+        report = PVRReport(self.vendor_meta1, [self.inhouse_meta1])
         self.assertTrue(
             report._determine_callNo_match(
                 self.inhouse_meta1))
 
     def test_order_inhouse_meta(self):
         report = PVRReport(
-            self.vendor_meta, [self.inhouse_meta1, self.inhouse_meta2])
-        self.assertEqual(
+            self.vendor_meta1, [self.inhouse_meta1, self.inhouse_meta2])
+        self.assertEquals(
             report._meta_inhouse[0].sierraId, '01234568')
-        self.assertEqual(
+        self.assertEquals(
             report._meta_inhouse[1].sierraId, '01234569')
+
+    def test_determine_missing_vendor_target_id(self):
+        report = PVRReport(
+            self.vendor_meta1, [self.inhouse_meta1, self.inhouse_meta2])
+        self.assertIsNone(report.target_sierraId)
+
+    def test_determine_present_vendor_target_id(self):
+        report = PVRReport(
+            self.vendor_meta2, [self.inhouse_meta1, self.inhouse_meta2])
+        self.assertEquals(report.target_sierraId, 'o1234578')
+
+    def test_set_target_id_when_vendor_supplied(self):
+        report = PVRReport(
+            self.vendor_meta2, [self.inhouse_meta1, self.inhouse_meta2])
+        report._set_target_id('o2345678')
+        self.assertEquals(report.target_sierraId, 'o1234578')  # no change to preserve original id
+
+    def test_set_target_id_when_analyzer_supplied(self):
+        report = PVRReport(
+            self.vendor_meta1, [self.inhouse_meta1, self.inhouse_meta2])
+        report._set_target_id('o2345678')
+        self.assertEquals(
+            report.target_sierraId, 'o2345678')  # new target because not provided originally
 
 
 class TestPVR_NYPLReport(unittest.TestCase):
@@ -261,8 +303,8 @@ class TestPVR_NYPLReport(unittest.TestCase):
             catSource='inhouse',
             ownLibrary='research')
 
-        self.vendor_meta = MagicMock()
-        self.vendor_meta.configure_mock(**attrs1)
+        self.vendor_meta1 = MagicMock()
+        self.vendor_meta1.configure_mock(**attrs1)
         self.inhouse_meta1 = MagicMock()
         self.inhouse_meta1.configure_mock(**attrs2)
         self.inhouse_meta2 = MagicMock()
@@ -271,7 +313,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
         self.inhouse_meta3.configure_mock(**attrs4)
 
         self.report = PVR_NYPLReport(
-            'cat', self.vendor_meta,
+            'cat', self.vendor_meta1,
             [self.inhouse_meta1, self.inhouse_meta2, self.inhouse_meta3])
 
     def test_group_by_library(self):
@@ -854,7 +896,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             t028=[],
             t901=[u'MWT'],
             t947=[],
-            sierraId=None,
+            sierraId='o000001',
             bCallNumber='DVD M',
             rCallNumber=[],
             vendor='MWT',
@@ -869,7 +911,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             t028=[],
             t901=[],
             t947=[],
-            sierraId='000001',
+            sierraId='b000001',
             bCallNumber=None,
             rCallNumber=[],
             catSource='vendor',
@@ -886,7 +928,7 @@ class TestPVR_NYPLReport(unittest.TestCase):
             t028=[],
             t901=[],
             t947=[],
-            sierraId='000002',
+            sierraId='b000002',
             bCallNumber=None,
             rCallNumber=['JEF 1234'],
             catSource='inhouse',
@@ -902,11 +944,11 @@ class TestPVR_NYPLReport(unittest.TestCase):
         self.assertEqual(
             report.action, 'overlay')
         self.assertEqual(
-            report.target_sierraId, '000001')
+            report.target_sierraId, 'o000001')
         self.assertEqual(
             report.mixed, [])
         self.assertEqual(
-            report.other, ['000002'])
+            report.other, ['b000002'])
         self.assertEqual(
             report.vendor, 'MWT')
         self.assertTrue(
