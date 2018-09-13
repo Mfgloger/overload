@@ -405,21 +405,8 @@ def run_processing(
             # add fields form bib & order templates
             module_logger.info(
                 'Adding template field(s) to the vendor record.')
-            if agent == 'cat':
-                # delete present sierra id if specified
-                # this is to prevent overlaying research record by branch
-                # if vendor provides mixed or research bib number
-                if sierra_id_present and \
-                        vx[vendor]['existing_sierraId'] == 'remove_new' and \
-                        analysis['action'] == 'insert' and \
-                        analysis['target_sierraId'] is None:
-                    module_logger.debug(
-                        'Removing present sierra id field.')
-                    if system == 'nypl':
-                        bib.remove_fields('945')
-                    elif system == 'bpl':
-                        bib.remove_fields('907')
 
+            if agent == 'cat':
                 templates = vx[vendor].get('bib_template')
                 module_logger.debug(
                     'Selected CAT templates for {}: {}'.format(
