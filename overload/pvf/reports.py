@@ -75,8 +75,14 @@ def shelf2dataframe(batch_stats, system):
     list2str = ['inhouse_dups', 'mixed', 'other']
     for key, value in stats.iteritems():
         if value['target_sierraId'] is not None:
-            value['target_sierraId'] = 'b{}a'.format(
-                value['target_sierraId'])
+            if len(value['target_sierraId']) == 8:
+                value['target_sierraId'] = 'b{}a'.format(
+                    value['target_sierraId'])
+            elif len(value['target_sierraId']) == 7:
+                value['target_sierraId'] = 'o{}a'.format(
+                    value['target_sierraId'])
+            else:
+                value['target_sierraId'] = None
         for cat in list2str:
             if cat in value:
                 if value[cat] == []:
