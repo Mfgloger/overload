@@ -157,7 +157,7 @@ def report_dups(system, library, df):
             df_rep = df_rep[
                 df_rep['inhouse_dups'].notnull()|df_rep['mixed'].notnull()|df_rep['other'].notnull()].sort_index()
             df_rep.columns = [
-                'vendor', 'vendor_id', 'target_it',
+                'vendor', 'vendor_id', 'target_id',
                 dups, 'mixed', other]
         else:
             df_rep = df[[
