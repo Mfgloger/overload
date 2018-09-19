@@ -305,10 +305,13 @@ def db_template_to_960(template, vendor_960):
     except ValueError:
         pass
 
-    field = Field(
-        tag='960',
-        indicators=[' ', ' '],
-        subfields=nsub)
+    if nsub == []:
+        field = None
+    else:
+        field = Field(
+            tag='960',
+            indicators=[' ', ' '],
+            subfields=nsub)
 
     return field
 

@@ -361,6 +361,15 @@ class TestTemplate_to_960(unittest.TestCase):
             str(field),
             '=960  \\\\$m1')
 
+    def test_no_vendor960_but_at_least_one_template_attr_set(self):
+        self.temp.vendor = 'TEST'
+        field = bibs.db_template_to_960(self.temp, None)
+        self.assertEqual(
+            str(field),
+            '=960  \\\\$m1$vTEST')
+        self.temp.internalNote = None
+        self.temp.vendor = None
+
     def test_template_None_keeps_vendor_subfields(self):
         vfield = Field(
             tag='960',
@@ -472,6 +481,14 @@ class TestTemplate_to_961(unittest.TestCase):
     def test_vendor_subfields_None_return_None(self):
         field = bibs.db_template_to_961(self.temp, None)
         self.assertIsNone(field)
+
+    def test_no_vendor961_but_at_least_one_template_attr_set(self):
+        self.temp.internalNote = 'TEST'
+        field = bibs.db_template_to_961(self.temp, None)
+        self.assertEqual(
+            str(field),
+            '=961  \\\\$dTEST')
+        self.temp.internalNote = None
 
     def test_retuns_None_if_all_template_attr_not_None(self):
         field = bibs.db_template_to_961(self.temp, None)

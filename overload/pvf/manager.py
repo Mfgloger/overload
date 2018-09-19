@@ -444,22 +444,36 @@ def run_processing(
                         db_session, NYPLOrderTemplate, tName=template)
 
                     new_fields = []
-                    for t960 in bib.get_fields('960'):
-                        new_field = db_template_to_960(trec, t960)
+                    if '960' in bib:
+                        for t960 in bib.get_fields('960'):
+                            new_field = db_template_to_960(trec, t960)
+                            if new_field:
+                                new_fields.append(new_field)
+                        bib.remove_fields('960')
+                    else:
+                        new_field = db_template_to_960(trec, None)
                         if new_field:
                             new_fields.append(new_field)
-                    if '960' in bib:
-                        bib.remove_fields('960')
+
+                    # add modified fields back to record
                     for field in new_fields:
                         bib.add_field(field)
 
                     new_fields = []
-                    for t961 in bib.get_fields('961'):
-                        new_field = db_template_to_961(trec, t961)
+                    if '961' in bib:
+                        for t961 in bib.get_fields('961'):
+                            new_field = db_template_to_961(trec, t961)
+                            if new_field:
+                                new_fields.append(new_field)
+                        # remove existing fields
+                        # (will be replaced by modified ones)
+                        bib.remove_fields('961')
+                    else:
+                        new_field = db_template_to_961(trec, None)
                         if new_field:
                             new_fields.append(new_field)
-                    if '961' in bib:
-                        bib.remove_fields('961')
+
+                    # add modified fields to bib
                     for field in new_fields:
                         bib.add_field(field)
 
