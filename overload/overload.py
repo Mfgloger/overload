@@ -1,62 +1,73 @@
 # GUI for OpsUtils
 
+import base64
+import calendar
+import datetime
+import json
+import keyring
+from keyring.backends.Windows import WinVaultKeyring
+import logging
+import logging.config
+import loggly.handlers
+import os
+import os.path
+import re
+import shelve
+import subprocess
 import Tkinter as tk
 import ttk
 import tkMessageBox
 import tkFileDialog
-import shelve
-import os
-import os.path
-import subprocess
-import logging
-import logging.config
-import loggly.handlers
-import re
-import base64
-import datetime
-import calendar
 
 
-from gui_utils import BusyManager, ToolTip
-from setup_dirs import *
-from logging_setup import LOGGING
-from pvf.pvf_gui import ProcessVendorFiles
 from datastore import session_scope, PVR_Batch
 from db_worker import retrieve_values
+from connectors import goo
+from connectors.goo_settings.scopes import SHEET_SCOPE, FDRIVE_SCOPE
+from connectors.goo_settings.access_names import GAPP, GUSER
+import credentials
+from errors import OverloadError
+from gui_utils import BusyManager, ToolTip
+from logging_setup import LOGGING, DEV_LOGGING, LogglyAdapter
+import overload_help
+from pvf.pvf_gui import ProcessVendorFiles
 from pvf.reports import cumulative_nypl_stats, cumulative_bpl_stats, \
     cumulative_vendor_stats
+from setup_dirs import *
 
 
 def updates(manual=True):
     with open('version.txt', 'r') as app_fh:
         app_version = app_fh.readline()[9:].strip()
-        overload_logger.info(
+        overload_logger.debug(
             'Checking for Overload updates. Current version: {}'.format(
                 app_version))
 
     user_data = shelve.open(USER_DATA)
     if 'update_dir' in user_data['paths']:
         update_dir = user_data['paths']['update_dir']
-        overload_logger.info(
+        overload_logger.debug(
             'Using update directory from user_data: {}'.format(
                 update_dir))
         if os.path.isfile(update_dir + r'\version.txt'):
-            overload_logger.info(
+            overload_logger.debug(
                 'Found version.txt in update directory')
             up_fh = update_dir + r'\version.txt'
             with open(up_fh, 'r') as up_f:
                 update_version = up_f.readline()[9:].strip()
-                overload_logger.info(
-                    'Version available for download: {}'.format(
+                overload_logger.debug(
+                    'Version available for pull: {}'.format(
                         update_version))
                 if app_version != update_version:
                     overload_logger.debug(
-                        'Local and update directory versions are '
-                        'not the same. Launching update procedure.')
+                        'Local version different than in update directory')
                     m = 'A new version ({}) of Overload has been ' \
                         'found.\nWould you like to run the ' \
                         'update?'.format(update_version)
                     if tkMessageBox.askyesno('Update Info', m):
+                        overload_logger.info(
+                            '{} user is upgrading to overload version {}'.format(
+                                USER_NAME, update_version))
                         # launch updater & quit main app
                         user_data.close()
                         args = '{} "{}"'.format(
@@ -68,12 +79,12 @@ def updates(manual=True):
                     if manual:
                         overload_logger.debug(
                             'Local and update directory versions are '
-                            'the same.')
+                            'the same')
                         m = 'Babel is up-to-date'
                         tkMessageBox.showinfo('Info', m)
         else:
-            overload_logger.info(
-                'Unable find version.txt in update directory ({})'.format(
+            overload_logger.error(
+                'Missing files. Failed to find version.txt in ({})'.format(
                     update_dir))
             m = '"version.txt" file in update folder not found.\n' \
                 'Please provide update directory to correct folder\n' \
@@ -81,8 +92,9 @@ def updates(manual=True):
                 'settings>default directories>update folder'
             tkMessageBox.showwarning('Missing Files', m)
     else:
-        overload_logger.info(
-            'Update directory not setup in Settings.')
+        overload_logger.warning(
+            'Update directory not setup in Settings: user={}'.format(
+                USER_NAME))
         m = 'please provide update directory\n' \
             'Go to:\n' \
             'settings>default directories>update folder'
@@ -107,7 +119,7 @@ class MainApplication(tk.Tk):
         for F in (
                 Main, ProcessVendorFiles, UpgradeBib, Reports,
                 Settings, DefaultDirs, SierraAPIs, PlatformAPIs,
-                Z3950s, About):
+                Z3950s, GooAPI, About):
             page_name = F.__name__
             frame = F(parent=container, controller=self,
                       **self.app_data)
@@ -165,11 +177,11 @@ class Main(tk.Frame):
         self.rowconfigure(0, minsize=25)
         self.rowconfigure(2, minsize=10)
         self.rowconfigure(10, minsize=25)
-        self.columnconfigure(0, minsize=50)
+        self.columnconfigure(0, minsize=30)
         self.columnconfigure(2, minsize=20)
         self.columnconfigure(4, minsize=20)
         self.columnconfigure(6, minsize=20)
-        self.columnconfigure(8, minsize=50)
+        self.columnconfigure(8, minsize=30)
 
         getRecNoICO = tk.PhotoImage(file='./icons/ProcessVendorFiles.gif')
         self.getRecNoBtn = ttk.Button(
@@ -475,8 +487,8 @@ class Reports(tk.Frame):
             row=12, column=6, sticky='nw', padx=5)
 
     def pvf_user_report(self):
-        overload_logger.info(
-            'Displaying user reports.')
+        overload_logger.debug(
+            'Displaying user reports')
         month = self.pvf_user_months.get()
         if month == '':
             m = 'plase select month to display user stats'
@@ -512,8 +524,8 @@ class Reports(tk.Frame):
                 tk.END, bpl_stats.to_string(index=False) + '\n')
 
     def pvf_vendor_report(self):
-        overload_logger.info(
-            'Displaying vendor reports.')
+        overload_logger.debug(
+            'Displaying vendor reports')
         start_month = self.pvf_ven_dateA.get()
         end_month = self.pvf_ven_dateB.get()
         if start_month == '' or end_month == '':
@@ -599,12 +611,13 @@ class Settings(tk.Frame):
 
         self.rowconfigure(0, minsize=25)
         self.rowconfigure(2, minsize=10)
+        self.rowconfigure(4, minsize=200)
         self.rowconfigure(10, minsize=25)
-        self.columnconfigure(0, minsize=50)
+        self.columnconfigure(0, minsize=30)
         self.columnconfigure(2, minsize=20)
         self.columnconfigure(4, minsize=20)
-        self.columnconfigure(8, minsize=80)
-        self.columnconfigure(10, minsize=50)
+        self.columnconfigure(8, minsize=50)
+        self.columnconfigure(10, minsize=30)
 
         foldersICO = tk.PhotoImage(file='./icons/folders.gif')
         self.defaultDirBtn = ttk.Button(
@@ -632,6 +645,20 @@ class Settings(tk.Frame):
         self.platform_apiBtn.image = apiICO
         self.platform_apiBtn.grid(
             row=1, column=3, sticky='snew')
+
+        gooICO = tk.PhotoImage(file='./icons/key-lock.gif')
+
+        self.goo_apiBtn = ttk.Button(
+            self, image=gooICO,
+            text='Google APIs',
+            compound=tk.TOP,
+            cursor='hand2',
+            width=15,
+            command=lambda: controller.show_frame('GooAPI'))
+
+        self.goo_apiBtn.image = gooICO
+        self.goo_apiBtn.grid(
+            row=1, column=5, sticky='snew')
 
         self.sierra_apiBtn = ttk.Button(
             self, image=apiICO,
@@ -662,7 +689,7 @@ class Settings(tk.Frame):
             width=15,
             command=lambda: controller.show_frame('Main'))
         self.closeBtn.grid(
-            row=3, column=9, sticky='sew')
+            row=5, column=1, sticky='sew')
 
 
 class SierraAPIs(tk.Frame):
@@ -822,18 +849,16 @@ class SierraAPIs(tk.Frame):
                 client_id = None
             else:
                 client_id = self.client_id.get()
-            client_id = base64.b64encode(client_id)
+            encoded_client_id = base64.b64encode(client_id)
             if self.client_secret.get() == '' or \
                     self.client_secret.get() == 'None':
                 client_secret = None
             else:
                 client_secret = self.client_secret.get()
-            client_secret = base64.b64encode(client_secret)
 
             new_conn = dict(
                 host=self.host.get(),
-                client_id=client_id,
-                client_secret=client_secret,
+                client_id=encoded_client_id,
                 library=self.library.get(),
                 method='SierraAPI')
 
@@ -845,6 +870,11 @@ class SierraAPIs(tk.Frame):
                 APIs = user_data['SierraAPIs']
             APIs[new_conn_name] = new_conn
             user_data.close()
+
+            # store critical data in Windows Vault
+            credentials.standard_to_vault(
+                self.host.get(), client_id, client_secret)
+
             tkMessageBox.showinfo('Input', 'Settings have been saved')
             self.observer()
 
@@ -910,6 +940,14 @@ class SierraAPIs(tk.Frame):
         else:
             if tkMessageBox.askokcancel('Deletion', 'delete connection?'):
                 user_data = shelve.open(USER_DATA, writeback=True)
+                conn = user_data['SierraAPIs'][self.conn_name.get()]
+
+                # delete from Windows Vault
+                keyring.delete_password(
+                    conn['host'],
+                    base64.b64decode(conn['client_id']))
+
+                # delete from user_data
                 user_data['SierraAPIs'].pop(self.conn_name.get(), None)
                 user_data.close()
                 # update indexes & reset to blank form
@@ -932,7 +970,10 @@ class SierraAPIs(tk.Frame):
                 self.library.set(conn['library'])
                 self.host.set(conn['host'])
                 self.client_id.set(base64.b64decode(conn['client_id']))
-                self.client_secret.set(base64.b64decode(conn['client_secret']))
+                self.client_secret.set(
+                    credentials.get_from_vault(
+                        conn['host'],
+                        base64.b64decode(conn['client_id'])))
             except KeyError:
                 pass
             finally:
@@ -1102,7 +1143,7 @@ class PlatformAPIs(tk.Frame):
         valid_results = self.validate()
         correct = valid_results[0]
         new_conn_name = self.conn_name.get()
-        overload_logger.info(
+        overload_logger.debug(
             'Saving new Platform API settings under name {}'.format(
                 new_conn_name))
 
@@ -1117,19 +1158,18 @@ class PlatformAPIs(tk.Frame):
                 client_id = None
             else:
                 client_id = self.client_id.get()
-            client_id = base64.b64encode(client_id)
+            encoded_client_id = base64.b64encode(client_id)
             if self.client_secret.get() == '' or \
                     self.client_secret.get() == 'None':
                 client_secret = None
             else:
                 client_secret = self.client_secret.get()
-            client_secret = base64.b64encode(client_secret)
 
+            # save info in shelf
             new_conn = dict(
                 oauth_server=oauth_server,
                 host=self.host.get(),
-                client_id=client_id,
-                client_secret=client_secret,
+                client_id=encoded_client_id,
                 last_token=None,
                 method='Platform API',
                 library='NYPL')
@@ -1142,6 +1182,11 @@ class PlatformAPIs(tk.Frame):
                 APIs = user_data['PlatformAPIs']
             APIs[new_conn_name] = new_conn
             user_data.close()
+
+            # store critical data in Windows Vault
+            credentials.standard_to_vault(
+                oauth_server, client_id, client_secret)
+
             tkMessageBox.showinfo('Input', 'Settings have been saved')
             self.observer()
 
@@ -1198,7 +1243,7 @@ class PlatformAPIs(tk.Frame):
             m += 'client secret field is required\n'
             correct = False
 
-        overload_logger.info(
+        overload_logger.debug(
             'Validation of entered Platform API settings. '
             'Correct: {}, errors: {}'.format(
                 correct, m))
@@ -1211,6 +1256,14 @@ class PlatformAPIs(tk.Frame):
         else:
             if tkMessageBox.askokcancel('Deletion', 'delete connection?'):
                 user_data = shelve.open(USER_DATA, writeback=True)
+
+                # delete creds from Windows Vault
+                conn = user_data['PlatformAPIs'][self.conn_name.get()]
+                keyring.delete_password(
+                    conn['oauth_server'],
+                    base64.b64decode(conn['client_id']))
+
+                # delete from user_data
                 user_data['PlatformAPIs'].pop(self.conn_name.get(), None)
                 user_data.close()
                 # update indexes & reset to blank form
@@ -1233,7 +1286,11 @@ class PlatformAPIs(tk.Frame):
                 self.oauth_server.set(conn['oauth_server'])
                 self.host.set(conn['host'])
                 self.client_id.set(base64.b64decode(conn['client_id']))
-                self.client_secret.set(base64.b64decode(conn['client_secret']))
+                # retrieve secret from Windows Vault
+                secret = credentials.get_from_vault(
+                    self.oauth_server.get(),
+                    self.client_id.get())
+                self.client_secret.set(secret)
             except KeyError:
                 pass
             finally:
@@ -1728,6 +1785,279 @@ class DefaultDirs(tk.Frame):
             user_data.close()
 
 
+class GooAPI(tk.Frame):
+    """
+    widget for ingesting Google API credentials
+    """
+
+    def __init__(self, parent, controller, **app_data):
+        self.parent = parent
+        tk.Frame.__init__(self, parent, background='white')
+        self.controller = controller
+        self.activeW = app_data['activeW']
+        self.activeW.trace('w', self.observer)
+
+        self.creds = None
+        self.folder_ids = {}
+        self.key = tk.StringVar()
+        self.status = ''
+
+        # settings frame
+        self.baseFrm = ttk.LabelFrame(self, text='Google API settings')
+        self.baseFrm.grid(
+            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm.rowconfigure(0, minsize=20)
+        self.baseFrm.rowconfigure(2, minsize=5)
+        self.baseFrm.rowconfigure(4, minsize=5)
+        self.baseFrm.rowconfigure(6, minsize=5)
+        self.baseFrm.rowconfigure(8, minsize=250)
+        self.baseFrm.rowconfigure(10, minsize=20)
+        self.baseFrm.columnconfigure(0, minsize=10)
+        self.baseFrm.columnconfigure(4, minsize=10)
+
+        self.linkBtn = ttk.Button(
+            self.baseFrm, text='link G-Drive',
+            cursor='hand2',
+            width=15,
+            command=self.link_GSuite)
+        self.linkBtn.grid(
+            row=1, column=1, sticky='sew')
+
+        self.testBtn = ttk.Button(
+            self.baseFrm, text='test',
+            cursor='hand2',
+            width=15,
+            command=self.test_link_to_GSuite)
+        self.testBtn.grid(
+            row=3, column=1, sticky='sew')
+
+        self.unlinkBtn = ttk.Button(
+            self.baseFrm, text='unlink G-Drive',
+            cursor='hand2',
+            width=15,
+            command=self.unlink_GSuite)
+        self.unlinkBtn.grid(
+            row=5, column=1, sticky='sew')
+
+        self.helpBtn = ttk.Button(
+            self.baseFrm, text='help',
+            cursor='hand2',
+            width=15,
+            command=self.help)
+        self.helpBtn.grid(
+            row=7, column=1, sticky='sew')
+
+        self.closeBtn = ttk.Button(
+            self.baseFrm, text='close',
+            cursor='hand2',
+            width=15,
+            command=lambda: controller.show_frame('Main'))
+        self.closeBtn.grid(
+            row=9, column=1, sticky='sew')
+
+        self.linkDetailsTxt = tk.Text(
+            self.baseFrm,
+            wrap=tk.WORD,
+            width=72,
+            state=tk.DISABLED,
+            borderwidth=0)
+        self.linkDetailsTxt.grid(
+            row=1, column=3, rowspan=8, sticky='ne', padx=10, pady=5)
+
+    def link_GSuite(self):
+        # look up update folder and determine path to
+        # credential file
+        self.creds = credentials.locate_goo_credentials(USER_DATA, GOO_CREDS)
+        if self.creds:
+            if not os.path.isfile(self.creds):
+                overload_logger.error(
+                    'goo_credentials.bin not found at {}'.format(
+                        os.path.split(self.creds)[0]))
+                m = 'Google credentials at {}\n' \
+                    'appear to be missing. Please report the problem.'.format(
+                        os.path.split(self.creds)[0])
+                tkMessageBox.showerror('Settings Error', m)
+            else:
+                # ask for decryption key, decrypt creds and
+                # store in Windows vault
+                self.ask_decryption_key()
+                self.wait_window(self.top)
+        else:
+            overload_logger.error(
+                'User settings error. Missing "Overload Creds" directory')
+            m = 'Unable to locate "Overload Creds" folder with ' \
+                '"goo_credentials.bin" file on the shared drive. \n' \
+                'Specify correct upgrade folder at  \n'\
+                'Settings>Default Directories>Upgrade Folder and try again.'
+            tkMessageBox.showerror('Settings Error', m)
+
+        # verify and store in user_data g-drive folder ids
+        if not credentials.store_goo_folder_ids(USER_DATA, GOO_FOLDERS):
+            overload_logger.error(
+                'User settings error. '
+                'Unable to located goo_folders.json file.')
+            m = 'Unable to locate "goo_folder.json" file on the shared ' \
+                'drive.\nSpecify correct upgrade folder at \n' \
+                'Settings>Default Directories>Upgrade Folder and try again.'
+            tkMessageBox.showerror('Settings Error', m)
+
+        self.test_link_to_GSuite()
+
+    def ask_decryption_key(self):
+        self.top = tk.Toplevel(self, background='white')
+        self.top.iconbitmap('./icons/key.ico')
+        self.top.title('Decryption Key')
+
+        # reset key
+        self.key.set('')
+
+        # layout
+        self.top.columnconfigure(0, minsize=10)
+        self.top.columnconfigure(2, minsize=5)
+        self.top.columnconfigure(4, minsize=10)
+        self.top.rowconfigure(0, minsize=10)
+        self.top.rowconfigure(2, minsize=5)
+        self.top.rowconfigure(4, minsize=5)
+        self.top.rowconfigure(6, minsize=10)
+
+        ttk.Label(
+            self.top,
+            text='please provide decryption key:').grid(
+                row=1, column=1, columnspan=3, sticky='nw', padx=10)
+
+        self.keyEnt = tk.Entry(
+            self.top, textvariable=self.key, show='*')
+        self.keyEnt.grid(
+            row=3, column=1, columnspan=3, sticky='snew', padx=10)
+
+        self.decryptBtn = ttk.Button(
+            self.top,
+            text='decrypt',
+            command=self.decrypt_creds)
+        self.decryptBtn.grid(
+            row=5, column=1, sticky='sew', padx=10, pady=10)
+
+        self.closeBtn = ttk.Button(
+            self.top,
+            text='close',
+            command=self.top.destroy)
+        self.closeBtn.grid(
+            row=5, column=3, sticky='sew', padx=10, pady=10)
+
+    def decrypt_creds(self):
+        key = self.key.get().strip()
+        try:
+            decrypted_creds = credentials.decrypt_file_data(key, self.creds)
+        except OverloadError as e:
+            overload_logger.error('Decryption error: {}'.format(e))
+            m = 'Decryption error: {}'.format(e)
+            tkMessageBox.showerror('Decryption error', m, parent=self.top)
+        else:
+            # store temp json file
+            cred_fh = os.path.join(TEMP_DIR, 'credentials.json')
+            with open(cred_fh, 'w') as file:
+                json.dump(json.loads(decrypted_creds), file)
+
+            # insert credentials into Windows Vault
+            if goo.store_access_token(
+                    GAPP, GUSER,
+                    cred_fh,
+                    [SHEET_SCOPE, FDRIVE_SCOPE]):
+
+                # browser will open to complete the authorization
+                # close the widget
+                self.top.destroy()
+            else:
+                self.top.destroy()
+                tkMessageBox.showerror(
+                    'Google Drive', 'Unable to link Google Drive.')
+
+            # clean-up
+            # delete decoded creds file
+            try:
+                os.remove(cred_fh)
+            except WindowsError as e:
+                overload_logger.error(
+                    'Unable to delete temp creds from {}. Error: {}'.format(
+                        TEMP_DIR, e))
+
+    def unlink_GSuite(self):
+        # remove credentials from credentials manager
+        credentials.delete_from_vault(GAPP, GUSER)
+
+        # remove folder ids from user_data
+        try:
+            user_data = shelve.open(USER_DATA, writeback=True)
+            user_data.pop('gdrive', None)
+        except KeyError:
+            pass
+        finally:
+            user_data.close()
+
+        # verify
+        self.test_link_to_GSuite()
+
+    def test_link_to_GSuite(self):
+        self.status = ''
+        if not credentials.get_from_vault(GAPP, GUSER):
+            self.status = '\tMissing Google API credentials. ' \
+                'Unable to connect to the Google Drive\n'
+        else:
+            self.status = '\tGoogle API credentials stored in ' \
+                'Windows Credential Manager.\n'
+
+        user_data = shelve.open(USER_DATA)
+        try:
+            self.status = self.status + \
+                '\tNYPL Google Drive folder id: {}\n'.format(
+                    user_data['gdrive']['nypl_folder_id'])
+        except KeyError:
+            self.status = self.status + \
+                '\tNYPL Google Drive folder id: missing\n'
+        try:
+            self.status = self.status + \
+                '\tBPL Google Drive folder id: {}\n'.format(
+                    user_data['gdrive']['bpl_folder_id'])
+        except KeyError:
+            self.status = self.status + \
+                '\tBPL Google Drive folder id: missing\n'
+        user_data.close()
+
+        self.update_status()
+
+    def update_status(self):
+        self.status = 'Status:\n' + self.status
+        self.linkDetailsTxt['state'] = tk.NORMAL
+        self.linkDetailsTxt.delete(1.0, tk.END)
+        self.linkDetailsTxt.insert(tk.END, self.status)
+        self.linkDetailsTxt['state'] = tk.DISABLED
+
+    def help(self):
+        text = overload_help.open_help(
+            'goo_help.txt')
+        help_popup = tk.Toplevel(background='white')
+        help_popup.iconbitmap('./icons/help.ico')
+        yscrollbar = tk.Scrollbar(help_popup, orient=tk.VERTICAL)
+        yscrollbar.grid(
+            row=0, column=1, rowspan=10, sticky='nsw', padx=2)
+        helpTxt = tk.Text(
+            help_popup,
+            wrap=tk.WORD,
+            background='white',
+            relief=tk.FLAT,
+            yscrollcommand=yscrollbar.set)
+        helpTxt.grid(
+            row=0, column=0, sticky='snew', padx=10, pady=10)
+        yscrollbar.config(command=helpTxt.yview)
+        for line in text:
+            helpTxt.insert(tk.END, line)
+        helpTxt['state'] = tk.DISABLED
+
+    def observer(self, *args):
+        if self.activeW.get() == 'GooAPI':
+            self.test_link_to_GSuite()
+
+
 class About(tk.Frame):
     """info about OpsUtils"""
 
@@ -1773,6 +2103,11 @@ class About(tk.Frame):
             with open('version.txt') as fh:
                 for line in fh:
                     info += line
+            if os.path.isfile(PATCHING_RECORD):
+                with open(PATCHING_RECORD, 'r') as fh:
+                    info += '\ninstalled patches:\n'
+                    for line in fh:
+                        info += '  {}'.format(line)
             credits = ''
             with open('./help/icon_credits.txt') as fh:
                 for line in fh:
@@ -1800,8 +2135,12 @@ if __name__ == "__main__":
     version = about['__version__']
 
     # set up app logger
-    logging.config.dictConfig(LOGGING)
-    overload_logger = logging.getLogger('overload_console')
+    logging.config.dictConfig(DEV_LOGGING)
+    logger = logging.getLogger('overload')
+    overload_logger = LogglyAdapter(logger, None)
+
+    # set the backend for credentials
+    keyring.set_keyring(WinVaultKeyring())
 
     # launch application
     app = MainApplication()

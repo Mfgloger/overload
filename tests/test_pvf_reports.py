@@ -56,7 +56,7 @@ class Test_Reports(unittest.TestCase):
                 'inhouse_dups': [],
                 'target_sierraId': None,
                 'mixed': [],
-                'other': [],
+                'other': ['00000006'],
                 'action': 'insert'},
             '5': {
                 'vendor_id': 'ven0005',
@@ -68,9 +68,22 @@ class Test_Reports(unittest.TestCase):
                 'inhouse_dups': [],
                 'target_sierraId': '',
                 'mixed': [],
+                'other': ['00000004', '00000005'],
+                'action': 'insert'},
+            '6': {
+                'vendor_id': 'ven0006',
+                'vendor': 'TEST VENDOR5',
+                'updated_by_vendor': False,
+                'callNo_match': True,
+                'target_callNo': 'TEST CALL A',
+                'vendor_callNo': 'TEST CALL A',
+                'inhouse_dups': ['00000008', '00000009'],
+                'target_sierraId': '00000008',
+                'mixed': [],
                 'other': [],
                 'action': 'insert'}
         }
+
         stats_shelf = shelve.open('temp')
         for key, value in d.iteritems():
             stats_shelf[key] = value
@@ -89,15 +102,16 @@ class Test_Reports(unittest.TestCase):
             list(df.columns.values),
             ['action', 'callNo_match', 'inhouse_dups', 'mixed', 'other', 'target_callNo', 'target_sierraId', 'updated_by_vendor', 'vendor', 'vendor_callNo', 'vendor_id'])
         self.assertEqual(
-            df.shape, (5, 11))
+            df.shape, (6, 11))
         # check if replaces empty strings with np.NaN values
         self.assertEqual(
             df.index[df['mixed'].isnull()].tolist(),
-            [2, 4, 3, 5])
+            [2, 4, 6, 3, 5])
 
     def test_shelf2dataframe_sierra_id_formatting(self):
         df = reports.shelf2dataframe('temp', 'nypl')
-        print df.head()
+        # more tests here
+        # print df.head()
 
     def test_create_nypl_stats(self):
         df = reports.shelf2dataframe('temp', 'nypl')
@@ -169,7 +183,7 @@ class Test_Reports(unittest.TestCase):
         df = reports.shelf2dataframe('temp', 'nypl')
         dups = reports.report_dups('NYPL', 'branches', df)
         self.assertEqual(
-            dups.index.tolist(), [1])
+            dups.index.tolist(), [1, 4, 5, 6])
 
     def test_callNo_issues(self):
         df = reports.shelf2dataframe('temp', 'bpl')
@@ -179,6 +193,41 @@ class Test_Reports(unittest.TestCase):
                 ['vendor', 'vendor_id', 'target_id', 'vendor_callNo', 'target_callNo', 'duplicate bibs'])
         self.assertEqual(
             callNo.index.tolist(),[2])
+
+    def test_nypl_branches_dup_report_for_sheet(self):
+        df = reports.shelf2dataframe('temp', 'nypl')
+        dups = reports.report_dups('NYPL', 'branches', df)
+        sheet_data = reports.dups_report_for_sheet(
+            'NYPL', 'branches', 'CAT', dups)
+        self.assertEqual(
+            sheet_data,
+            [['18-10-17', 'CAT', 'TEST VENDOR1', 'ven0001', 'b01234567a', None, 'b00000003a', 'b00000004a', 'no'], ['18-10-17', 'CAT', 'TEST VENDOR4', 'ven0004', None, None, None, 'b00000006a', 'no action'], ['18-10-17', 'CAT', 'TEST VENDOR5', 'ven0005', None, None, None, 'b00000004a,b00000005a', 'no'], ['18-10-17', 'CAT', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', None, None, 'no']])
+
+    def test_nypl_research_dup_report_for_sheet(self):
+        df = reports.shelf2dataframe('temp', 'nypl')
+        dups = reports.report_dups('NYPL', 'research', df)
+        sheet_data = reports.dups_report_for_sheet(
+            'NYPL', 'research', 'ACQ', dups)
+        self.assertEqual(
+            sheet_data,
+            [['18-10-17', 'ACQ', 'TEST VENDOR1', 'ven0001', 'b01234567a', None, 'b00000003a', 'b00000004a', 'no'], ['18-10-17', 'ACQ', 'TEST VENDOR4', 'ven0004', None, None, None, 'b00000006a', 'no action'], ['18-10-17', 'ACQ', 'TEST VENDOR5', 'ven0005', None, None, None, 'b00000004a,b00000005a', 'no'], ['18-10-17', 'ACQ', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', None, None, 'no']])
+
+    def test_bpl_dup_report_for_sheet(self):
+        df = reports.shelf2dataframe('temp', 'bpl')
+        dups = reports.report_dups('BPL', None, df)
+        sheet_data = reports.dups_report_for_sheet(
+            'BPL', None, 'CAT', dups)
+        self.assertEqual(
+            sheet_data,
+            [['18-10-17', 'CAT', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', 'no']])
+
+    def test_CAT_callNos_report_for_sheet(self):
+        df = reports.shelf2dataframe('temp', 'nypl')
+        callNos = reports.report_callNo_issues(df, 'cat')
+        sheet_data = reports.callNos_report_for_sheet(callNos)
+        self.assertEqual(
+            sheet_data,
+            [['18-10-17', 'TEST VENDOR2', 'ven0002', 'b02345678a', 'TEST CALL B', 'TEST CALL A', None, 'no']])
 
 
 if __name__ == '__main__':

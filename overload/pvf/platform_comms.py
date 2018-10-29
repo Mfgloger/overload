@@ -1,18 +1,21 @@
 # module responsible for PVF communication with Platform
 
-import shelve
-import logging
 import base64
 from datetime import datetime
+import logging
 from requests.exceptions import ConnectionError, Timeout
+import shelve
+
 
 from connectors.platform import AuthorizeAccess, PlatformSession
-from pvf import queries
+import credentials
 from errors import OverloadError, APITokenError, APITokenExpiredError
+from logging_setup import LogglyAdapter
+from pvf import queries
 from setup_dirs import USER_DATA
 
 
-module_logger = logging.getLogger('overload_console.pvr_plat_comms')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def open_platform_session(api_name=None):
@@ -24,7 +27,7 @@ def open_platform_session(api_name=None):
     return:
         session obj
     """
-    module_logger.info('Preping to open Platform session.')
+    module_logger.debug('Preping to open Platform session.')
     reusing_token = False
     try:
         ud = shelve.open(USER_DATA, writeback=True)
@@ -32,11 +35,13 @@ def open_platform_session(api_name=None):
         # retrieve specified Platform authorization
         conn_data = ud['PlatformAPIs'][api_name]
         client_id = base64.b64decode(conn_data['client_id'])
-        client_secret = base64.b64decode(
-            conn_data['client_secret'])
         auth_server = conn_data['oauth_server']
         base_url = conn_data['host']
         last_token = conn_data['last_token']  # encrypt?
+
+        # retrieve secret from Windows Vault
+        client_secret = credentials.get_from_vault(
+            auth_server, client_id)
 
         # check if valid token exists and reuse if can
         if last_token is not None:
@@ -48,12 +53,12 @@ def open_platform_session(api_name=None):
                     client_id, client_secret, auth_server)
                 token = auth.get_token()
             else:
-                module_logger.info(
+                module_logger.debug(
                     'Last Platform token still valid. Re-using.')
                 reusing_token = True
                 token = last_token
         else:
-            module_logger.info('Requesting Platform access token.')
+            module_logger.debug('Requesting Platform access token.')
             auth = AuthorizeAccess(
                 client_id, client_secret, auth_server)
             token = auth.get_token()
@@ -64,26 +69,26 @@ def open_platform_session(api_name=None):
             ud['PlatformAPIs'][api_name]['last_token'] = token
 
     except KeyError as e:
-        module_logger.critical(
+        module_logger.error(
             'KeyError in user_data: api name: {}. Error msg:{}'.format(
                 api_name, e))
         raise OverloadError(
-            'Error parsing user_data while retrieving connection info')
+            'Error parsing user_data while retrieving connection info.')
 
     except ValueError as e:
-        module_logger.critical(e)
+        module_logger.error(e)
         raise OverloadError(e)
 
     except APITokenError as e:
-        module_logger.error(e)
+        module_logger.error('Platform API Token Error: {}'.format(e))
         raise OverloadError(e)
 
     except ConnectionError as e:
-        module_logger.critical(e)
+        module_logger.error('Platform Connection Error: {}'.format(e))
         raise OverloadError(e)
 
     except Timeout as e:
-        module_logger.error(e)
+        module_logger.error('Platform Timeout Error: {}'.format(e))
         raise OverloadError(e)
 
     finally:
@@ -91,7 +96,7 @@ def open_platform_session(api_name=None):
 
     # open Platform session
     try:
-        module_logger.info('Auth obtained. Opening Platform session.')
+        module_logger.debug('Auth obtained. Opening Platform session.')
         session = PlatformSession(base_url, token)
         return session
 
@@ -99,8 +104,8 @@ def open_platform_session(api_name=None):
         module_logger.error(e)
         raise OverloadError(e)
 
-    except APITokenExpiredError:
-        module_logger.critical(e)
+    except APITokenExpiredError as e:
+        module_logger.error('Platform API token expired: {}'.format(e))
         raise OverloadError(e)
 
 
@@ -115,7 +120,7 @@ def platform_queries_manager(api_type, session, meta, matchpoint):
     return:
         query result
     """
-    module_logger.info('Making new Platform request.')
+    module_logger.debug('Making new Platform request.')
     try:
         result = queries.query_runner(
             api_type, session, meta, matchpoint)
@@ -129,19 +134,18 @@ def platform_queries_manager(api_type, session, meta, matchpoint):
     except ConnectionError as e:
         module_logger.error(
             'ConnectionError while running Platform queries. '
-            'Closing session and terminating processing.')
+            'Closing session and aborting processing.')
         session.close()
         raise OverloadError(e)
 
     except Timeout as e:
         module_logger.error(
             'Timeout error while running Platform queries. '
-            'Closing session and terminating processing')
+            'Closing session and aborting processing.')
         session.close()
         raise OverloadError(e)
 
     except ValueError as e:
         session.close()
-        module_logger.error(
-            e)
+        module_logger.error(e)
         raise OverloadError(e)

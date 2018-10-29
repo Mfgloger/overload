@@ -1,9 +1,10 @@
 import logging
 
 from bibs import read_marc21, write_marc21, BibMeta
+from logging_setup import LogglyAdapter
 
 
-module_logger = logging.getLogger('overload_console.dedup')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def _find_duplicates(indices):
@@ -75,12 +76,15 @@ def dedup_marc_file(file, progbar=None):
     Dedups records in a processed file based on the 001 tag (control field);
     combies 949 item tags on merged bibs
     args:
-        marc file handle
+        file: string, marc file handle
+        progbar: instance of ttk.Progressbar
     returns:
-        dup records count, combined records count, file_handle of deduped file
+        dedup_count: tuple (int, int, str)
+            number of dups, number of resulting bibs,
+            file_handle of deduped file
     """
 
-    module_logger.info('Deduping processed file {}'.format(
+    module_logger.debug('Deduping processed file {}'.format(
         file))
 
     reader = read_marc21(file)
@@ -105,7 +109,7 @@ def dedup_marc_file(file, progbar=None):
 
     if len(dups) > 0:
         module_logger.debug(
-            'Discovered duplicates in processed file {}: {}'.format(
+            'Discovered {} duplicate(s) in processed file {}'.format(
                 file, dups))
 
         # create new MARC file and add deduped bibs to it
@@ -137,7 +141,7 @@ def dedup_marc_file(file, progbar=None):
                 progbar['value'] = n
                 progbar.update()
 
-        module_logger.info(
+        module_logger.debug(
             'Merged {} duplicate bibs into {} in file {}'.format(
                 dedup_count, len(dups), file))
 

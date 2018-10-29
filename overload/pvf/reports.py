@@ -1,16 +1,18 @@
 # creates pvr statistical reports
 
+from datetime import date
+import logging
+import os
 import pandas as pd
 import shelve
-import os
 from sqlalchemy import func
-import logging
 
 
 from datastore import PVR_Batch, PVR_File, Vendor, session_scope
+from logging_setup import LogglyAdapter
 
 
-module_logger = logging.getLogger('overload_console.reports')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def generate_processing_summary(batch_meta):
@@ -181,6 +183,52 @@ def report_dups(system, library, df):
     return df_rep
 
 
+def dups_report_for_sheet(system, library, agency, df):
+    """
+    generates list of rows with data that can be appended to
+    a spreadesheet
+    args:
+        system: string, 'NYPL' or 'BPL'
+        library: string, 'branches' or 'research'
+        df: class, pandas.core.frame.DataFrame
+
+    returns:
+        data: list of lists (rows for spreadsheet)
+    """
+    if system == 'NYPL':
+        if library == 'branches':
+            dups = 'branches dups'
+            other = 'research'
+        elif library == 'research':
+            dups = 'research dups'
+            other = 'branches'
+        columns = [
+            'date', 'agency', 'vendor', 'vendor_id',
+            'target_id', dups, 'mixed', other, 'corrected']
+    else:
+        # BPL
+        columns = [
+            'date', 'agency', 'vendor', 'vendor_id',
+            'target_id', 'duplicate bibs', 'corrected']
+
+    # append date to data
+    gdf = df.copy()
+    date_today = date.today().strftime('%y-%m-%d')
+    gdf = gdf.assign(date=date_today, corrected='no', agency=agency)
+
+    # rearrange columns and their values
+    gdf = gdf[columns]
+
+    if system == 'NYPL':
+        mask = ((gdf.iloc[:, 5].isnull()&gdf.iloc[:, 6].isnull())&~(gdf.iloc[:, 7].notnull()&gdf.iloc[:, 7].str.contains(',')))
+        gdf.loc[mask, 'corrected'] = 'no action'
+    elif system == 'BPL':
+        mask = gdf.iloc[:, 5].isnull()
+        gdf.loc[mask, 'corrected'] = 'no action'
+
+    return gdf.values.tolist()
+
+
 def report_callNo_issues(df, agent):
     df_call = df[~df['callNo_match']].sort_index()
     if agent == 'cat':
@@ -194,6 +242,29 @@ def report_callNo_issues(df, agent):
         'vendor', 'vendor_id', 'target_id', 'vendor_callNo',
         'target_callNo', 'duplicate bibs']
     return df_call
+
+
+def callNos_report_for_sheet(df):
+    """
+    generates list of rows from erorrs dataframe that can
+    be appended to Google Sheet
+    args:
+        system: string, 'NYPL' or 'BPL'
+        df: class, pandas.core.frame.DataFrame
+    returns:
+        data: list of row values (list of lists)
+    """
+
+    cdf = df.copy()
+    date_today = date.today().strftime('%y-%m-%d')
+    cdf = cdf.assign(date=date_today, corrected='no')
+    columns = [
+        'date', 'vendor', 'vendor_id', 'target_id',
+        'vendor_callNo', 'target_callNo',
+        'duplicate bibs', 'corrected']
+    cdf = cdf[columns]
+
+    return cdf.values.tolist()
 
 
 def report_details(system, library, df):

@@ -5,9 +5,10 @@ from pymarc import Record
 
 from connectors.sierra_z3950 import Z3950_QUALIFIERS, z3950_query
 from bibs.patches import remove_oclc_prefix
+from logging_setup import LogglyAdapter
 
 
-module_logger = logging.getLogger('overload_console.pvr_queries')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def platform_status_interpreter(response=None):
@@ -19,10 +20,10 @@ def platform_status_interpreter(response=None):
     return:
         (status, response) tuple (str, dict)
     """
-    module_logger.info('Interpreting response status code.')
+    module_logger.debug('Interpreting response status code.')
     if response is not None:
         code = response.status_code
-        module_logger.debug(
+        module_logger.info(
             'Platform response status code: {}'.format(
                 code))
         if code == 200:
@@ -59,46 +60,50 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
     """
     if request_dst == 'Platform API':
         if matchpoint == '020':
-            module_logger.debug(
-                'Platform bibStandardNo endpoint request, '
-                'keywords (020): {}'.format(
-                    bibmeta.t020))
             if len(bibmeta.t020) > 0:
+                module_logger.info(
+                    'Platform bibStandardNo endpoint request, '
+                    'keywords (020): {}'.format(
+                        bibmeta.t020))
                 response = session.query_bibStandardNo(keywords=bibmeta.t020)
             else:
                 # do not attempt even to make a request to API
                 response = None
         elif matchpoint == '024':
-            module_logger.debug(
-                'Platform bibStandardNo endpoint request, '
-                'keywords (024): {}'.format(
-                    bibmeta.t024))
             if len(bibmeta.t024) > 0:
+                module_logger.info(
+                    'Platform bibStandardNo endpoint request, '
+                    'keywords (024): {}'.format(
+                        bibmeta.t024))
                 response = session.query_bibStandardNo(keywords=bibmeta.t024)
             else:
                 response = None
         elif matchpoint == 'sierra_id':
-            module_logger.debug(
-                'Platform bibId endpoint request, '
-                'keywords (sierra id): {}'.format(
-                    bibmeta.sierraId))
             if bibmeta.sierraId is not None and len(bibmeta.sierraId) == 8:
                 # sierraID must be passed as a list to query_bibId
+                module_logger.info(
+                    'Platform bibId endpoint request, '
+                    'keywords (sierra id): {}'.format(
+                        bibmeta.sierraId))
                 response = session.query_bibId(keywords=[bibmeta.sierraId])
             else:
                 response = None
         elif matchpoint == '001':
-            module_logger.debug(
-                'Platform bibControlNo endpoint request, '
-                'keywords (001): {}'.format(
-                    bibmeta.t001))
             if bibmeta.t001 is not None:
+                module_logger.info(
+                    'Platform bibControlNo endpoint request, '
+                    'keywords (001): {}'.format(
+                        bibmeta.t001))
                 stripped, controlNo_without_prefix = remove_oclc_prefix(
                     bibmeta.t001)
                 if stripped:
                     keywords = [bibmeta.t001, controlNo_without_prefix]
                 else:
                     keywords = [bibmeta.t001]
+                module_logger.info(
+                    'Platform bibControlNo endpoint request, '
+                    'keywords (001): {}'.format(
+                        keywords))
                 response = session.query_bibControlNo(
                     keywords=keywords)
             else:
@@ -147,10 +152,10 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
         retrieved_bibs = []
         if matchpoint in ('020', '022'):
             for keyword in keywords:
-                module_logger.debug(
-                    'Z3950 query params: keyword={}, '
+                module_logger.info(
+                    'Z3950 request params: host={}, keyword={}, '
                     'qualifier={}'.format(
-                        keyword, qualifier))
+                        session['host'], keyword, qualifier))
                 success, results = z3950_query(
                     target=session,
                     keyword=keyword,
@@ -161,21 +166,20 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
         # strings
         elif matchpoint == 'sierra_id':
             if keywords and len(keywords) == 8:
-                module_logger.debug(
-                    'Z3950 query params: keyword={}, '
+                module_logger.info(
+                    'Z3950 query params: host={}, keyword={}, '
                     'qualifier={}'.format(
-                        keywords, qualifier))
+                        session['host'], keywords, qualifier))
                 success, results = z3950_query(
                     target=session,
                     keyword=keywords,
                     qualifier=qualifier)
                 if success:
                     for item in results:
-                        status = 'hit'
                         retrieved_bibs.append(Record(data=item.data))
             else:
                 module_logger.debug(
-                    'Z3950 query params insufficient. Skipping.')
+                    'Z3950 request params insufficient. Skipping.')
 
         if len(retrieved_bibs) == 0:
             status = 'nohit'
@@ -183,12 +187,14 @@ def query_runner(request_dst, session, bibmeta, matchpoint):
         else:
             status = 'hit'
             response = retrieved_bibs
-        module_logger.debug(
-            'Z3950 results: {}, number of matches: {}'.format(
+        module_logger.info(
+            'Z3950 request results: {}, number of matches: {}'.format(
                 status, len(retrieved_bibs)))
         return status, response
 
     else:
+        module_logger.error('Unsupported query target: {}'.format(
+            request_dst))
         raise ValueError(
-            'Invalid query destionation provided: {}'.format(
+            'Unsupported query target: {}'.format(
                 request_dst))

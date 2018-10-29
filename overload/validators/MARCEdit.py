@@ -5,10 +5,11 @@ import logging
 import datetime
 
 
-from setup_dirs import USER_DATA, CVAL_REP, MVAL_REP
+from logging_setup import LogglyAdapter
+from setup_dirs import CVAL_REP, MVAL_REP, USER_DATA, USER_NAME
 
 
-module_logger = logging.getLogger('overload_console.marcedit')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def get_engine():
@@ -29,7 +30,9 @@ def get_engine():
                 cmarcedit))
         if not os.path.exists(cmarcedit):
             cmarcedit = None
-            module_logger.error('MARCEdit not found on user machine')
+            module_logger.error(
+                'MARCEdit not found on user {} machine'.format(
+                    USER_NAME))
 
     # find validation rules
     if 'marc_rules' in user_data['paths'] and \
@@ -68,8 +71,9 @@ def validate(cmarcedit, MARCfile, report, rules_fh, overwrite):
         '-d', report,
         '-rules', rules_fh]
 
-    module_logger.debug('Begin MARCEdit validation with params: {}'.format(
-        ' '.join(args)))
+    module_logger.debug(
+        'Begin MARCEdit validation with params: {}'.format(
+            ' '.join(args)))
     try:
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -79,8 +83,9 @@ def validate(cmarcedit, MARCfile, report, rules_fh, overwrite):
             stderr=subprocess.PIPE,
             startupinfo=si)
     except OSError as e:
-        module_logger.exception('MARCEdit validation error: {}'.format(
-            str(e)))
+        module_logger.exception(
+            'MARCEdit validation error: {}'.format(
+                str(e)))
         return False
 
     # delete combined report from previous batch process

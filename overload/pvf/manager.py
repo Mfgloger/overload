@@ -1,36 +1,38 @@
 # handles and oversees processing of vendor records (top level below gui)
 # logging and passing exception to gui happens here
-import os
+
 from datetime import datetime, date
-import shelve
 import logging
+import os
+import shelve
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 
+from analyzer import PVR_NYPLReport, PVR_BPLReport
+from bibs import patches
 from bibs.bibs import VendorBibMeta, read_marc21, \
     create_target_id_field, write_marc21, check_sierra_id_presence, \
     sierra_format_tag, create_field_from_template, \
     db_template_to_960, db_template_to_961, db_template_to_949
-from bibs import patches
 from bibs.crosswalks import platform2meta, bibs2meta
 from bibs.dedup import dedup_marc_file
-from platform_comms import open_platform_session, platform_queries_manager
-from z3950_comms import z3950_query_manager
-from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
-from pvf import reports
-from analyzer import PVR_NYPLReport, PVR_BPLReport
-from setup_dirs import BATCH_STATS, BATCH_META, USER_DATA, BARCODES
-from errors import OverloadError, APITokenExpiredError
-from utils import remove_files
 from datastore import session_scope, Vendor, \
     PVR_Batch, PVR_File, NYPLOrderTemplate
 from db_worker import insert_or_ignore, retrieve_values, \
     retrieve_record, update_nypl_template, delete_record
+from errors import OverloadError, APITokenExpiredError
+from logging_setup import LogglyAdapter
+from platform_comms import open_platform_session, platform_queries_manager
+from pvf.vendors import vendor_index, identify_vendor, get_query_matchpoint
+from pvf import reports
+from setup_dirs import BARCODES, BATCH_META, BATCH_STATS, USER_DATA, USER_NAME
+from utils import remove_files
 from validators.default import validate_processed_files_integrity
+from z3950_comms import z3950_query_manager
 
 
-module_logger = logging.getLogger('overload_console.pvr_manager')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def run_platform_queries(api_type, session, meta_in, matchpoint):
@@ -48,26 +50,26 @@ def run_processing(
 
     # agent argument is 3 letter code
 
-    module_logger.info('PVR process launched.')
+    module_logger.debug('PVR process launched.')
 
     # tokens and sessions are opened on this level
 
     # determine destination API
     if api_type == 'Platform API':
-        module_logger.info('Creating Platform API session.')
+        module_logger.debug('Creating Platform API session.')
         try:
             session = open_platform_session(api_name)
         except OverloadError:
             raise
     elif api_type == 'Z3950':
-        module_logger.info('retrieving Z3950 settings for {}'.format(
+        module_logger.debug('retrieving Z3950 settings for {}'.format(
             api_name))
         user_data = shelve.open(USER_DATA)
         target = user_data['Z3950s'][api_name]
         user_data.close()
 
     elif api_type == 'Sierra API':
-        module_logger.info('Connecting to Sierra API')
+        module_logger.debug('Connecting to Sierra API')
 
     # clean-up batch metadata & stats
     module_logger.debug('Opening BATCH_META.')
@@ -88,12 +90,15 @@ def run_processing(
 
     stats = shelve.open(BATCH_STATS, writeback=True)
     stats.clear()
-    if not remove_files(BARCODES):
-        module_logger.error('Unable to delete barcodes from previous batch.')
-        raise OverloadError('Unable to delete barcodes from previous batch.')
 
-    module_logger.debug(
-        'BATCH_STATS has been emptied from previous content.')
+    if not remove_files(BARCODES):
+        module_logger.error(
+            'Unable to empty BARCODES storage at location {}'.format(
+                BARCODES))
+        raise OverloadError('Unable to delete barcodes from previous batch.')
+    else:
+        module_logger.debug(
+            'BATCH_STATS has been emptied from previous content.')
 
     # determine output mrc files namehandles
     if agent == 'cat':
@@ -108,8 +113,8 @@ def run_processing(
 
         # delete existing files to start over from scratch
         if not remove_files([fh_new, fh_dups]):
-            module_logger.error(
-                'Unable to delete output files from previous batch.')
+            module_logger.warning(
+                'Unable to delete PVF output files from previous batch.')
             raise OverloadError(
                 'Unable to delete output files from previous batch.')
 
@@ -123,8 +128,8 @@ def run_processing(
 
         # delete existing files to start over from scratch
         if not remove_files([fh]):
-            module_logger.error(
-                'Unable to delete output files from previous batch.')
+            module_logger.warning(
+                'Unable to delete PVF output files from previous batch.')
             raise OverloadError(
                 'Unable to delete output files from previous batch.')
 
@@ -211,14 +216,14 @@ def run_processing(
                         vendor = 'UNKNOWN'
 
             if vendor == 'UNKNOWN':
-                module_logger.warning(
+                module_logger.debug(
                     'Encounted unidentified vendor in record # : {} '
-                    'in file {} (system={}, library={}, agent={}).'.format(
+                    'in file {} (system={}, library={}, agent={})'.format(
                         n, file, system, library, agent))
 
             # determine vendor bib meta
             meta_in = VendorBibMeta(bib, vendor=vendor, dstLibrary=library)
-            module_logger.debug('Vendor bib meta: {}'.format(str(meta_in)))
+            module_logger.info('Vendor bib meta: {}'.format(str(meta_in)))
 
             # store barcodes found in vendor files for verification
             module_logger.debug('Storing barcodes for verification.')
@@ -238,7 +243,8 @@ def run_processing(
 
                 except APITokenExpiredError:
                     module_logger.info(
-                        'Requesting new Platform token. Opening new session.')
+                        'Platform token expired. '
+                        'Requesting new one and opening new session.')
                     session = open_platform_session(api_name)
                     result = platform_queries_manager(
                         api_type, session, meta_in, matchpoint)
@@ -341,7 +347,7 @@ def run_processing(
                             target, meta_in, matchpoint)
                         if status == 'hit':
                             meta_out = bibs2meta(bibs)
-                module_logger.debug(
+                module_logger.info(
                     'Retrieved bibs meta: {}'.format(
                         meta_out))
 
@@ -358,7 +364,7 @@ def run_processing(
             elif system == 'bpl':
                 analysis = PVR_BPLReport(agent, meta_in, meta_out)
 
-            module_logger.info('Analyzing query results and vendor bib')
+            module_logger.debug('Analyzing query results and vendor bib')
             analysis = analysis.to_dict()
 
             # apply patches if needed
@@ -369,7 +375,7 @@ def run_processing(
                     'Unable to patch bib. Error: {}'.format(e))
                 analysis['callNo_match'] = False
 
-            module_logger.info('Analysis results: {}'.format(analysis))
+            module_logger.info('PVF analysis results: {}'.format(analysis))
 
             # save analysis to shelf for statistical purposes
             stats[str(n)] = analysis
@@ -391,8 +397,9 @@ def run_processing(
 
                 try:
                     module_logger.info(
-                        'Adding MARC field with target Sierra id '
-                        'to vendor record: {}.'.format(
+                        'Adding target Sierra id ({}) MARC field '
+                        'to vendor record {}.'.format(
+                            analysis['vendor_id'],
                             analysis['target_sierraId']))
                     bib.add_field(
                         create_target_id_field(
@@ -403,7 +410,7 @@ def run_processing(
                     raise OverloadError(e)
 
             # add fields form bib & order templates
-            module_logger.info(
+            module_logger.debug(
                 'Adding template field(s) to the vendor record.')
 
             if agent == 'cat':
@@ -488,15 +495,15 @@ def run_processing(
             # append to appropirate output file
             if agent == 'cat':
                 if analysis['action'] == 'attach':
-                    module_logger.info(
+                    module_logger.debug(
                         'Appending vendor record to the dup file.')
                     write_marc21(fh_dups, bib)
                 else:
-                    module_logger.info(
+                    module_logger.debug(
                         'Appending vendor record to the new file.')
                     write_marc21(fh_new, bib)
             else:
-                module_logger.info(
+                module_logger.debug(
                     'Appending vendor record to a prc file.')
                 write_marc21(fh, bib)
 
@@ -526,29 +533,31 @@ def run_processing(
                     'Unable to manipulate deduped file')
 
     # validate intergrity of process files for cataloging
-    files = []
+    files_out = []
     if agent == 'cat':
         if os.path.isfile(fh_dups):
-            files.append(fh_dups)
+            files_out.append(fh_dups)
         if os.path.isfile(fh_new):
-            files.append(fh_new)
+            files_out.append(fh_new)
 
         valid, missing_barcodes = validate_processed_files_integrity(
-            files, BARCODES)
+            files_out, BARCODES)
         module_logger.debug(
             'Integrity validation: {}, missing_barcodes: {}'.format(
                 valid, missing_barcodes))
         if not valid:
             module_logger.error(
-                'Integrity barcode error: {}'.format(
+                'Barcodes integrity error: {}'.format(
                     missing_barcodes))
 
     batch = shelve.open(BATCH_META, writeback=True)
     processing_time = datetime.now() - batch['timestamp']
     module_logger.info(
-        'Batch stats: {} files, {} records, '
-        'processing time: {}'.format(
-            f, n, processing_time))
+        'Batch processing stats: system={}, library={}, agent={}, user={}, '
+        'used template={}, file count={}, files={}, record count={}, '
+        'processing time={}'.format(
+            system, library, agent, USER_NAME, template,
+            f, [os.path.split(file)[1] for file in files], n, processing_time))
     batch['processing_time'] = processing_time
     batch['processed_files'] = f
     batch['processed_bibs'] = n
@@ -562,7 +571,7 @@ def run_processing(
     # close any open session if Platform or Sierra API has been used
     if api_type in ('Platform API', 'Sierra API') and session is not None:
         session.close()
-        module_logger.info('Closing API session.')
+        module_logger.debug('Closing API session.')
 
     if agent == 'cat' and not valid:
         raise OverloadError(
@@ -570,7 +579,7 @@ def run_processing(
 
 
 def save_stats():
-    module_logger.info('Saving batch stats.')
+    module_logger.debug('Saving batch stats.')
     batch = shelve.open(BATCH_META)
     timestamp = batch['timestamp']
     system = batch['system']

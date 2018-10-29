@@ -1,7 +1,4 @@
 import xml.etree.ElementTree as ET
-# import logging
-
-# module_logger = logging.getLogger('overload_console.vendors')
 
 
 def vendor_index(vendor_fh, library):

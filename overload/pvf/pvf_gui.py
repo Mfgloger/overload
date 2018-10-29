@@ -1,38 +1,43 @@
-import Tkinter as tk
-import ttk
-import tkMessageBox
-import tkFileDialog
-import shelve
-import os.path
-import shutil
-import logging
-import os
-import time
 from datetime import date
 from ftplib import error_perm
+import logging
+import os
+import os.path
+import shelve
+import shutil
+import sys
+import time
+import Tkinter as tk
+import ttk
+import tkFileDialog
+import tkMessageBox
 
 
 from bibs import bibs
-from validation import validate_files
-from validators.marcedit import delete_validation_report
-from gui_utils import ToolTip, BusyManager
-import overload_help
-import reports
-from errors import OverloadError
-from manager import run_processing, save_stats, save_template, \
-    update_template, delete_template, get_template_names
+import bibs.sierra_dicts as sd
 from datastore import NYPLOrderTemplate, session_scope
 from db_worker import retrieve_record
-from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
-    LSPEC_REP, DVAL_REP, BATCH_META, BATCH_STATS
-import bibs.sierra_dicts as sd
+import connectors.goo as goo
+from connectors.goo_settings.access_names import GAPP, GUSER
+from errors import OverloadError
 from ftp_manager import store_connection, delete_connection, \
     get_ftp_connections, get_connection_details, connect2ftp, \
     disconnect_ftp, read_ftp_content, move2ftp, move2local
+from gui_utils import ToolTip, BusyManager
+from logging_setup import format_traceback, LogglyAdapter
+from manager import run_processing, save_stats, save_template, \
+    update_template, delete_template, get_template_names
+import overload_help
+from pvf import goo_comms
+import reports
+from setup_dirs import MY_DOCS, USER_DATA, CVAL_REP, \
+    LSPEC_REP, DVAL_REP, BATCH_META, BATCH_STATS
 from utils import convert_file_size
+from validation import validate_files
+from validators.marcedit import delete_validation_report
 
 
-module_logger = logging.getLogger('overload_console.pvr_gui')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 class TransferFiles(tk.Frame):
@@ -720,7 +725,7 @@ class TransferFiles(tk.Frame):
 
         except WindowsError as e:
             module_logger.error(
-                'Encounted error when populating FTP local panel.'
+                'WindowsError when populating FTP local panel.'
                 'Error: {}'.format(e))
             self.locTrv.insert(
                 '', tk.END, values=('...', '', ''),
@@ -2092,7 +2097,7 @@ class ProcessVendorFiles(tk.Frame):
 
             # run validation
             try:
-                module_logger.info('Validating files.')
+                module_logger.debug('Validating files.')
                 self.current_process.set('validating...')
                 valid_files = validate_files(
                     self.system.get().lower(),
@@ -2100,10 +2105,18 @@ class ProcessVendorFiles(tk.Frame):
                     self.files, marcval, locval)
 
                 if valid_files:
-                    module_logger.info('Records are valid.')
+                    module_logger.info(
+                        'Validating batch of records. '
+                        'Active validators: marcval={}, locval={}. '
+                        'Results: records are valid.'.format(
+                            self.marcVal.get(), self.locVal.get()))
                     self.validated.set('validation: records are A-OK!')
                 else:
-                    module_logger.info('Some records are not valid.')
+                    module_logger.warning(
+                        'Validating batch of records. '
+                        'Active validators: marcVal={}, locVal={}. '
+                        'Results: errors found.'.format(
+                            self.marcVal.get(), self.locVal.get()))
                     self.current_process.set('')
                     self.cur_manager.notbusy()
                     self.validated.set('validation: ERRORS FOUND!')
@@ -2114,7 +2127,7 @@ class ProcessVendorFiles(tk.Frame):
             except OverloadError as e:
                 self.current_process.set('')
                 module_logger.error(
-                    'Error encountered while validating. Error: {}'.format(
+                    'Error while validating. Error: {}'.format(
                         e))
                 valid_files = False
                 self.cur_manager.notbusy()
@@ -2150,14 +2163,16 @@ class ProcessVendorFiles(tk.Frame):
                     self.cur_manager.notbusy()
                     tkMessageBox.showerror(
                         'Processing Error', e)
-                except Exception as e:
+                except Exception as exc:
                     self.current_process.set('interrupted...')
                     self.cur_manager.notbusy()
+                    # log and display error
+                    _, _, exc_traceback = sys.exc_info()
+                    tb = format_traceback(exc, exc_traceback)
+                    module_logger.error(
+                        'Unhandled error: {}'.format(tb))
                     tkMessageBox.showerror(
-                        'Processing Error', e)
-                    module_logger.critical(
-                        'Unhandled error occurred: {}'.format(e),
-                        exc_info=True)
+                        'Processing Error', exc)
                 finally:
                     self.cur_manager.notbusy()
 
@@ -2396,6 +2411,14 @@ class ProcessVendorFiles(tk.Frame):
 
         ttk.Button(
             self.topD,
+            text='send',
+            width=12,
+            cursor='hand2',
+            command=self.send_to_sheet).grid(
+            row=12, column=3, sticky='nw', padx=5)
+
+        ttk.Button(
+            self.topD,
             text='close',
             width=12,
             cursor='hand2',
@@ -2512,7 +2535,7 @@ class ProcessVendorFiles(tk.Frame):
 
         # create dataframe to be tabulated
         try:
-            module_logger.info(
+            module_logger.debug(
                 'Mapping BATCH_STATS to dataframe for general '
                 'stats report for {}.'.format(self.last_used_sys))
             df = reports.shelf2dataframe(BATCH_STATS, self.last_used_sys)
@@ -2528,7 +2551,7 @@ class ProcessVendorFiles(tk.Frame):
             df = None
 
         # generate vendor stats
-        module_logger.info(
+        module_logger.debug(
             'Generating vendor breakdown section for '
             '{}.'.format(self.last_used_sys))
         self.reportDTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
@@ -2544,7 +2567,7 @@ class ProcessVendorFiles(tk.Frame):
             tk.END, '\n' + ('-' * 120) + '\n')
 
         # report duplicates
-        module_logger.info(
+        module_logger.debug(
             'Generating duplicate reports section for {}-{}.'.format(
                 self.last_used_sys, self.last_used_lib))
         self.reportDTxt.insert(tk.END, 'Duplicates report:\n', 'blue')
@@ -2563,7 +2586,7 @@ class ProcessVendorFiles(tk.Frame):
             tk.END, '\n' + ('-' * 120) + '\n')
 
         # report callNo issues
-        module_logger.info(
+        module_logger.debug(
             'Generating call number issues section.')
         if self.last_used_lib != 'research':
             self.reportDTxt.insert(tk.END, 'Call number issues:\n', 'blue')
@@ -2615,7 +2638,7 @@ class ProcessVendorFiles(tk.Frame):
                 'Error: {}'.format(e))
             df = None
 
-        module_logger.info(
+        module_logger.debug(
             'Generating detailed report for {}-{}'.format(
                 self.last_used_sys, self.last_used_lib))
         if df is not None:
@@ -2708,6 +2731,165 @@ class ProcessVendorFiles(tk.Frame):
                 'Encountered error while saving the report. Aborting.',
                 parent=self.topD)
 
+    def send_to_sheet(self):
+        self.cur_manager.busy()
+        final_msg = ''
+
+        # identify correct google folder id
+        user_data = shelve.open(USER_DATA)
+        try:
+            if self.last_used_sys == 'NYPL':
+                parent_id = user_data['gdrive']['nypl_folder_id']
+                tabs = ['branches', 'research']
+                if self.last_used_lib == 'branches':
+                    active_tab = 'branches'
+                else:
+                    active_tab = 'research'
+            elif self.last_used_sys == 'BPL':
+                parent_id = user_data['gdrive']['bpl_folder_id']
+                tabs = ['duplicates']
+                active_tab = 'duplicates'
+        except KeyError:
+            m = 'Google parent folder IDs cannot be retrieved.\n' \
+                'Please check Settings>Google API and re-link if\n' \
+                'needed.'
+            tkMessageBox.showerror('Google API Error', m)
+        finally:
+            module_logger.debug(
+                'Preping data for transfer to Google Sheet: '
+                'system: {}, google parent_id: {}, '
+                'active tab: {}'.format(
+                    self.last_used_sys, parent_id, active_tab))
+            user_data.close()
+        try:
+            if self.dups is not None and self.dups.size > 0:
+                # prep data for report there
+                data = reports.dups_report_for_sheet(
+                    self.last_used_sys, self.last_used_lib,
+                    self.last_used_agent, self.dups)
+
+                # determine google sheet name
+                sheet_name = goo_comms.name_pvf_sheet('dups')
+
+                # determine if such sheet exists
+                # get authorization
+                goo_auth = goo.get_access_token(GAPP, GUSER)
+                # get sheet id
+                sheet_id = goo.get_latest_file_id_in_folder(
+                    goo_auth, sheet_name, parent_id)
+
+                # if doesn't exist create one
+                if not sheet_id:
+                    sheet_id = goo_comms.create_sheet_for_system(
+                        self.last_used_sys, goo_auth, sheet_name,
+                        tabs, parent_id)
+
+                module_logger.debug(
+                    'Appending data to sheet (id: {}).'.format(
+                        sheet_id))
+                results = goo.append2sheet(
+                    goo_auth, sheet_id, active_tab, data)
+
+                module_logger.debug(
+                    'Google Sheet response: {}'.format(results))
+
+                try:
+                    if results['updates']['updatedRows'] == len(data):
+                        final_msg += 'Dups: appended successfully {} row(s) ' \
+                            'to sheet "{}".\n'.format(
+                                results['updates']['updatedRows'],
+                                sheet_name)
+                    else:
+                        final_msg += 'Dups: unable to save some data ' \
+                            'to Google Sheet.\n' \
+                            'Appended {} row(s) out of {} to ' \
+                            'sheet "{}"\n'.format(
+                                results['updates']['updatedRows'],
+                                len(data),
+                                sheet_name)
+                except KeyError:
+                    module_logger.error(
+                        'Google API response malformed.')
+                    m = 'Google API response error.'
+                    tkMessageBox.showerror('Google Drive', m, parent=self.topD)
+                except TypeError:
+                    module_logger.error(
+                        'Google API response type error.')
+                    m = 'Google API response error.'
+                    tkMessageBox.showerror('Google Drive', m, parent=self.topD)
+
+            if self.callNos is not None and self.callNos.size > 0:
+                data = reports.callNos_report_for_sheet(self.callNos)
+
+                # determine google sheet name
+                sheet_name = goo_comms.name_pvf_sheet('callnos')
+                tabs = ['errors']
+
+                # determine if such sheet exists
+                # get authorization
+                goo_auth = goo.get_access_token(GAPP, GUSER)
+                # get sheet id
+                sheet_id = goo.get_latest_file_id_in_folder(
+                    goo_auth, sheet_name, parent_id)
+
+                # if doesn't exist create one
+                if not sheet_id:
+                    sheet_id = goo_comms.create_sheet_for_system(
+                        self.last_used_sys, goo_auth, sheet_name,
+                        tabs, parent_id)
+
+                module_logger.debug(
+                    'Appending data to sheet (id: {}).'.format(
+                        sheet_id))
+                results = goo.append2sheet(
+                    goo_auth, sheet_id, tabs[0], data)
+
+                module_logger.debug(
+                    'Google Sheet response: {}'.format(results))
+
+                try:
+                    if results['updates']['updatedRows'] == len(data):
+                        final_msg += 'CallNo: Appended successfully {} ' \
+                            'row(s) to sheet "{}".\n'.format(
+                                results['updates']['updatedRows'],
+                                sheet_name)
+                    else:
+                        final_msg += 'CallNo: unable to save some data ' \
+                            'to Google Sheet.\n' \
+                            'Appended {} row(s) out of {} to ' \
+                            'sheet "{}"\n'.format(
+                                results['updates']['updatedRows'],
+                                len(data),
+                                sheet_name)
+                except KeyError:
+                    module_logger.error(
+                        'Google API response malformed.')
+                    m = 'Google API response error.'
+                    tkMessageBox.showerror('Google Drive', m, parent=self.topD)
+                except TypeError:
+                    module_logger.error(
+                        'Google API response type error.')
+                    m = 'Google API response error.'
+                    tkMessageBox.showerror('Google Drive', m, parent=self.topD)
+
+        except OverloadError as exc:
+            module_logger.error('GDrive error: {}'.format(exc))
+            tkMessageBox.showerror(
+                'Google Drive', exc, parent=self.topD)
+        except Exception as exc:
+            # general exception to catch unhandled situations
+            _, _, exc_traceback = sys.exc_info()
+            tb = format_traceback(exc, exc_traceback)
+            module_logger.error('Unhandled error: {}'.format(tb))
+            tkMessageBox.showerror(
+                'Google Drive',
+                'Unexpected error occured.\nError: {}'.format(exc))
+        finally:
+            self.cur_manager.notbusy()
+            if final_msg != '':
+                tkMessageBox.showinfo(
+                    'Google Drive', final_msg, parent=self.topD)
+
     def download_details(self):
         # suggested name
         date_today = date.today().strftime('%y%m%d')
@@ -2747,6 +2929,7 @@ class ProcessVendorFiles(tk.Frame):
             help_popup,
             background='white',
             relief=tk.FLAT,
+            wrap=tk.WORD,
             yscrollcommand=yscrollbar.set)
         helpTxt.grid(
             row=0, column=0, sticky='snew', padx=10, pady=10)

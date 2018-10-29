@@ -1,11 +1,8 @@
 import xml.etree.ElementTree as ET
-# import logging
 
 
 from bibs.bibs import read_marc21
 from bibs.sierra_dicts import NYPL_BRANCHES, BPL_BRANCHES
-
-# module_logger = logging.getLogger('overload_console.vendors')
 
 
 def local_specs(system, agent, fh):

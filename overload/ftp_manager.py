@@ -1,5 +1,6 @@
-import json
 import base64
+import json
+import sys
 
 from ftplib import FTP, all_errors
 import logging
@@ -10,9 +11,11 @@ from datastore import FTPs, session_scope
 from db_worker import insert_or_ignore, retrieve_values, retrieve_record, \
     delete_record
 from errors import OverloadError
+from logging_setup import format_traceback, LogglyAdapter
 from utils import convert2date_obj
 
-module_logger = logging.getLogger('overload_console.ftp_manager')
+
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def store_connection(name, host, folder, user, password, system):
@@ -45,7 +48,8 @@ def store_connection(name, host, folder, user, password, system):
                 password=password,
                 system=system)
     except IntegrityError as e:
-        module_logger.error(e)
+        module_logger.error(
+            'Unable to store FTP details. Error: {}'.format(e))
         raise OverloadError(
             'Error. The name of the new connection is\n.'
             'already used or some of the required elements\n'
@@ -60,9 +64,12 @@ def delete_connection(name, system):
                 FTPs,
                 name=name,
                 system=system)
-        except Exception as e:
-            module_logger.error(e)
-            raise OverloadError(e)
+        except Exception as exc:
+            _, _, exc_traceback = sys.exc_info()
+            tb = format_traceback(exc, exc_traceback)
+            module_logger.error(
+                'Unhandled error of deletion of FTP details. {}'.format(tb))
+            raise OverloadError(exc)
 
 
 def get_ftp_connections(system):
@@ -95,7 +102,7 @@ def get_connection_details(name, system):
 
 
 def connect2ftp(host, user, password):
-    module_logger.info('Connecting to FTP: {}.'.format(
+    module_logger.debug('Connecting to FTP: {}.'.format(
         host))
     try:
         ftp = FTP(host)
@@ -106,7 +113,7 @@ def connect2ftp(host, user, password):
             return ftp
         else:
             module_logger.error(
-                'Unsuccessful connection attempt: {}.'.format(
+                'Unsuccessful connection attempt to FTP: {}.'.format(
                     conn))
             raise OverloadError(
                 'Unable to connect to FTP.\n'
@@ -123,14 +130,14 @@ def connect2ftp(host, user, password):
 def disconnect_ftp(ftp):
     try:
         ftp.quit()
-        module_logger.info('Quiting FTP.')
+        module_logger.debug('Quiting FTP.')
     except all_errors:
         ftp.close()
-        module_logger.info('Quiting FTP unsuccessful. Calling close method.')
+        module_logger.warning('Quiting FTP unsuccessful. Calling close method.')
 
 
 def read_ftp_content(ftp, host):
-    module_logger.info(
+    module_logger.debug(
         'Accessing FTP ({}) directory & file listing'.format(
             host))
     # create a list of directories and files

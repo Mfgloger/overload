@@ -4,11 +4,12 @@ import logging
 
 from validators import marcedit, local_specs, default
 from errors import OverloadError
+from logging_setup import LogglyAdapter
 from utils import remove_files
 from setup_dirs import MVAL_REP, LSPEC_REP, DVAL_REP
 
 
-module_logger = logging.getLogger('overload_console.validation')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def validate_files(system, agent, files, marcval=False, locval=False):
@@ -29,7 +30,7 @@ def validate_files(system, agent, files, marcval=False, locval=False):
 
     # MARCEdit MARC syntax validation
     if marcval:
-        module_logger.info('Running MARCEdit validation.')
+        module_logger.debug('Running MARCEdit validation.')
         # make sure MARCEdit is installed on the machine
         val_engine = marcedit.get_engine()
         if val_engine is None:
@@ -69,7 +70,7 @@ def validate_files(system, agent, files, marcval=False, locval=False):
 
     # local specification validation
     if locval:
-        module_logger.info('Local specs validation launch.')
+        module_logger.debug('Local specs validation launch.')
 
         # define local specs rules for each system, agent, and vendor
         try:

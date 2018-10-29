@@ -106,5 +106,15 @@ platform_res*.json
 
 # Z3950 logs
 PyZ3950_parsetab.py
+
+# patching files
 updater/raction_db.py
 updater/datastore.db
+
+# notes
+binaries_notes.txt
+temp*.py
+
+# logging configuration
+overload/logging_setup.py
+tests/temp

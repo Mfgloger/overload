@@ -1,12 +1,13 @@
 import logging
 
 
-from pvf import queries
 from errors import OverloadError
+from pvf import queries
+from logging_setup import LogglyAdapter
 from PyZ3950.zoom import ConnectionError
 
 
-module_logger = logging.getLogger('overload_console.pvr_z3950_comms')
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def z3950_query_manager(target, meta, matchpoint):
@@ -19,16 +20,21 @@ def z3950_query_manager(target, meta, matchpoint):
     return:
         query result
     """
-    module_logger.info('Making new Z3950 request to: {}'.format(
+    module_logger.debug('Making new Z3950 request to: {}'.format(
         target['host']))
     try:
         result = queries.query_runner(
             'Z3950', target, meta, matchpoint)
         return result
     except ConnectionError:
+        module_logger.error('Z3950 Connection error on host {}'.format(
+            target['host']))
         raise OverloadError(
             'Connection error. Unable to reach Z3950 host: {}.'.format(
                 target))
     except ValueError:
+        module_logger.error(
+            'Z3950 ValueError on target parameters {}'.format(
+                target))
         raise OverloadError(
             'Z3950 target not provided')

@@ -1,0 +1,37 @@
+Overview:
+=========
+Linking Overload with BookOps Google Drive allows the app to send its reports
+directly to appropriate Google Drive documents, such as for example Google
+Sheets, which can be accessed by other staff. This feature supposed to replace
+and streamline sending manually downloaded reports via email.
+
+Linking G-Suite:
+================
+1. Click "link G-Suite"
+2. Provide decryption key as provided in a pop-up window
+3. Confirm the key with "decrypt" button
+4. Your default browser will open to confirm your permission for
+   Overload to use your credentials to access Google Drive
+5. You will be required to login to your Gmail account (if you are already
+   signed in, just click on your BookOps account) and select "Allow"
+   button (Overload does not store your credentials but they are required
+   by Google API to verify your identity)
+6. After succesful operation your browser should display
+   following message: "The authentication flow has completed."
+7. Back in Overload interface click on "test"
+8. Status on the right should show that the credentials has been
+   stored in Windows Credential Manager and NYPL & BPL folder ids have been
+   assigned their IDs.
+9. From that point on, Overload will output its reports to
+   appropriate documents on Google Drive (for example, Archiving
+   files in Processing Vendor Files module will send duplicate or call number
+   errors report to Google Sheet)
+
+Unlinking G-Suite:
+==================
+
+Credentials and other associated information can be deleted from your machine
+anytime by clicking on the "Unlink G-Suite" button.
+Testing should prompt status chage on the right, that states missing
+credentials in Windows Credential Manager and idicate Google folder IDs as
+missing.
