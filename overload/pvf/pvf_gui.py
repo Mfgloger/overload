@@ -460,7 +460,7 @@ class TransferFiles(tk.Frame):
         saveBtn = ttk.Button(
             self.rename_top,
             text='OK',
-            command=lambda:self.save_new_fh(from_location))
+            command=lambda: self.save_new_fh(from_location))
         saveBtn.grid(
             row=3, column=1, sticky='snew', padx=50, pady=10)
         cancelBtn = ttk.Button(
@@ -555,7 +555,7 @@ class TransferFiles(tk.Frame):
                 if transfered:
                     self.populate_remote_panel()
 
-    def help():
+    def help(self):
         text = overload_help.open_help(
             'pvr_ftp_help.txt')
         help_popup = tk.Toplevel(background='white')
@@ -566,6 +566,7 @@ class TransferFiles(tk.Frame):
         helpTxt = tk.Text(
             help_popup,
             background='white',
+            wrap=tk.WORD,
             relief=tk.FLAT,
             yscrollcommand=yscrollbar.set)
         helpTxt.grid(
@@ -1420,6 +1421,7 @@ class OrderTemplate(tk.Frame):
         helpTxt = tk.Text(
             help_popup,
             background='white',
+            wrap=tk.WORD,
             relief=tk.FLAT,
             yscrollcommand=yscrollbar.set)
         helpTxt.grid(
