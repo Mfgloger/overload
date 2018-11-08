@@ -13,8 +13,9 @@ from analyzer import PVR_NYPLReport, PVR_BPLReport
 from bibs import patches
 from bibs.bibs import VendorBibMeta, read_marc21, \
     create_target_id_field, write_marc21, check_sierra_id_presence, \
-    sierra_format_tag, create_field_from_template, \
-    db_template_to_960, db_template_to_961, db_template_to_949
+    sierra_command_tag, create_field_from_template, \
+    db_template_to_960, db_template_to_961, db_template_to_949, \
+    set_nypl_sierra_bib_default_location
 from bibs.crosswalks import platform2meta, bibs2meta
 from bibs.dedup import dedup_marc_file
 from datastore import session_scope, Vendor, \
@@ -485,12 +486,16 @@ def run_processing(
                         bib.add_field(field)
 
                     if trec.bibFormat and \
-                            not sierra_format_tag(bib) and \
+                            not sierra_command_tag(bib) and \
                             agent == 'sel':
                         new_field = db_template_to_949(trec.bibFormat)
                         bib.add_field(new_field)
                         # it's safer for acquisition to skip command in 949 -
                         # there are conflicts with Import Invoices load table
+
+            # apply bibliographic default location to NYPL brief records
+            if system == 'nypl' and agent == 'sel':
+                bib = set_nypl_sierra_bib_default_location(library, bib)
 
             # append to appropirate output file
             if agent == 'cat':

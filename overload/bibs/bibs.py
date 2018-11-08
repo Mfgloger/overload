@@ -5,6 +5,7 @@ from pymarc.exceptions import RecordLengthInvalid
 import re
 from datetime import datetime
 from errors import OverloadError
+from sierra_dicts import NBIB_DEFAULT_LOCATIONS
 
 
 def parse_isbn(field):
@@ -95,7 +96,7 @@ def check_sierra_id_presence(system, bib):
     return found
 
 
-def sierra_format_tag(bib):
+def sierra_command_tag(bib):
     found = False
     try:
         if '949' in bib:
@@ -108,6 +109,57 @@ def sierra_format_tag(bib):
     except IndexError:
         raise IndexError('Encountered IndexError in vendor 949$a')
     return found
+
+
+def set_nypl_sierra_bib_default_location(library, bib):
+    """
+    adds a 949 MARC tag command for setting bibliographic location
+    args:
+        bib: pymarc.record.Record
+    returns:
+        bib: pymarc.record.Record, with added command "bn=" to
+            the "949  $a" field, the field is created if missing
+    """
+
+    # determine correct location code
+    if library == 'branches':
+        defloc = NBIB_DEFAULT_LOCATIONS['branches']
+    elif library == 'research':
+        defloc = NBIB_DEFAULT_LOCATIONS['research']
+    else:
+        raise OverloadError(
+            'Invalid library argument passed: {}'.format(
+                library))
+
+    # determine if 949 already preset
+    if sierra_command_tag(bib):
+        for field in bib.get_fields('949'):
+            if field.indicators == [' ', ' ']:
+                command = field['a'].strip()
+                if 'bn=' in command:
+                    # skip, already present
+                    break
+                else:
+                    if command[-1] == ';':
+                        new_command = '{}{}'.format(
+                            field['a'],
+                            'bn={};'.format(defloc))
+                    else:
+                        new_command = '{}{}'.format(
+                            field['a'],
+                            ';bn={};'.format(defloc))
+                    field['a'] = new_command
+                    break
+
+    else:
+        # command tag not preset add
+        bib.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', ' '],
+                subfields=['a', '*bn={};'.format(defloc)])
+        )
+    return bib
 
 
 def create_field_from_template(template):

@@ -159,6 +159,12 @@ NRACTION = {
     's': 'special instr.'
 }
 
+# nypl default bibliograhic locations for brief records
+NBIB_DEFAULT_LOCATIONS = {
+    'branches': 'zzzzz',
+    'research': 'xxx'
+}
+
 # languages
 LANG = {
     'ara': 'Arabic',

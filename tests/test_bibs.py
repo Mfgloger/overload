@@ -223,9 +223,9 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertTrue(
             bibs.check_sierra_id_presence('bpl', self.marc_bib))
 
-    def test_check_sierra_format_tag_presence_False(self):
+    def test_check_sierra_command_tag_presence_False(self):
         self.assertFalse(
-            bibs.sierra_format_tag(self.marc_bib))
+            bibs.sierra_command_tag(self.marc_bib))
         self.marc_bib.add_field(
             Field(
                 tag='949',
@@ -237,25 +237,25 @@ class TestBibsUtilities(unittest.TestCase):
                 indicators=[' ', ' '],
                 subfields=['b', "*b2=a;"]))
         self.assertFalse(
-            bibs.sierra_format_tag(self.marc_bib))
+            bibs.sierra_command_tag(self.marc_bib))
 
-    def test_check_sierra_format_tag_presence_True(self):
+    def test_check_sierra_command_tag_presence_True(self):
         self.marc_bib.add_field(
             Field(
                 tag='949',
                 indicators=[' ', ' '],
                 subfields=['a', "*b2=a;"]))
         self.assertTrue(
-            bibs.sierra_format_tag(self.marc_bib))
+            bibs.sierra_command_tag(self.marc_bib))
 
-    def test_check_sierra_format_tag_presence_exception(self):
+    def test_check_sierra_command_tag_presence_exception(self):
         self.marc_bib.add_field(
             Field(
                 tag='949',
                 indicators=[' ', ' '],
                 subfields=['a', '']))
         with self.assertRaises(IndexError):
-            bibs.sierra_format_tag(self.marc_bib)
+            bibs.sierra_command_tag(self.marc_bib)
 
     def test_create_field_from_template(self):
         template = dict(
@@ -271,6 +271,54 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(field.indicators, [' ', '1'])
         self.assertEqual(field['a'], 'foo')
         self.assertEqual(field['b'], 'bar')
+
+    def test_set_nypl_sierra_bib_default_location_for_branches_new(self):
+        # test when no command line present
+        bib = bibs.set_nypl_sierra_bib_default_location('branches', self.marc_bib)
+        for field in bib.get_fields('949'):
+            if field.indicators == [' ', ' ']:
+                command = field
+        self.assertEqual(
+            str(command), '=949  \\\\$a*bn=zzzzz;')
+
+    def test_set_nypl_sierra_bib_default_location_for_branches_present(self):
+        # test adding location skipped when "bn=" command already present
+        self.marc_bib.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', ' '],
+                subfields=['a', '*recs=a;bn=xxx;']))
+        bib = bibs.set_nypl_sierra_bib_default_location('branches', self.marc_bib)
+        for field in bib.get_fields('949'):
+            if field.indicators == [' ', ' ']:
+                command = field
+        self.assertEqual(
+            str(command), '=949  \\\\$a*recs=a;bn=xxx;')
+
+    def test_set_nypl_sierra_bib_default_location_for_branches_other_command_present(self):
+        # simulate command line with other parameters present
+        self.marc_bib.add_field(
+            Field(
+                tag='949',
+                indicators=[' ', ' '],
+                subfields=['a', '*recs=a']))
+        bib = bibs.set_nypl_sierra_bib_default_location('branches', self.marc_bib)
+        for field in bib.get_fields('949'):
+            if field.indicators == [' ', ' ']:
+                command = field
+        self.assertEqual(
+            str(command),
+            '=949  \\\\$a*recs=a;bn=zzzzz;')
+        
+    def test_set_nypl_sierra_bib_default_location_for_research_new(self):
+        # test when no command line present
+        bib = bibs.set_nypl_sierra_bib_default_location('research', self.marc_bib)
+        for field in bib.get_fields('949'):
+            if field.indicators == [' ', ' ']:
+                command = field
+        self.assertEqual(
+            str(command), '=949  \\\\$a*bn=xxx;')
+
 
     def test_bibmeta_object(self):
         meta = bibs.BibMeta(self.marc_bib, sierraId='12345678')
@@ -332,6 +380,7 @@ class TestTemplate_to_960(unittest.TestCase):
     """
     Tests of creation of order fixed fields in 960 MARC tag
     """
+
     def setUp(self):
         class template:
             pass
