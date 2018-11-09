@@ -205,7 +205,7 @@ def customize_bpl_pvf_dup_report(auth, sheet_id):
 
     # customize the look & behavior of each sheet
     for tab_id in tab_ids:
-        request_body = sheet_templates.bpl_pfv_dup_report_template(tab_id)
+        request_body = sheet_templates.bpl_pvf_dup_report_template(tab_id)
 
         service.spreadsheets().batchUpdate(
             spreadsheetId=sheet_id,
@@ -217,7 +217,7 @@ def customize_pvf_callNos_report(auth, sheet_id):
     cutomizes overload PVF report for BPL data
     args:
         auth: class 'oauth2client.client.OAuth2Credentials'
-        sheet_id: string, Google Sheet id 
+        sheet_id: string, Google Sheet id
     """
 
     service = discovery.build('sheets', 'v4', credentials=auth)
