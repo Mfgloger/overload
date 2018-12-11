@@ -1,7 +1,7 @@
 # general tools to read, parse, and write MARC files
 
 from pymarc import MARCReader, JSONReader, MARCWriter, Field
-from pymarc.exceptions import RecordLengthInvalid
+from pymarc.exceptions import RecordLengthInvalid, RecordDirectoryInvalid
 import re
 from datetime import datetime
 from errors import OverloadError
@@ -196,6 +196,11 @@ def count_bibs(file):
             'Character encoding error in file:\n{}\n'
             'Please convert character encoding to UTF-8\n'
             'using MARCEdit program.'.format(file))
+    except RecordDirectoryInvalid:
+        raise OverloadError(
+            'Encountered malformed MARC record directory\n'
+            'in file "{}".\nUse MARCEdit to identify '
+            'incorrect record.'.format(file))
 
 
 def db_template_to_960(template, vendor_960):

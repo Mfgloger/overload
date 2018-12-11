@@ -2083,57 +2083,57 @@ class ProcessVendorFiles(tk.Frame):
             if legal_files:
                 self.progbar['maximum'] = total_bib_count
 
-            # run validation if requested
-            if self.marcVal.get() == 1:
-                marcval = True
-            else:
-                marcval = False
-                self.validated.set('validation: MARC syntax check skipped')
-
-            if self.locVal.get() == 1:
-                locval = True
-            else:
-                msg = self.validated.get() + ', local specs check skipped'
-                self.validated.set(msg)
-                locval = False
-
-            # run validation
-            try:
-                module_logger.debug('Validating files.')
-                self.current_process.set('validating...')
-                valid_files = validate_files(
-                    self.system.get().lower(),
-                    self.agent.get()[:3],
-                    self.files, marcval, locval)
-
-                if valid_files:
-                    module_logger.info(
-                        'Validating batch of records. '
-                        'Active validators: marcval={}, locval={}. '
-                        'Results: records are valid.'.format(
-                            self.marcVal.get(), self.locVal.get()))
-                    self.validated.set('validation: records are A-OK!')
+                # run validation if requested
+                if self.marcVal.get() == 1:
+                    marcval = True
                 else:
-                    module_logger.warning(
-                        'Validating batch of records. '
-                        'Active validators: marcVal={}, locVal={}. '
-                        'Results: errors found.'.format(
-                            self.marcVal.get(), self.locVal.get()))
+                    marcval = False
+                    self.validated.set('validation: MARC syntax check skipped')
+
+                if self.locVal.get() == 1:
+                    locval = True
+                else:
+                    msg = self.validated.get() + ', local specs check skipped'
+                    self.validated.set(msg)
+                    locval = False
+
+                # run validation
+                try:
+                    module_logger.debug('Validating files.')
+                    self.current_process.set('validating...')
+                    valid_files = validate_files(
+                        self.system.get().lower(),
+                        self.agent.get()[:3],
+                        self.files, marcval, locval)
+
+                    if valid_files:
+                        module_logger.info(
+                            'Validating batch of records. '
+                            'Active validators: marcval={}, locval={}. '
+                            'Results: records are valid.'.format(
+                                self.marcVal.get(), self.locVal.get()))
+                        self.validated.set('validation: records are A-OK!')
+                    else:
+                        module_logger.warning(
+                            'Validating batch of records. '
+                            'Active validators: marcVal={}, locVal={}. '
+                            'Results: errors found.'.format(
+                                self.marcVal.get(), self.locVal.get()))
+                        self.current_process.set('')
+                        self.cur_manager.notbusy()
+                        self.validated.set('validation: ERRORS FOUND!')
+                        m = 'Some of the records in selected file(s) \n' \
+                            'are not valid.\n' \
+                            'Please see error report for details.'
+                        tkMessageBox.showerror('Validation', m)
+                except OverloadError as e:
                     self.current_process.set('')
+                    module_logger.error(
+                        'Error while validating. Error: {}'.format(
+                            e))
+                    valid_files = False
                     self.cur_manager.notbusy()
-                    self.validated.set('validation: ERRORS FOUND!')
-                    m = 'Some of the records in selected file(s) \n' \
-                        'are not valid.\n' \
-                        'Please see error report for details.'
-                    tkMessageBox.showerror('Validation', m)
-            except OverloadError as e:
-                self.current_process.set('')
-                module_logger.error(
-                    'Error while validating. Error: {}'.format(
-                        e))
-                valid_files = False
-                self.cur_manager.notbusy()
-                tkMessageBox.showerror('Validation', e)
+                    tkMessageBox.showerror('Validation', e)
 
             if legal_files and valid_files:
                 if self.template.get() == '':
