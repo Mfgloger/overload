@@ -2,6 +2,8 @@
 
 import unittest
 import shelve
+from datetime import datetime
+
 import pandas as pd
 
 from context import reports
@@ -88,6 +90,9 @@ class Test_Reports(unittest.TestCase):
         for key, value in d.iteritems():
             stats_shelf[key] = value
         stats_shelf.close()
+
+        # today's date
+        self.report_date = datetime.now().strftime('%y-%m-%d')
 
     def cleanUp(self):
         stats_shelf = shelve.open('temp')
@@ -201,7 +206,7 @@ class Test_Reports(unittest.TestCase):
             'NYPL', 'branches', 'CAT', dups)
         self.assertEqual(
             sheet_data,
-            [['18-10-17', 'CAT', 'TEST VENDOR1', 'ven0001', 'b01234567a', None, 'b00000003a', 'b00000004a', 'no'], ['18-10-17', 'CAT', 'TEST VENDOR4', 'ven0004', None, None, None, 'b00000006a', 'no action'], ['18-10-17', 'CAT', 'TEST VENDOR5', 'ven0005', None, None, None, 'b00000004a,b00000005a', 'no'], ['18-10-17', 'CAT', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', None, None, 'no']])
+            [[self.report_date, 'CAT', 'TEST VENDOR1', 'ven0001', 'b01234567a', None, 'b00000003a', 'b00000004a', 'no'], [self.report_date, 'CAT', 'TEST VENDOR4', 'ven0004', None, None, None, 'b00000006a', 'no action'], [self.report_date, 'CAT', 'TEST VENDOR5', 'ven0005', None, None, None, 'b00000004a,b00000005a', 'no'], [self.report_date, 'CAT', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', None, None, 'no']])
 
     def test_nypl_research_dup_report_for_sheet(self):
         df = reports.shelf2dataframe('temp', 'nypl')
@@ -210,7 +215,7 @@ class Test_Reports(unittest.TestCase):
             'NYPL', 'research', 'ACQ', dups)
         self.assertEqual(
             sheet_data,
-            [['18-10-17', 'ACQ', 'TEST VENDOR1', 'ven0001', 'b01234567a', None, 'b00000003a', 'b00000004a', 'no'], ['18-10-17', 'ACQ', 'TEST VENDOR4', 'ven0004', None, None, None, 'b00000006a', 'no action'], ['18-10-17', 'ACQ', 'TEST VENDOR5', 'ven0005', None, None, None, 'b00000004a,b00000005a', 'no'], ['18-10-17', 'ACQ', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', None, None, 'no']])
+            [[self.report_date, 'ACQ', 'TEST VENDOR1', 'ven0001', 'b01234567a', None, 'b00000003a', 'b00000004a', 'no'], [self.report_date, 'ACQ', 'TEST VENDOR4', 'ven0004', None, None, None, 'b00000006a', 'no action'], [self.report_date, 'ACQ', 'TEST VENDOR5', 'ven0005', None, None, None, 'b00000004a,b00000005a', 'no'], [self.report_date, 'ACQ', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', None, None, 'no']])
 
     def test_bpl_dup_report_for_sheet(self):
         df = reports.shelf2dataframe('temp', 'bpl')
@@ -219,7 +224,7 @@ class Test_Reports(unittest.TestCase):
             'BPL', None, 'CAT', dups)
         self.assertEqual(
             sheet_data,
-            [['18-10-17', 'CAT', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', 'no']])
+            [[self.report_date, 'CAT', 'TEST VENDOR5', 'ven0006', 'b00000008a', 'b00000008a,b00000009a', 'no']])
 
     def test_CAT_callNos_report_for_sheet(self):
         df = reports.shelf2dataframe('temp', 'nypl')
@@ -227,7 +232,7 @@ class Test_Reports(unittest.TestCase):
         sheet_data = reports.callNos_report_for_sheet(callNos)
         self.assertEqual(
             sheet_data,
-            [['18-10-17', 'TEST VENDOR2', 'ven0002', 'b02345678a', 'TEST CALL B', 'TEST CALL A', None, 'no']])
+            [[self.report_date, 'TEST VENDOR2', 'ven0002', 'b02345678a', 'TEST CALL B', 'TEST CALL A', None, 'no']])
 
 
 if __name__ == '__main__':
