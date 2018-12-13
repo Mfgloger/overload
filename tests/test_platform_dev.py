@@ -11,6 +11,7 @@ import requests
 
 from context import AuthorizeAccess, PlatformSession
 from context import setup_dirs
+from context import credentials
 
 
 class TestPlatformMethodsOnDev(unittest.TestCase):
@@ -23,10 +24,12 @@ class TestPlatformMethodsOnDev(unittest.TestCase):
         user_data = shelve.open(setup_dirs.USER_DATA)
         api_params = user_data['PlatformAPIs']['NYPL TEST']
         self.client_id = base64.b64decode(api_params['client_id'])
-        self.client_secret = base64.b64decode(api_params['client_secret'])
-        self.oauth_server = 'https://isso.nypl.org'
+        self.oauth_server = api_params['oauth_server']
         self.base_url = api_params['host']
         user_data.close()
+        # get password
+        self.client_secret = credentials.get_from_vault(
+            self.oauth_server, self.client_id)
         self.auth = AuthorizeAccess(
             self.client_id, self.client_secret, self.oauth_server)
         self.token = self.auth.get_token()
