@@ -60,7 +60,7 @@ REQUIRED = [
     "six==1.11.0",
     "SQLAlchemy==1.2.6",
     "uritemplate==3.0.0",
-    "urllib3==1.22"
+    "urllib3==1.24.1"
 ]
 
 # requires manual installation of Aaron Lav's PyZ3950
