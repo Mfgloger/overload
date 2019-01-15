@@ -793,21 +793,17 @@ class TransferFiles(tk.Frame):
         widget.bind('<Leave>', leave)
 
 
-class OrderTemplate(tk.Frame):
-    """GUI for selection order templates"""
+class OrderFields(tk.Frame):
+    """Widget populating order fields"""
 
     def __init__(self, parent, **kwargs):
         self.parent = parent
-        self.agent = kwargs['agent']
         tk.Frame.__init__(self, self.parent, background='white')
-        self.top = tk.Toplevel(self, background='white')
-        self.cur_manager = BusyManager(self)
-        self.top.iconbitmap('./icons/templates.ico')
-        self.top.title('Record Templates')
+        self.columnconfigure(0, minsize=5)
+        self.columnconfigure(6, minsize=25)
+        self.columnconfigure(12, minsize=5)
 
         # variables
-        self.otid = tk.IntVar()
-        self.template_name = tk.StringVar()
         self.acqType = tk.StringVar()
         self.claim = tk.StringVar()
         self.oCode1 = tk.StringVar()
@@ -833,54 +829,20 @@ class OrderTemplate(tk.Frame):
         self.shipTo = tk.StringVar()
         self.requestor = tk.StringVar()
         self.paidNote = tk.StringVar()
-        self.bibMatForm = tk.StringVar()
-        self.primary_match = tk.StringVar()
-        self.secondary_match = tk.StringVar()
-        self.tertiary_match = tk.StringVar()
-
-        # layout of the main frame
-        self.top.columnconfigure(0, minsize=5)
-        self.top.columnconfigure(1, minsize=250)
-        self.top.columnconfigure(9, minsize=5)
-        self.top.columnconfigure(16, minsize=5)
-        self.top.rowconfigure(21, minsize=5)
-        self.top.rowconfigure(23, minsize=10)
-
-        # templates list
-        ttk.Label(self.top, text='{} templates:'.format(self.agent)).grid(
-            row=0, column=1, sticky='sw', pady=10)
-        scrollbar = ttk.Scrollbar(self.top, orient=tk.VERTICAL)
-        scrollbar.grid(
-            row=1, column=2, sticky='nsw', rowspan=20, padx=2, pady=10)
-        self.templateLst = tk.Listbox(
-            self.top,
-            selectmode=tk.SINGLE,
-            yscrollcommand=scrollbar.set)
-        self.templateLst.bind('<<ListboxSelect>>', self.show_details)
-        self.templateLst.grid(
-            row=1, column=1, sticky='snew', rowspan=20, pady=10)
-        scrollbar['command'] = self.templateLst.yview
-
-        # template name
-        ttk.Label(self.top, text='name:').grid(
-            row=0, column=4, sticky='sw', padx=5, pady=10)
-        self.templateEnt = ttk.Entry(
-            self.top, textvariable=self.template_name)
-        self.templateEnt.grid(
-            row=0, column=5, columnspan=8, sticky='sew', pady=10)
 
         # fixed fields frame
         self.fixedFrm = ttk.LabelFrame(
-            self.top,
+            self,
             text='order fixed fields')
         self.fixedFrm.grid(
-            row=1, rowspan=12, column=4, columnspan=5,
+            row=0, rowspan=12, column=0, columnspan=5,
             sticky='snew', padx=5, pady=5)
+
         self.fixedFrm.columnconfigure(0, minsize=5)
         self.fixedFrm.columnconfigure(3, minsize=25)
+        self.fixedFrm.columnconfigure(6, minsize=5)
         self.fixedFrm.rowconfigure(14, minsize=5)
 
-        # fixed fields widgets
         ttk.Label(self.fixedFrm, text='ACQ Type', style='Small.TLabel').grid(
             row=0, column=1, columnspan=2, sticky='sw')
         self.acqTypeCbx = ttk.Combobox(
@@ -996,13 +958,14 @@ class OrderTemplate(tk.Frame):
 
         # variable fields frame
         self.varFrm = ttk.LabelFrame(
-            self.top,
+            self,
             text='order variable fields')
         self.varFrm.grid(
-            row=1, rowspan=12, column=10, columnspan=5,
+            row=0, rowspan=12, column=7, columnspan=5,
             sticky='snew', padx=5, pady=5)
         self.varFrm.columnconfigure(0, minsize=5)
         self.varFrm.columnconfigure(3, minsize=25)
+        self.varFrm.columnconfigure(12, minsize=5)
         self.varFrm.rowconfigure(14, minsize=5)
 
         # variable field widgets
@@ -1108,6 +1071,126 @@ class OrderTemplate(tk.Frame):
             self.varFrm, textvariable=self.paidNote)
         self.paidNoteEnt.grid(
             row=11, column=4, columnspan=2, sticky='sew')
+
+        self.populate_cbxs()
+
+    def populate_cbxs(self):
+        # unblock comoboxes
+        for child in self.fixedFrm.winfo_children():
+            if child.winfo_class() == 'TCombobox':
+                child['state'] = '!readonly'
+
+        # populate with values
+        self.acqTypeCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.NACQ_TYPE.iteritems())]
+        self.acqTypeCbx['values'] = self.acqTypeCbx['values'] + ('', )
+        self.claimCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.NCLAIM.iteritems())]
+        self.claimCbx['values'] = self.claimCbx['values'] + ('', )
+        self.oCode1Cbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.NORDER_CODE1.iteritems())]
+        self.oCode1Cbx['values'] = self.oCode1Cbx['values'] + ('', )
+        self.oCode2Cbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.NORDER_CODE2.iteritems())]
+        self.oCode2Cbx['values'] = self.oCode2Cbx['values'] + ('', )
+        self.oCode3Cbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.NORDER_CODE3.iteritems())]
+        self.oCode3Cbx['values'] = self.oCode3Cbx['values'] + ('', )
+        self.oCode4Cbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.NORDER_CODE4.iteritems())]
+        self.oCode4Cbx['values'] = self.oCode4Cbx['values'] + ('', )
+        self.ractionCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(sd.NRACTION.iteritems())]
+        self.ractionCbx['values'] = self.ractionCbx['values'] + ('', )
+        self.oFormCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.N_OFORM.iteritems())]
+        self.oFormCbx['values'] = self.oFormCbx['values'] + ('', )
+        self.oTypeCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.NORDER_TYPE.iteritems())]
+        self.oTypeCbx['values'] = self.oTypeCbx['values'] + ('', )
+        self.oNoteCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.NORDER_NOTE.iteritems())]
+        self.oNoteCbx['values'] = self.oNoteCbx['values'] + ('', )
+        self.langCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.LANG.iteritems())]
+        self.langCbx['values'] = self.langCbx['values'] + ('', )
+        self.countryCbx['values'] = [
+            '{} ({})'.format(x, y) for x, y in sorted(
+                sd.COUNTRIES.iteritems())]
+        self.countryCbx['values'] = self.countryCbx['values'] + ('', )
+
+        # block comboboxes
+        for child in self.fixedFrm.winfo_children():
+            if child.winfo_class() == 'TCombobox':
+                child['state'] = 'readonly'
+
+
+class OrderTemplate(tk.Frame):
+    """GUI for selection order templates"""
+
+    def __init__(self, parent, **kwargs):
+        self.parent = parent
+        self.agent = kwargs['agent']
+        tk.Frame.__init__(self, self.parent, background='white')
+        self.top = tk.Toplevel(self, background='white')
+        self.cur_manager = BusyManager(self)
+        self.top.iconbitmap('./icons/templates.ico')
+        self.top.title('Record Templates')
+
+        # variables
+        self.otid = tk.IntVar()
+        self.template_name = tk.StringVar()
+        self.bibMatForm = tk.StringVar()
+        self.primary_match = tk.StringVar()
+        self.secondary_match = tk.StringVar()
+        self.tertiary_match = tk.StringVar()
+
+        # layout of the main frame
+        self.top.columnconfigure(0, minsize=5)
+        self.top.columnconfigure(1, minsize=250)
+        self.top.columnconfigure(9, minsize=5)
+        self.top.columnconfigure(16, minsize=5)
+        self.top.rowconfigure(21, minsize=5)
+        self.top.rowconfigure(23, minsize=10)
+
+        # templates list
+        ttk.Label(self.top, text='{} templates:'.format(self.agent)).grid(
+            row=0, column=1, sticky='sw', pady=10)
+        scrollbar = ttk.Scrollbar(self.top, orient=tk.VERTICAL)
+        scrollbar.grid(
+            row=1, column=2, sticky='nsw', rowspan=20, padx=2, pady=10)
+        self.templateLst = tk.Listbox(
+            self.top,
+            selectmode=tk.SINGLE,
+            yscrollcommand=scrollbar.set)
+        self.templateLst.bind('<<ListboxSelect>>', self.show_details)
+        self.templateLst.grid(
+            row=1, column=1, sticky='snew', rowspan=20, pady=10)
+        scrollbar['command'] = self.templateLst.yview
+
+        # template name
+        ttk.Label(self.top, text='name:').grid(
+            row=0, column=4, sticky='sw', padx=5, pady=10)
+        self.templateEnt = ttk.Entry(
+            self.top, textvariable=self.template_name)
+        self.templateEnt.grid(
+            row=0, column=5, columnspan=8, sticky='sew', pady=10)
+
+        # create order fields frame
+        self.fieldsWidget = OrderFields(self.top)
+        self.fieldsWidget.grid(
+            row=1, rowspan=12, column=4, columnspan=10,
+            sticky='snew', padx=5, pady=5)
 
         # sierra bibliographic format frame
         self.bibFrm = ttk.LabelFrame(
@@ -1220,65 +1303,68 @@ class OrderTemplate(tk.Frame):
             self.otid.set(t.otid)
 
             if t.acqType is not None:
-                self.acqType.set(
+                self.fieldsWidget.acqType.set(
                     '{} ({})'.format(t.acqType, sd.NACQ_TYPE[t.acqType]))
             if t.claim is not None:
-                self.claim.set(
+                self.fieldsWidget.claim.set(
                     '{} ({})'.format(t.claim, sd.NCLAIM[t.claim]))
             if t.code1 is not None:
-                self.oCode1.set(
+                self.fieldsWidget.oCode1.set(
                     '{} ({})'.format(t.code1, sd.NORDER_CODE1[t.code1]))
             if t.code2 is not None:
-                self.oCode2.set(
+                self.fieldsWidget.oCode2.set(
                     '{} ({})'.format(t.code2, sd.NORDER_CODE2[t.code2]))
             if t.code3 is not None:
-                self.oCode3.set(
+                self.fieldsWidget.oCode3.set(
                     '{} ({})'.format(t.code3, sd.NORDER_CODE3[t.code3]))
             if t.code4 is not None:
-                self.oCode4.set(
+                self.fieldsWidget.oCode4.set(
                     '{} ({})'.format(t.code4, sd.NORDER_CODE4[t.code4]))
+            if t.raction is not None:
+                self.fieldsWidget.raction.set(
+                    '{} ({})'.format(t.raction, sd.NRACTION[t.raction]))
             if t.form is not None:
-                self.oForm.set(
+                self.fieldsWidget.oForm.set(
                     '{} ({})'.format(t.form, sd.N_OFORM[t.form]))
             if t.orderType is not None:
-                self.oType.set(
+                self.fieldsWidget.oType.set(
                     '{} ({})'.format(t.orderType, sd.NORDER_TYPE[t.orderType]))
             if t.orderNote is not None:
-                self.oNote.set(
+                self.fieldsWidget.oNote.set(
                     '{} ({})'.format(t.orderNote, sd.NORDER_NOTE[t.orderNote]))
             if t.lang is not None:
-                self.lang.set(
+                self.fieldsWidget.lang.set(
                     '{} ({})'.format(t.lang, sd.LANG[t.lang]))
             if t.country is not None:
-                self.country.set(
+                self.fieldsWidget.country.set(
                     '{} ({})'.format(t.country, sd.COUNTRIES[t.country]))
 
             if t.vendor is not None:
-                self.vendor.set(t.vendor)
+                self.fieldsWidget.vendor.set(t.vendor)
             if t.identity is not None:
-                self.identity.set(t.identity)
+                self.fieldsWidget.identity.set(t.identity)
             if t.generalNote is not None:
-                self.genNote.set(t.generalNote)
+                self.fieldsWidget.genNote.set(t.generalNote)
             if t.internalNote is not None:
-                self.intNote.set(t.internalNote)
+                self.fieldsWidget.intNote.set(t.internalNote)
             if t.oldOrdNo is not None:
-                self.oldOrdNo.set(t.oldOrdNo)
+                self.fieldsWidget.oldOrdNo.set(t.oldOrdNo)
             if t.selector is not None:
-                self.selector.set(t.selector)
+                self.fieldsWidget.selector.set(t.selector)
             if t.venAddr is not None:
-                self.venAddr.set(t.venAddr)
+                self.fieldsWidget.venAddr.set(t.venAddr)
             if t.venNote is not None:
-                self.venNote.set(t.venNote)
+                self.fieldsWidget.venNote.set(t.venNote)
             if t.blanketPO is not None:
-                self.blanketPO.set(t.blanketPO)
+                self.fieldsWidget.blanketPO.set(t.blanketPO)
             if t.venTitleNo is not None:
-                self.venTitleNo.set(t.venTitleNo)
+                self.fieldsWidget.venTitleNo.set(t.venTitleNo)
             if t.paidNote is not None:
-                self.paidNote.set(t.paidNote)
+                self.fieldsWidget.paidNote.set(t.paidNote)
             if t.shipTo is not None:
-                self.shipTo.set(t.shipTo)
+                self.fieldsWidget.shipTo.set(t.shipTo)
             if t.requestor is not None:
-                self.requestor.set(t.requestor)
+                self.fieldsWidget.requestor.set(t.requestor)
             if t.bibFormat is not None:
                 self.bibMatForm.set(t.bibFormat)
 
@@ -1296,18 +1382,18 @@ class OrderTemplate(tk.Frame):
         f = dict(
             tName=self.template_name.get().strip(),
             agent=self.agent[:3],
-            acqType=self.acqType.get(),
-            claim=self.claim.get(),
-            code1=self.oCode1.get(),
-            code2=self.oCode2.get(),
-            code3=self.oCode3.get(),
-            code4=self.oCode4.get(),
-            raction=self.raction.get(),
-            form=self.oForm.get(),
-            orderNote=self.oNote.get(),
-            orderType=self.oType.get(),
-            lang=self.lang.get(),
-            country=self.country.get(),
+            acqType=self.fieldsWidget.acqType.get(),
+            claim=self.fieldsWidget.claim.get(),
+            code1=self.fieldsWidget.oCode1.get(),
+            code2=self.fieldsWidget.oCode2.get(),
+            code3=self.fieldsWidget.oCode3.get(),
+            code4=self.fieldsWidget.oCode4.get(),
+            raction=self.fieldsWidget.raction.get(),
+            form=self.fieldsWidget.oForm.get(),
+            orderNote=self.fieldsWidget.oNote.get(),
+            orderType=self.fieldsWidget.oType.get(),
+            lang=self.fieldsWidget.lang.get(),
+            country=self.fieldsWidget.country.get(),
             bibFormat=self.bibMatForm.get(),
             match1st=self.primary_match.get(),
             match2nd=self.secondary_match.get(),
@@ -1330,19 +1416,19 @@ class OrderTemplate(tk.Frame):
 
         # entry boxes
         v = dict(
-            vendor=self.vendor.get().strip(),
-            identity=self.identity.get().strip(),
-            generalNote=self.genNote.get().strip(),
-            internalNote=self.intNote.get().strip(),
-            oldOrdNo=self.oldOrdNo.get().strip(),
-            selector=self.selector.get().strip(),
-            venAddr=self.venAddr.get().strip(),
-            venNote=self.venNote.get().strip(),
-            venTitleNo=self.venTitleNo.get().strip(),
-            blanketPO=self.blanketPO.get().strip(),
-            shipTo=self.shipTo.get().strip(),
-            requestor=self.requestor.get().strip(),
-            paidNote=self.paidNote.get().strip(),
+            vendor=self.fieldsWidget.vendor.get().strip(),
+            identity=self.fieldsWidget.identity.get().strip(),
+            generalNote=self.fieldsWidget.genNote.get().strip(),
+            internalNote=self.fieldsWidget.intNote.get().strip(),
+            oldOrdNo=self.fieldsWidget.oldOrdNo.get().strip(),
+            selector=self.fieldsWidget.selector.get().strip(),
+            venAddr=self.fieldsWidget.venAddr.get().strip(),
+            venNote=self.fieldsWidget.venNote.get().strip(),
+            venTitleNo=self.fieldsWidget.venTitleNo.get().strip(),
+            blanketPO=self.fieldsWidget.blanketPO.get().strip(),
+            shipTo=self.fieldsWidget.shipTo.get().strip(),
+            requestor=self.fieldsWidget.requestor.get().strip(),
+            paidNote=self.fieldsWidget.paidNote.get().strip(),
         )
 
         for key, value in v.iteritems():
@@ -1438,64 +1524,6 @@ class OrderTemplate(tk.Frame):
             self.templateLst.insert(tk.END, name)
 
     def populate_cbxs(self):
-        # unblock comoboxes
-        for child in self.fixedFrm.winfo_children():
-            if child.winfo_class() == 'TCombobox':
-                child['state'] = '!readonly'
-
-        # populate with values
-        self.acqTypeCbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.NACQ_TYPE.iteritems())]
-        self.acqTypeCbx['values'] = self.acqTypeCbx['values'] + ('', )
-        self.claimCbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.NCLAIM.iteritems())]
-        self.claimCbx['values'] = self.claimCbx['values'] + ('', )
-        self.oCode1Cbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.NORDER_CODE1.iteritems())]
-        self.oCode1Cbx['values'] = self.oCode1Cbx['values'] + ('', )
-        self.oCode2Cbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.NORDER_CODE2.iteritems())]
-        self.oCode2Cbx['values'] = self.oCode2Cbx['values'] + ('', )
-        self.oCode3Cbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.NORDER_CODE3.iteritems())]
-        self.oCode3Cbx['values'] = self.oCode3Cbx['values'] + ('', )
-        self.oCode4Cbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.NORDER_CODE4.iteritems())]
-        self.oCode4Cbx['values'] = self.oCode4Cbx['values'] + ('', )
-        self.ractionCbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(sd.NRACTION.iteritems())]
-        self.ractionCbx['values'] = self.ractionCbx['values'] + ('', )
-        self.oFormCbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.N_OFORM.iteritems())]
-        self.oFormCbx['values'] = self.oFormCbx['values'] + ('', )
-        self.oTypeCbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.NORDER_TYPE.iteritems())]
-        self.oTypeCbx['values'] = self.oTypeCbx['values'] + ('', )
-        self.oNoteCbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.NORDER_NOTE.iteritems())]
-        self.oNoteCbx['values'] = self.oNoteCbx['values'] + ('', )
-        self.langCbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.LANG.iteritems())]
-        self.langCbx['values'] = self.langCbx['values'] + ('', )
-        self.countryCbx['values'] = [
-            '{} ({})'.format(x, y) for x, y in sorted(
-                sd.COUNTRIES.iteritems())]
-        self.countryCbx['values'] = self.countryCbx['values'] + ('', )
-
-        # block comboboxes
-        for child in self.fixedFrm.winfo_children():
-            if child.winfo_class() == 'TCombobox':
-                child['state'] = 'readonly'
 
         self.bibMatFormCbx['state'] = '!readonly'
         self.bibMatFormCbx['values'] = [
@@ -1508,31 +1536,31 @@ class OrderTemplate(tk.Frame):
     def reset(self):
         self.otid.set(0)
         self.template_name.set('')
-        self.acqType.set('')
-        self.claim.set('')
-        self.oCode1.set('')
-        self.oCode2.set('')
-        self.oCode3.set('')
-        self.oCode4.set('')
-        self.raction.set('')
-        self.oForm.set('')
-        self.oNote.set('')
-        self.oType.set('')
-        self.vendor.set('')
-        self.lang.set('')
-        self.country.set('')
-        self.identity.set('')
-        self.genNote.set('')
-        self.intNote.set('')
-        self.oldOrdNo.set('')
-        self.selector.set('')
-        self.venAddr.set('')
-        self.venNote.set('')
-        self.venTitleNo.set('')
-        self.blanketPO.set('')
-        self.shipTo.set('')
-        self.requestor.set('')
-        self.paidNote.set('')
+        self.fieldsWidget.acqType.set('')
+        self.fieldsWidget.claim.set('')
+        self.fieldsWidget.oCode1.set('')
+        self.fieldsWidget.oCode2.set('')
+        self.fieldsWidget.oCode3.set('')
+        self.fieldsWidget.oCode4.set('')
+        self.fieldsWidget.raction.set('')
+        self.fieldsWidget.oForm.set('')
+        self.fieldsWidget.oNote.set('')
+        self.fieldsWidget.oType.set('')
+        self.fieldsWidget.vendor.set('')
+        self.fieldsWidget.lang.set('')
+        self.fieldsWidget.country.set('')
+        self.fieldsWidget.identity.set('')
+        self.fieldsWidget.genNote.set('')
+        self.fieldsWidget.intNote.set('')
+        self.fieldsWidget.oldOrdNo.set('')
+        self.fieldsWidget.selector.set('')
+        self.fieldsWidget.venAddr.set('')
+        self.fieldsWidget.venNote.set('')
+        self.fieldsWidget.venTitleNo.set('')
+        self.fieldsWidget.blanketPO.set('')
+        self.fieldsWidget.shipTo.set('')
+        self.fieldsWidget.requestor.set('')
+        self.fieldsWidget.paidNote.set('')
         self.bibMatForm.set('')
         self.primary_match.set('')
         self.secondary_match.set('')
