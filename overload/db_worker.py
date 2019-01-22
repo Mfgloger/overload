@@ -46,3 +46,8 @@ def retrieve_record(session, model, **kwargs):
 def delete_record(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).one()
     session.delete(instance)
+
+
+def create_db_object(model, **kwargs):
+    instance = model(**kwargs)
+    return instance

@@ -394,7 +394,7 @@ def db_template_to_961(template, vendor_961):
 
     # list of relevalnt to PVR subfields of 960
     pvr_subs = set(
-        ['a', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm', 'v'])
+        ['a', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'])
 
     # find extra subfield to be carried over to the new field
     nsub = []
@@ -470,11 +470,11 @@ def db_template_to_961(template, vendor_961):
 
     try:
         if template.venNote:
-            nsub.extend(['v', template.venNote])
+            nsub.extend(['h', template.venNote])
         else:
             nsub.extend([
-                'v',
-                vsub[vinx.index('v') + 1]])
+                'h',
+                vsub[vinx.index('h') + 1]])
     except ValueError:
         pass
 
