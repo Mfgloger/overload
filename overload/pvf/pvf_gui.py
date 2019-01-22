@@ -2339,7 +2339,6 @@ class ProcessVendorFiles(tk.Frame):
                     user_data = shelve.open(USER_DATA)
                     template = user_data['pvr_order_template']
                     user_data.close()
-                    print(template)
 
                 try:
                     run_processing(
