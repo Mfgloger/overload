@@ -2221,7 +2221,7 @@ class ProcessVendorFiles(tk.Frame):
                 'Selection and Acquisition users must specify the template')
 
         # launch one-time modification to template
-        if self.templateChange.get() == 1:
+        if self.templateChange.get() == 1 and self.template.get() != '':
             modWidget = ModifyTemplateForRun(
                 self, template=self.template.get())
             self.wait_window(modWidget.top)
