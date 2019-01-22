@@ -16,7 +16,7 @@ import tkMessageBox
 from bibs import bibs
 import bibs.sierra_dicts as sd
 from datastore import NYPLOrderTemplate, session_scope
-from db_worker import retrieve_record
+from db_worker import retrieve_record, create_db_object
 import connectors.goo as goo
 from connectors.goo_settings.access_names import GAPP, GUSER
 from errors import OverloadError
@@ -38,6 +38,152 @@ from validators.marcedit import delete_validation_report
 
 
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
+
+
+def insert_order_data(template, fieldsWidget):
+    """populates order fields in OrderFields widget"""
+
+    # fixed order fields
+    if template.acqType is not None:
+        fieldsWidget.acqType.set(
+            '{} ({})'.format(
+                template.acqType, sd.NACQ_TYPE[template.acqType]))
+    if template.claim is not None:
+        fieldsWidget.claim.set(
+            '{} ({})'.format(template.claim, sd.NCLAIM[template.claim]))
+    if template.code1 is not None:
+        fieldsWidget.oCode1.set(
+            '{} ({})'.format(
+                template.code1, sd.NORDER_CODE1[template.code1]))
+    if template.code2 is not None:
+        fieldsWidget.oCode2.set(
+            '{} ({})'.format(
+                template.code2, sd.NORDER_CODE2[template.code2]))
+    if template.code3 is not None:
+        fieldsWidget.oCode3.set(
+            '{} ({})'.format(
+                template.code3, sd.NORDER_CODE3[template.code3]))
+    if template.code4 is not None:
+        fieldsWidget.oCode4.set(
+            '{} ({})'.format(
+                template.code4, sd.NORDER_CODE4[template.code4]))
+    if template.raction is not None:
+        fieldsWidget.raction.set(
+            '{} ({})'.format(
+                template.raction, sd.NRACTION[template.raction]))
+    if template.form is not None:
+        fieldsWidget.oForm.set(
+            '{} ({})'.format(
+                template.form, sd.N_OFORM[template.form]))
+    if template.orderType is not None:
+        fieldsWidget.oType.set(
+            '{} ({})'.format(
+                template.orderType, sd.NORDER_TYPE[template.orderType]))
+    if template.orderNote is not None:
+        fieldsWidget.oNote.set(
+            '{} ({})'.format(
+                template.orderNote, sd.NORDER_NOTE[template.orderNote]))
+    if template.lang is not None:
+        fieldsWidget.lang.set(
+            '{} ({})'.format(
+                template.lang, sd.LANG[template.lang]))
+    if template.country is not None:
+        fieldsWidget.country.set(
+            '{} ({})'.format(
+                template.country, sd.COUNTRIES[template.country]))
+    if template.vendor is not None:
+        fieldsWidget.vendor.set(template.vendor)
+
+    # variable order fields
+    if template.identity is not None:
+        fieldsWidget.identity.set(template.identity)
+    if template.generalNote is not None:
+        fieldsWidget.genNote.set(template.generalNote)
+    if template.internalNote is not None:
+        fieldsWidget.intNote.set(template.internalNote)
+    if template.oldOrdNo is not None:
+        fieldsWidget.oldOrdNo.set(template.oldOrdNo)
+    if template.selector is not None:
+        fieldsWidget.selector.set(template.selector)
+    if template.venAddr is not None:
+        fieldsWidget.venAddr.set(template.venAddr)
+    if template.venNote is not None:
+        fieldsWidget.venNote.set(template.venNote)
+    if template.blanketPO is not None:
+        fieldsWidget.blanketPO.set(template.blanketPO)
+    if template.venTitleNo is not None:
+        fieldsWidget.venTitleNo.set(template.venTitleNo)
+    if template.paidNote is not None:
+        fieldsWidget.paidNote.set(template.paidNote)
+    if template.shipTo is not None:
+        fieldsWidget.shipTo.set(template.shipTo)
+    if template.requestor is not None:
+        fieldsWidget.requestor.set(template.requestor)
+
+
+def create_template_dict(fieldsWidget, **kwargs):
+    record = dict()
+
+    # comboboxes
+    f = dict(
+        # otid=template_id,
+        tName=kwargs['tName'].strip(),
+        agent=kwargs['agent'][:3],
+        acqType=fieldsWidget.acqType.get(),
+        claim=fieldsWidget.claim.get(),
+        code1=fieldsWidget.oCode1.get(),
+        code2=fieldsWidget.oCode2.get(),
+        code3=fieldsWidget.oCode3.get(),
+        code4=fieldsWidget.oCode4.get(),
+        raction=fieldsWidget.raction.get(),
+        form=fieldsWidget.oForm.get(),
+        orderNote=fieldsWidget.oNote.get(),
+        orderType=fieldsWidget.oType.get(),
+        lang=fieldsWidget.lang.get(),
+        country=fieldsWidget.country.get(),
+        bibFormat=kwargs['bibFormat'],
+        match1st=kwargs['match1st'],
+        match2nd=kwargs['match2nd'],
+        match3rd=kwargs['match3rd']
+    )
+
+    for key, value in f.iteritems():
+        if value == '':
+            value = None
+        else:
+            if key in ('match1st', 'match2nd', 'match3rd'):
+                if value == '':
+                    value = None
+                record[key] = value
+            elif key == 'country':
+                value = value.split(' (')[0]
+            else:
+                value = value.split('(')[0].strip()
+        record[key] = value
+
+    # entry boxes
+    v = dict(
+        vendor=fieldsWidget.vendor.get().strip(),
+        identity=fieldsWidget.identity.get().strip(),
+        generalNote=fieldsWidget.genNote.get().strip(),
+        internalNote=fieldsWidget.intNote.get().strip(),
+        oldOrdNo=fieldsWidget.oldOrdNo.get().strip(),
+        selector=fieldsWidget.selector.get().strip(),
+        venAddr=fieldsWidget.venAddr.get().strip(),
+        venNote=fieldsWidget.venNote.get().strip(),
+        venTitleNo=fieldsWidget.venTitleNo.get().strip(),
+        blanketPO=fieldsWidget.blanketPO.get().strip(),
+        shipTo=fieldsWidget.shipTo.get().strip(),
+        requestor=fieldsWidget.requestor.get().strip(),
+        paidNote=fieldsWidget.paidNote.get().strip(),
+    )
+
+    for key, value in v.iteritems():
+        if value == '':
+            value = None
+        record[key] = value
+
+    return record
 
 
 class TransferFiles(tk.Frame):
@@ -794,7 +940,7 @@ class TransferFiles(tk.Frame):
 
 
 class OrderFields(tk.Frame):
-    """Widget populating order fields"""
+    """Widget displaying order fields"""
 
     def __init__(self, parent, **kwargs):
         self.parent = parent
@@ -1135,6 +1281,98 @@ class OrderFields(tk.Frame):
                 child['state'] = 'readonly'
 
 
+class ModifyTemplateForRun(tk.Frame):
+    """Widget that applies one-time modification to
+       applied template"""
+
+    def __init__(self, parent, **kwargs):
+        self.parent = parent
+        self.template_name = kwargs['template']
+        tk.Frame.__init__(self, self.parent, background='white')
+        self.top = tk.Toplevel(self, background='white')
+        self.cur_manager = BusyManager(self)
+        self.top.iconbitmap('./icons/templates.ico')
+        self.top.title('One-time "{}" modification'.format(self.template_name))
+
+        # variables
+        self.otid = None
+        self.tName = None
+        self.agent = None
+        self.bibFormat = None
+        self.match1st = None
+        self.match2nd = None
+        self.match3rd = None
+
+        self.top.rowconfigure(0, minsize=5)
+        self.top.rowconfigure(2, minsize=10)
+        self.top.rowconfigure(4, minsize=5)
+
+        self.fieldsWidget = OrderFields(self.top)
+        self.fieldsWidget.grid(
+            row=1, column=1, columnspan=3)
+
+        # buttons
+        self.okBtn = ttk.Button(
+            self.top,
+            text='OK',
+            command=self.on_ok,
+            cursor='hand2',
+            width=12)
+        self.okBtn.grid(
+            row=3, column=2, sticky='nw', padx=5, pady=10)
+
+        self.cancelBtn = ttk.Button(
+            self.top,
+            text='Cancel',
+            command=self.on_cancel,
+            cursor='hand2',
+            width=12)
+        self.cancelBtn.grid(
+            row=3, column=3, sticky='nw', padx=5, pady=10)
+
+        self.get_fields()
+
+    def get_fields(self):
+        with session_scope() as db_session:
+            template = retrieve_record(
+                db_session, NYPLOrderTemplate, tName=self.template_name)
+
+            self.otid = template.otid
+            self.tName = template.tName
+            self.agent = template.agent
+            self.bibFormat = template.bibFormat
+            self.match1st = template.match1st
+            self.match2nd = template.match2nd
+            self.match3rd = template.match3rd
+
+            insert_order_data(template, self.fieldsWidget)
+
+    def on_ok(self):
+        template_dict = create_template_dict(
+            self.fieldsWidget,
+            tName=self.tName,
+            agent=self.agent,
+            bibFormat=self.bibFormat,
+            match1st=self.match1st,
+            match2nd=self.match2nd,
+            match3rd=self.match3rd)
+        template_dict['otid'] = self.otid
+
+        template = create_db_object(
+            NYPLOrderTemplate, **template_dict)
+
+        # save the template in user_data
+        user_data = shelve.open(USER_DATA)
+        user_data['pvr_order_template'] = template
+        user_data.close()
+
+        # destroy widget
+        self.top.destroy()
+
+    def on_cancel(self):
+        self.top.destroy()
+
+
 class OrderTemplate(tk.Frame):
     """GUI for selection order templates"""
 
@@ -1297,144 +1535,33 @@ class OrderTemplate(tk.Frame):
         name = self.templateLst.get(self.templateLst.curselection())
 
         with session_scope() as session:
-            t = retrieve_record(
+            template = retrieve_record(
                 session, NYPLOrderTemplate, tName=name, agent=self.agent[:3])
-            self.template_name.set(t.tName)
-            self.otid.set(t.otid)
+            self.template_name.set(template.tName)
+            self.otid.set(template.otid)
 
-            if t.acqType is not None:
-                self.fieldsWidget.acqType.set(
-                    '{} ({})'.format(t.acqType, sd.NACQ_TYPE[t.acqType]))
-            if t.claim is not None:
-                self.fieldsWidget.claim.set(
-                    '{} ({})'.format(t.claim, sd.NCLAIM[t.claim]))
-            if t.code1 is not None:
-                self.fieldsWidget.oCode1.set(
-                    '{} ({})'.format(t.code1, sd.NORDER_CODE1[t.code1]))
-            if t.code2 is not None:
-                self.fieldsWidget.oCode2.set(
-                    '{} ({})'.format(t.code2, sd.NORDER_CODE2[t.code2]))
-            if t.code3 is not None:
-                self.fieldsWidget.oCode3.set(
-                    '{} ({})'.format(t.code3, sd.NORDER_CODE3[t.code3]))
-            if t.code4 is not None:
-                self.fieldsWidget.oCode4.set(
-                    '{} ({})'.format(t.code4, sd.NORDER_CODE4[t.code4]))
-            if t.raction is not None:
-                self.fieldsWidget.raction.set(
-                    '{} ({})'.format(t.raction, sd.NRACTION[t.raction]))
-            if t.form is not None:
-                self.fieldsWidget.oForm.set(
-                    '{} ({})'.format(t.form, sd.N_OFORM[t.form]))
-            if t.orderType is not None:
-                self.fieldsWidget.oType.set(
-                    '{} ({})'.format(t.orderType, sd.NORDER_TYPE[t.orderType]))
-            if t.orderNote is not None:
-                self.fieldsWidget.oNote.set(
-                    '{} ({})'.format(t.orderNote, sd.NORDER_NOTE[t.orderNote]))
-            if t.lang is not None:
-                self.fieldsWidget.lang.set(
-                    '{} ({})'.format(t.lang, sd.LANG[t.lang]))
-            if t.country is not None:
-                self.fieldsWidget.country.set(
-                    '{} ({})'.format(t.country, sd.COUNTRIES[t.country]))
+            insert_order_data(template, self.fieldsWidget)
 
-            if t.vendor is not None:
-                self.fieldsWidget.vendor.set(t.vendor)
-            if t.identity is not None:
-                self.fieldsWidget.identity.set(t.identity)
-            if t.generalNote is not None:
-                self.fieldsWidget.genNote.set(t.generalNote)
-            if t.internalNote is not None:
-                self.fieldsWidget.intNote.set(t.internalNote)
-            if t.oldOrdNo is not None:
-                self.fieldsWidget.oldOrdNo.set(t.oldOrdNo)
-            if t.selector is not None:
-                self.fieldsWidget.selector.set(t.selector)
-            if t.venAddr is not None:
-                self.fieldsWidget.venAddr.set(t.venAddr)
-            if t.venNote is not None:
-                self.fieldsWidget.venNote.set(t.venNote)
-            if t.blanketPO is not None:
-                self.fieldsWidget.blanketPO.set(t.blanketPO)
-            if t.venTitleNo is not None:
-                self.fieldsWidget.venTitleNo.set(t.venTitleNo)
-            if t.paidNote is not None:
-                self.fieldsWidget.paidNote.set(t.paidNote)
-            if t.shipTo is not None:
-                self.fieldsWidget.shipTo.set(t.shipTo)
-            if t.requestor is not None:
-                self.fieldsWidget.requestor.set(t.requestor)
-            if t.bibFormat is not None:
-                self.bibMatForm.set(t.bibFormat)
-
-            if t.match1st is not None:
-                self.primary_match.set(t.match1st)
-            if t.match2nd is not None:
-                self.secondary_match.set(t.match2nd)
-            if t.match3rd is not None:
-                self.tertiary_match.set(t.match3rd)
+            if template.bibFormat is not None:
+                self.bibMatForm.set(template.bibFormat)
+            if template.match1st is not None:
+                self.primary_match.set(template.match1st)
+            if template.match2nd is not None:
+                self.secondary_match.set(template.match2nd)
+            if template.match3rd is not None:
+                self.tertiary_match.set(template.match3rd)
 
     def save_template(self):
-        record = dict()
 
-        # comboboxes
-        f = dict(
-            tName=self.template_name.get().strip(),
-            agent=self.agent[:3],
-            acqType=self.fieldsWidget.acqType.get(),
-            claim=self.fieldsWidget.claim.get(),
-            code1=self.fieldsWidget.oCode1.get(),
-            code2=self.fieldsWidget.oCode2.get(),
-            code3=self.fieldsWidget.oCode3.get(),
-            code4=self.fieldsWidget.oCode4.get(),
-            raction=self.fieldsWidget.raction.get(),
-            form=self.fieldsWidget.oForm.get(),
-            orderNote=self.fieldsWidget.oNote.get(),
-            orderType=self.fieldsWidget.oType.get(),
-            lang=self.fieldsWidget.lang.get(),
-            country=self.fieldsWidget.country.get(),
+        record = create_template_dict(
+            self.fieldsWidget,
+            # otid=self.otid.get(),
+            tName=self.template_name.get(),
+            agent=self.agent,
             bibFormat=self.bibMatForm.get(),
             match1st=self.primary_match.get(),
             match2nd=self.secondary_match.get(),
-            match3rd=self.tertiary_match.get()
-        )
-
-        for key, value in f.iteritems():
-            if value == '':
-                value = None
-            else:
-                if key in ('match1st', 'match2nd', 'match3rd'):
-                    if value == '':
-                        value = None
-                    record[key] = value
-                elif key == 'country':
-                    value = value.split(' (')[0]
-                else:
-                    value = value.split('(')[0].strip()
-            record[key] = value
-
-        # entry boxes
-        v = dict(
-            vendor=self.fieldsWidget.vendor.get().strip(),
-            identity=self.fieldsWidget.identity.get().strip(),
-            generalNote=self.fieldsWidget.genNote.get().strip(),
-            internalNote=self.fieldsWidget.intNote.get().strip(),
-            oldOrdNo=self.fieldsWidget.oldOrdNo.get().strip(),
-            selector=self.fieldsWidget.selector.get().strip(),
-            venAddr=self.fieldsWidget.venAddr.get().strip(),
-            venNote=self.fieldsWidget.venNote.get().strip(),
-            venTitleNo=self.fieldsWidget.venTitleNo.get().strip(),
-            blanketPO=self.fieldsWidget.blanketPO.get().strip(),
-            shipTo=self.fieldsWidget.shipTo.get().strip(),
-            requestor=self.fieldsWidget.requestor.get().strip(),
-            paidNote=self.fieldsWidget.paidNote.get().strip(),
-        )
-
-        for key, value in v.iteritems():
-            if value == '':
-                value = None
-            record[key] = value
+            match3rd=self.tertiary_match.get())
 
         # determine if new record or update
         if self.otid.get() != 0:
@@ -1604,6 +1731,7 @@ class ProcessVendorFiles(tk.Frame):
         self.agent.trace('w', self.agent_observer)
         self.last_used_agent = None
         self.template = tk.StringVar()
+        self.templateChange = tk.IntVar()
 
         # logos
         self.nyplLogo = tk.PhotoImage(file='./icons/nyplLogo.gif')
@@ -1640,6 +1768,7 @@ class ProcessVendorFiles(tk.Frame):
             relief='ridge')
         self.targetFrm.grid(
             row=1, column=1, columnspan=6, sticky='snew')
+        self.targetFrm.rowconfigure(4, minsize=5)
 
         # system drop down menu
         self.systemLbl = ttk.Label(
@@ -1712,6 +1841,14 @@ class ProcessVendorFiles(tk.Frame):
         self.templateBtn.grid(
             row=2, column=7, sticky='ne', padx=5)
         self.templateBtn.image = edit
+
+        self.modTemplateCbtn = ttk.Checkbutton(
+            self.targetFrm,
+            cursor='hand2',
+            text='one-time template change',
+            variable=self.templateChange)
+        self.modTemplateCbtn.grid(
+            row=3, column=2, columnspan=2, sticky='sew', padx=5)
 
         # browse & ftp buttons
         self.selectBtn = ttk.Button(
@@ -1988,6 +2125,8 @@ class ProcessVendorFiles(tk.Frame):
         user_data['pvr_locval'] = self.locVal.get()
         user_data['pvr_marcval'] = self.marcVal.get()
         user_data['pvr_template'] = self.template.get()
+        # delete any stored SEL or ACQ template
+        user_data['pvr_order_template'] = None
 
         # record used connection target
         if 'Z3950' in self.target_name.get():
@@ -2048,6 +2187,7 @@ class ProcessVendorFiles(tk.Frame):
                     m = 'Please select a destination folder for ' \
                         'output MARC files to procceed.'
                     tkMessageBox.showwarning('Missing Destination Folder', m)
+
         user_data.close()
 
         # verify all paramaters are present
@@ -2079,6 +2219,22 @@ class ProcessVendorFiles(tk.Frame):
             required_params = False
             missing_params.append(
                 'Selection and Acquisition users must specify the template')
+
+        # launch one-time modification to template
+        if self.templateChange.get() == 1:
+            modWidget = ModifyTemplateForRun(
+                self, template=self.template.get())
+            self.wait_window(modWidget.top)
+
+        # determine if one-time mod to template has been applied
+        user_data = shelve.open(USER_DATA)
+        if not user_data['pvr_order_template'] and \
+                self.templateChange.get() == 1:
+            required_params = False
+            missing_params.append(
+                'One-time template modification selected but not confirmed.')
+            self.templateChange.set(0)
+        user_data.close()
 
         if not required_params:
             tkMessageBox.showwarning(
@@ -2166,8 +2322,24 @@ class ProcessVendorFiles(tk.Frame):
             if legal_files and valid_files:
                 if self.template.get() == '':
                     template = None
+                elif self.templateChange.get() == 1:
+                    # use modified template
+                    user_data = shelve.open(USER_DATA)
+                    template = user_data['pvr_order_template']
+                    user_data.close()
                 else:
-                    template = self.template.get()
+                    # use regular template (retrieve from db)
+                    with session_scope() as db_session:
+                        template = retrieve_record(
+                            db_session, NYPLOrderTemplate,
+                            tName=self.template.get())
+                        user_data = shelve.open(USER_DATA)
+                        user_data['pvr_order_template'] = template
+                        user_data.close()
+                    user_data = shelve.open(USER_DATA)
+                    template = user_data['pvr_order_template']
+                    user_data.close()
+                    print(template)
 
                 try:
                     run_processing(
@@ -2204,6 +2376,7 @@ class ProcessVendorFiles(tk.Frame):
                     tkMessageBox.showerror(
                         'Processing Error', exc)
                 finally:
+                    self.templateChange.set(0)
                     self.cur_manager.notbusy()
 
     def archive(self):
@@ -3044,11 +3217,15 @@ class ProcessVendorFiles(tk.Frame):
         if self.agent.get() == 'cataloging':
             self.template.set('')
             # self.templateCbx.set('')
+            self.templateChange.set(0)
             self.templateCbx['state'] = 'disabled'
+            self.modTemplateCbtn['state'] = 'disabled'
         else:
             self.template.set('')
             self.templateCbx['state'] = '!disabled'
             self.templateCbx['state'] = 'readonly'
+            self.templateChange.set(0)
+            self.modTemplateCbtn['state'] = '!disabled'
 
     def observer(self, *args):
         if self.activeW.get() == 'ProcessVendorFiles':

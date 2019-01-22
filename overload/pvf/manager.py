@@ -49,6 +49,11 @@ def run_processing(
     files, system, library, agent, api_type, api_name,
         template, output_directory, progbar, current_process_label):
 
+    """
+    args:
+        template: instance of NYPLOrderTemplate class
+    """
+
     # agent argument is 3 letter code
 
     module_logger.debug('PVR process launched.')
@@ -73,6 +78,10 @@ def run_processing(
         module_logger.debug('Connecting to Sierra API')
 
     # clean-up batch metadata & stats
+    if not template:
+        template_name = None
+    else:
+        template_name = template.tName
     module_logger.debug('Opening BATCH_META.')
     batch = shelve.open(BATCH_META, writeback=True)
     module_logger.debug(
@@ -82,12 +91,12 @@ def run_processing(
     batch['system'] = system
     batch['library'] = library
     batch['agent'] = agent
-    batch['template'] = template
+    batch['template'] = template_name
     batch['file_names'] = files
     batch.close()
     module_logger.debug(
         'BATCH_META new data: {}, {}, {}, {}, {}, {}'.format(
-            timestamp, system, library, agent, template, files))
+            timestamp, system, library, agent, template_name, files))
 
     stats = shelve.open(BATCH_STATS, writeback=True)
     stats.clear()
@@ -144,37 +153,35 @@ def run_processing(
     elif agent in ('sel', 'acq'):
         if system == 'nypl':
             query_matchpoints = dict()
-            with session_scope() as db_session:
-                try:
-                    trec = retrieve_record(
-                        db_session, NYPLOrderTemplate, tName=template,
-                        agent=agent)
-
-                    if trec.match1st == 'sierra_id':
-                        query_matchpoints['primary'] = (
-                            'id', trec.match1st)
+            try:
+                if template.match1st == 'sierra_id':
+                    query_matchpoints['primary'] = (
+                        'id', template.match1st)
+                else:
+                    query_matchpoints['primary'] = (
+                        'tag', template.match1st)
+                if template.match2nd is not None:
+                    if template.match2nd == 'sierra_id':
+                        query_matchpoints['secondary'] = (
+                            'id', template.match2nd)
                     else:
-                        query_matchpoints['primary'] = (
-                            'tag', trec.match1st)
-                    if trec.match2nd is not None:
-                        if trec.match2nd == 'sierra_id':
-                            query_matchpoints['secondary'] = (
-                                'id', trec.match2nd)
-                        else:
-                            query_matchpoints['secondary'] = (
-                                'tag', trec.match2nd)
-                    if trec.match3rd is not None:
-                        if trec.match3rd == 'sierra_id':
-                            query_matchpoints['tertiary'] = (
-                                'id', trec.match3rd)
-                        else:
-                            query_matchpoints['tertiary'] = (
-                                'tag', trec.match3rd)
-                except NoResultFound:
-                    raise OverloadError(
-                        'Unable to find template {}.\n'
-                        'Please verify it exists.'.format(
-                            template))
+                        query_matchpoints['secondary'] = (
+                            'tag', template.match2nd)
+                if template.match3rd is not None:
+                    if template.match3rd == 'sierra_id':
+                        query_matchpoints['tertiary'] = (
+                            'id', template.match3rd)
+                    else:
+                        query_matchpoints['tertiary'] = (
+                            'tag', template.match3rd)
+            except NoResultFound:
+                raise OverloadError(
+                    'Unable to find template {}.\n'
+                    'Please verify it exists.'.format(
+                        template.tName))
+            except AttributeError:
+                raise OverloadError(
+                    'Error while applying order template.')
         else:
             raise OverloadError(
                 'selection workflow for BPL not implemented yet')
@@ -211,7 +218,7 @@ def run_processing(
             elif agent in ('sel', 'acq'):
                 # vendor code
                 if system == 'nypl':
-                    vendor = get_vendor_from_nypl_template(template, agent)
+                    vendor = template.vendor
                     if vendor is None:
                         # do not apply but keep for stats
                         vendor = 'UNKNOWN'
@@ -419,79 +426,76 @@ def run_processing(
                 module_logger.debug(
                     'Selected CAT templates for {}: {}'.format(
                         vendor, templates))
-                for template in templates:
+                for catTemp in templates:
                     # skip if present or always add
-                    if template['tag'] == '949' and \
+                    if catTemp['tag'] == '949' and \
                             analysis['action'] == 'attach':
                         pass
-                    elif template['option'] == 'skip':
-                        if template['tag'] not in bib:
+                    elif catTemp['option'] == 'skip':
+                        if catTemp['tag'] not in bib:
                             module_logger.debug(
                                 'Field {} not present, adding '
                                 'from template'.format(
-                                    template['tag']))
-                            new_field = create_field_from_template(template)
+                                    catTemp['tag']))
+                            new_field = create_field_from_template(catTemp)
                             bib.add_field(new_field)
                         else:
                             module_logger.debug(
                                 'Field {} found. Skipping.'.format(
-                                    template['tag']))
-                    elif template['option'] == 'add':
+                                    catTemp['tag']))
+                    elif catTemp['option'] == 'add':
                         module_logger.debug(
                             'Field {} being added without checking '
                             'if already present'.format(
-                                template['tag']))
-                        new_field = create_field_from_template(template)
+                                catTemp['tag']))
+                        new_field = create_field_from_template(catTemp)
                         bib.add_field(new_field)
 
             elif agent in ('sel', 'acq'):
                 # batch template details should be retrieved instead for the
                 # whole batch = no need to pull it for each bib
-                with session_scope() as db_session:
-                    trec = retrieve_record(
-                        db_session, NYPLOrderTemplate, tName=template)
 
-                    new_fields = []
-                    if '960' in bib:
-                        for t960 in bib.get_fields('960'):
-                            new_field = db_template_to_960(trec, t960)
-                            if new_field:
-                                new_fields.append(new_field)
-                        bib.remove_fields('960')
-                    else:
-                        new_field = db_template_to_960(trec, None)
+                new_fields = []
+                if '960' in bib:
+                    for t960 in bib.get_fields('960'):
+                        new_field = db_template_to_960(template, t960)
                         if new_field:
                             new_fields.append(new_field)
+                    bib.remove_fields('960')
+                else:
+                    new_field = db_template_to_960(template, None)
+                    if new_field:
+                        new_fields.append(new_field)
 
-                    # add modified fields back to record
-                    for field in new_fields:
-                        bib.add_field(field)
+                # add modified fields back to record
+                for field in new_fields:
+                    bib.add_field(field)
 
-                    new_fields = []
-                    if '961' in bib:
-                        for t961 in bib.get_fields('961'):
-                            new_field = db_template_to_961(trec, t961)
-                            if new_field:
-                                new_fields.append(new_field)
-                        # remove existing fields
-                        # (will be replaced by modified ones)
-                        bib.remove_fields('961')
-                    else:
-                        new_field = db_template_to_961(trec, None)
+                new_fields = []
+                if '961' in bib:
+                    for t961 in bib.get_fields('961'):
+                        new_field = db_template_to_961(template, t961)
                         if new_field:
                             new_fields.append(new_field)
+                    # remove existing fields
+                    # (will be replaced by modified ones)
+                    bib.remove_fields('961')
+                else:
+                    new_field = db_template_to_961(template, None)
+                    if new_field:
+                        new_fields.append(new_field)
 
-                    # add modified fields to bib
-                    for field in new_fields:
-                        bib.add_field(field)
+                # add modified fields to bib
+                for field in new_fields:
+                    bib.add_field(field)
 
-                    if trec.bibFormat and \
-                            not sierra_command_tag(bib) and \
-                            agent == 'sel':
-                        new_field = db_template_to_949(trec.bibFormat)
-                        bib.add_field(new_field)
-                        # it's safer for acquisition to skip command in 949 -
-                        # there are conflicts with Import Invoices load table
+                if template.bibFormat and \
+                        not sierra_command_tag(bib) and \
+                        agent == 'sel':
+                    new_field = db_template_to_949(template.bibFormat)
+                    bib.add_field(new_field)
+                    # it's safer for acquisition to skip command in 949 -
+                    # there are conflicts with Import Invoices load table
 
             # apply bibliographic default location to NYPL brief records
             if system == 'nypl' and agent == 'sel':
@@ -557,11 +561,12 @@ def run_processing(
 
     batch = shelve.open(BATCH_META, writeback=True)
     processing_time = datetime.now() - batch['timestamp']
+
     module_logger.info(
         'Batch processing stats: system={}, library={}, agent={}, user={}, '
         'used template={}, file count={}, files={}, record count={}, '
         'processing time={}'.format(
-            system, library, agent, USER_NAME, template,
+            system, library, agent, USER_NAME, template_name,
             f, [os.path.split(file)[1] for file in files], n, processing_time))
     batch['processing_time'] = processing_time
     batch['processed_files'] = f
@@ -682,9 +687,9 @@ def delete_template(otid):
         delete_record(session, NYPLOrderTemplate, otid=otid)
 
 
-def get_vendor_from_nypl_template(template, agent):
-    # agent arg must be 3 letter code
-    with session_scope() as session:
-        record = retrieve_record(
-            session, NYPLOrderTemplate, tName=template, agent=agent)
-        return record.vendor
+# def get_vendor_from_nypl_template(template, agent):
+#     # agent arg must be 3 letter code
+#     with session_scope() as session:
+#         record = retrieve_record(
+#             session, NYPLOrderTemplate, tName=template, agent=agent)
+#         return record.vendor
