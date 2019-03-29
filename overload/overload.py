@@ -119,7 +119,7 @@ class MainApplication(tk.Tk):
         for F in (
                 Main, ProcessVendorFiles, UpgradeBib, Reports,
                 Settings, DefaultDirs, SierraAPIs, PlatformAPIs,
-                Z3950s, GooAPI, About):
+                Z3950s, GooAPI, WorldcatAPIs, About):
             page_name = F.__name__
             frame = F(parent=container, controller=self,
                       **self.app_data)
@@ -658,15 +658,15 @@ class Settings(tk.Frame):
         self.goo_apiBtn.grid(
             row=1, column=5, sticky='snew')
 
-        self.sierra_apiBtn = ttk.Button(
+        self.z3950_apiBtn = ttk.Button(
             self, image=apiICO,
             text='Z950s',
             compound=tk.TOP,
             cursor='hand2',
             width=15,
             command=lambda: controller.show_frame('Z3950s'))
-        self.sierra_apiBtn.image = apiICO
-        self.sierra_apiBtn.grid(
+        self.z3950_apiBtn.image = apiICO
+        self.z3950_apiBtn.grid(
             row=3, column=1, sticky='snew')
 
         self.sierra_apiBtn = ttk.Button(
@@ -680,6 +680,18 @@ class Settings(tk.Frame):
         self.sierra_apiBtn.image = apiICO
         self.sierra_apiBtn.grid(
             row=3, column=3, sticky='snew')
+
+        self.wc_apiBtn = ttk.Button(
+            self, image=apiICO,
+            text='Worldcat APIs',
+            compound=tk.TOP,
+            cursor='hand2',
+            width=15,
+            command=lambda: controller.show_frame('WorldcatAPIs'))
+
+        self.wc_apiBtn.image = apiICO
+        self.wc_apiBtn.grid(
+            row=3, column=5, sticky='snew')
 
         self.closeBtn = ttk.Button(
             self, text='close',
@@ -1307,6 +1319,22 @@ class PlatformAPIs(tk.Frame):
                         conn_names.append(name)
                     self.conn_nameCbx['value'] = sorted(conn_names)
             user_data.close()
+
+
+class WorldcatAPIs(tk.Frame):
+
+    """records Worldcat Services API settings"""
+
+    def __init__(self, parent, controller, **app_data):
+        self.parent = parent
+        tk.Frame.__init__(self, parent, background='white')
+        self.controller = controller
+        self.activeW = app_data['activeW']
+        self.activeW.trace('w', self.observer)
+
+    def observer(self, *args):
+        if self.activeW.get() == 'WorldcatAPIs':
+            print('Worldcat API Settings')
 
 
 class Z3950s(tk.Frame):
