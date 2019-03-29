@@ -12,7 +12,7 @@ import shelve
 from errors import OverloadError
 
 
-def locate_goo_credentials(shelf_fh, goo_creds_fh):
+def locate_credentials(shelf_fh, creds_fh):
     """
     creates a path to folder where credentials are
     stored
@@ -27,7 +27,7 @@ def locate_goo_credentials(shelf_fh, goo_creds_fh):
             return None
         else:
             creds_path = os.path.join(
-                os.path.split(update_dir)[0], goo_creds_fh)
+                os.path.split(update_dir)[0], creds_fh)
             return creds_path
     except KeyError:
         return None

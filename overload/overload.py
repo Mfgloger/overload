@@ -632,7 +632,7 @@ class Settings(tk.Frame):
         self.defaultDirBtn.grid(
             row=1, column=1, sticky='snew')
 
-        apiICO = tk.PhotoImage(file='./icons/remoteDB.gif')
+        apiICO = tk.PhotoImage(file='./icons/key-lock.gif')
 
         self.platform_apiBtn = ttk.Button(
             self, image=apiICO,
@@ -646,17 +646,15 @@ class Settings(tk.Frame):
         self.platform_apiBtn.grid(
             row=1, column=3, sticky='snew')
 
-        gooICO = tk.PhotoImage(file='./icons/key-lock.gif')
-
         self.goo_apiBtn = ttk.Button(
-            self, image=gooICO,
+            self, image=apiICO,
             text='Google APIs',
             compound=tk.TOP,
             cursor='hand2',
             width=15,
             command=lambda: controller.show_frame('GooAPI'))
 
-        self.goo_apiBtn.image = gooICO
+        self.goo_apiBtn.image = apiICO
         self.goo_apiBtn.grid(
             row=1, column=5, sticky='snew')
 
@@ -1867,7 +1865,7 @@ class GooAPI(tk.Frame):
     def link_GSuite(self):
         # look up update folder and determine path to
         # credential file
-        self.creds = credentials.locate_goo_credentials(USER_DATA, GOO_CREDS)
+        self.creds = credentials.locate_credentials(USER_DATA, GOO_CREDS)
         if self.creds:
             if not os.path.isfile(self.creds):
                 overload_logger.error(
