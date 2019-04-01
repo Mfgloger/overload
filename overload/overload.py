@@ -1,5 +1,4 @@
-# GUI for OpsUtils
-
+import ast
 import base64
 import calendar
 import datetime
@@ -292,6 +291,8 @@ class UpgradeBib(tk.Frame):
         self.parent = parent
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
+        
 
 
 class Reports(tk.Frame):
@@ -1332,9 +1333,244 @@ class WorldcatAPIs(tk.Frame):
         self.activeW = app_data['activeW']
         self.activeW.trace('w', self.observer)
 
+        # variables
+        self.key = tk.StringVar()
+        self.cred_fhs = []
+
+        # main frame
+        self.baseFrm = ttk.LabelFrame(self, text='WorldCat API credentials')
+        self.baseFrm.grid(
+            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm.rowconfigure(0, minsize=20)
+        self.baseFrm.rowconfigure(2, minsize=5)
+        self.baseFrm.rowconfigure(4, minsize=5)
+        self.baseFrm.rowconfigure(6, minsize=5)
+        self.baseFrm.rowconfigure(8, minsize=5)
+        self.baseFrm.rowconfigure(10, minsize=250)
+        self.baseFrm.rowconfigure(12, minsize=20)
+        self.baseFrm.columnconfigure(0, minsize=10)
+        self.baseFrm.columnconfigure(2, minsize=10)
+        self.baseFrm.columnconfigure(5, minsize=10)
+
+        self.autolinkBtn = ttk.Button(
+            self.baseFrm, text='auto credentials',
+            cursor='hand2',
+            width=15,
+            command=self.get_worldcat_creds)
+        self.autolinkBtn.grid(
+            row=1, column=1, sticky='sew')
+
+        self.addBtn = ttk.Button(
+            self.baseFrm, text='add credential',
+            cursor='hand2',
+            width=15,
+            command=self.add_worldcat_cred)
+        self.addBtn.grid(
+            row=3, column=1, sticky='sew')
+
+        self.testBtn = ttk.Button(
+            self.baseFrm, text='test',
+            cursor='hand2',
+            width=15,
+            command=self.test_worldcat_cred)
+        self.testBtn.grid(
+            row=5, column=1, sticky='sew')
+
+        self.deleteBtn = ttk.Button(
+            self.baseFrm, text='delete credential',
+            cursor='hand2',
+            width=15,
+            command=self.delete_worldcat_cred)
+        self.deleteBtn.grid(
+            row=7, column=1, sticky='sew')
+
+        self.helpBtn = ttk.Button(
+            self.baseFrm, text='help',
+            cursor='hand2',
+            width=15,
+            command=self.show_help)
+        self.helpBtn.grid(
+            row=9, column=1, sticky='sew')
+
+        self.closeBtn = ttk.Button(
+            self.baseFrm, text='close',
+            cursor='hand2',
+            width=15,
+            command=lambda: controller.show_frame('Main'))
+        self.closeBtn.grid(
+            row=11, column=1, sticky='sew')
+
+        # info canvas
+        self.yscrollbar = tk.Scrollbar(self.baseFrm, orient=tk.VERTICAL)
+        self.yscrollbar.grid(
+            row=1, column=3, rowspan=10, sticky='nse', padx=2)
+        self.infoCnv = tk.Canvas(
+            self.baseFrm, bg='white',
+            width=570,
+            height=400,
+            yscrollcommand=self.yscrollbar.set)
+        self.infoCnv.grid(
+            row=1, column=4, rowspan=10)
+
+        self.infoFrm = tk.Frame(
+            self.infoCnv)
+        self.yscrollbar.config(command=self.infoCnv.yview)
+        self.infoCnv.create_window(
+            (0, 0), window=self.infoFrm, anchor="nw",
+            tags="self.infoFrm")
+        self.infoFrm.bind("<Configure>", self.onFrameConfigure)
+
+        self.napisFrm = ttk.LabelFrame(self.infoFrm, text='NYPL')
+        self.napisFrm.columnconfigure(2, minsize=200)
+        self.napisFrm.grid(
+            row=0, column=0, sticky='nsw')
+
+        self.bapisFrm = ttk.LabelFrame(self.infoFrm, text='BPL')
+        self.bapisFrm.columnconfigure(2, minsize=200)
+        self.bapisFrm.grid(
+            row=1, column=0, sticky='nsw')
+
+    def onFrameConfigure(self, event):
+        self.infoCnv.config(scrollregion=self.infoCnv.bbox('all'))
+
+    def get_worldcat_creds(self):
+        # look up update folder and determine path to
+        # credential file
+
+        creds_dir = credentials.locate_credentials(USER_DATA, WORLDCAT_CREDS)
+        for filename in os.listdir(creds_dir):
+            if filename.endswith(".bin"):
+                self.cred_fhs.append(os.path.join(creds_dir, filename))
+
+        if self.cred_fhs:
+            # ask for decryption key, decrypt creds and
+            # store in Windows vault
+            self.ask_decryption_key()
+            self.wait_window(self.top)
+        else:
+            overload_logger.error(
+                'Worlcat credentials not found at {}'.format(
+                    creds_dir))
+            m = 'Google credentials at {}\n' \
+                'appear to be missing. Please report the problem.'.format(
+                    creds_dir)
+            tkMessageBox.showerror('Settings Error', m)
+
+    def add_worldcat_cred(self):
+        print('open pop-up window and add individual credentials')
+
+    def test_worldcat_cred(self):
+        print('testing selected credentials')
+
+    def delete_worldcat_cred(self):
+        print('delete cred from the Vault')
+
+    def show_help(self):
+        print('show_help here')
+
+    def ask_decryption_key(self):
+        self.top = tk.Toplevel(self, background='white')
+        self.top.iconbitmap('./icons/key.ico')
+        self.top.title('Decryption Key')
+
+        # reset key
+        self.key.set('')
+
+        # layout
+        self.top.columnconfigure(0, minsize=10)
+        self.top.columnconfigure(2, minsize=5)
+        self.top.columnconfigure(4, minsize=10)
+        self.top.rowconfigure(0, minsize=10)
+        self.top.rowconfigure(2, minsize=5)
+        self.top.rowconfigure(4, minsize=5)
+        self.top.rowconfigure(6, minsize=10)
+
+        ttk.Label(
+            self.top,
+            text='please provide decryption key:').grid(
+                row=1, column=1, columnspan=3, sticky='nw', padx=10)
+
+        self.keyEnt = tk.Entry(
+            self.top, textvariable=self.key, show='*')
+        self.keyEnt.grid(
+            row=3, column=1, columnspan=3, sticky='snew', padx=10)
+
+        self.decryptBtn = ttk.Button(
+            self.top,
+            text='decrypt',
+            command=self.decrypt_creds)
+        self.decryptBtn.grid(
+            row=5, column=1, sticky='sew', padx=10, pady=10)
+
+        self.closeBtn = ttk.Button(
+            self.top,
+            text='close',
+            command=self.top.destroy)
+        self.closeBtn.grid(
+            row=5, column=3, sticky='sew', padx=10, pady=10)
+
+    def decrypt_creds(self):
+        key = self.key.get().strip()
+        nypl_apis = dict()
+        bpl_apis = dict()
+        success = True
+        for cred_fh in self.cred_fhs:
+            try:
+                decrypted_creds = credentials.decrypt_file_data(key, cred_fh)
+                name = ast.literal_eval(decrypted_creds)['name']
+                library = ast.literal_eval(decrypted_creds)['library']
+                credentials.store_in_vault(
+                    name, 'Overload', decrypted_creds)
+                # add credentials names to user_data for retrieval
+                details = {'last_token': None, 'expires_on': None}
+                if library == 'NYPL':
+                    nypl_apis[name] = details
+                elif library == 'BPL':
+                    bpl_apis[name] = details
+            except OverloadError as e:
+                success = False
+                overload_logger.error('Decryption error: {}'.format(e))
+                m = 'Decryption error: {}'.format(e)
+                tkMessageBox.showerror('Decryption error', m, parent=self.top)
+        if success:
+            wc_apis = dict(NYPL=nypl_apis, BPL=bpl_apis)
+            user_data = shelve.open(USER_DATA)
+            user_data['WorldcatAPIs'] = wc_apis
+            user_data.close()
+            self.top.destroy()
+
+    def create_individual_api_info(self, parent, name, row):
+        cred = credentials.get_from_vault(name, 'Overload')
+        if cred:
+            api = ast.literal_eval(cred)
+            ttk.Label(parent, text=name).grid(
+                row=row, column=0, sticky='nsw', pady=5)
+            ttk.Label(parent, text='scopes').grid(
+                row=row, column=1, sticky='nsw', padx=5)
+            ttk.Label(parent, text=','.join(api['scopes'])).grid(
+                row=row, column=2, columnspan=5, sticky='nsw', padx=5)
+            ttk.Label(parent, text='institution id').grid(
+                row=row + 1, column=1, sticky='nsw', padx=5)
+            ttk.Label(parent, text=api['authenticating_institution_id']).grid(
+                row=row + 1, column=2, columnspan=5, sticky='nsw', padx=5)
+
+    def display_available_apis(self):
+        user_data = shelve.open(USER_DATA)
+        apis = user_data['WorldcatAPIs']
+        r = 0
+        for name in apis['NYPL']:
+            self.create_individual_api_info(self.napiFrm, name, r)
+            r += 2
+        r = 0
+        for name in apis['BPL']:
+            self.create_individual_api_info(self.bapisFrm, name, r)
+            r += 2
+
+        user_data.close()
+
     def observer(self, *args):
         if self.activeW.get() == 'WorldcatAPIs':
-            print('Worldcat API Settings')
+            self.display_available_apis()
 
 
 class Z3950s(tk.Frame):
