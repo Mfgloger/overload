@@ -1430,9 +1430,10 @@ class WorldcatAPIs(tk.Frame):
         # credential file
 
         creds_dir = credentials.locate_credentials(USER_DATA, WORLDCAT_CREDS)
-        for filename in os.listdir(creds_dir):
-            if filename.endswith(".bin"):
-                self.cred_fhs.append(os.path.join(creds_dir, filename))
+        if os.path.isdir(creds_dir):
+            for filename in os.listdir(creds_dir):
+                if filename.endswith(".bin"):
+                    self.cred_fhs.append(os.path.join(creds_dir, filename))
 
         if self.cred_fhs:
             # ask for decryption key, decrypt creds and
@@ -1443,7 +1444,7 @@ class WorldcatAPIs(tk.Frame):
             overload_logger.error(
                 'Worlcat credentials not found at {}'.format(
                     creds_dir))
-            m = 'Google credentials at {}\n' \
+            m = 'WorldCat credentials at\n {}\n' \
                 'appear to be missing. Please report the problem.'.format(
                     creds_dir)
             tkMessageBox.showerror('Settings Error', m)
@@ -1548,17 +1549,20 @@ class WorldcatAPIs(tk.Frame):
 
     def display_available_apis(self):
         user_data = shelve.open(USER_DATA)
-        apis = user_data['WorldcatAPIs']
-        r = 0
-        for name in apis['NYPL']:
-            self.create_individual_api_info(self.napiFrm, name, r)
-            r += 2
-        r = 0
-        for name in apis['BPL']:
-            self.create_individual_api_info(self.bapisFrm, name, r)
-            r += 2
-
-        user_data.close()
+        try:
+            apis = user_data['WorldcatAPIs']
+            r = 0
+            for name in apis['NYPL']:
+                self.create_individual_api_info(self.napiFrm, name, r)
+                r += 2
+            r = 0
+            for name in apis['BPL']:
+                self.create_individual_api_info(self.bapisFrm, name, r)
+                r += 2
+        except KeyError:
+            pass
+        finally:
+            user_data.close()
 
     def observer(self, *args):
         if self.activeW.get() == 'WorldcatAPIs':
