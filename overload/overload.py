@@ -33,6 +33,7 @@ from pvf.pvf_gui import ProcessVendorFiles
 from pvf.reports import cumulative_nypl_stats, cumulative_bpl_stats, \
     cumulative_vendor_stats
 from setup_dirs import *
+from wc_upgrade.wc_gui import UpgradeBibs
 
 
 def updates(manual=True):
@@ -116,7 +117,7 @@ class MainApplication(tk.Tk):
         # spawn Overload frames
         self.frames = {}
         for F in (
-                Main, ProcessVendorFiles, UpgradeBib, Reports,
+                Main, ProcessVendorFiles, UpgradeBibs, Reports,
                 Settings, DefaultDirs, SierraAPIs, PlatformAPIs,
                 Z3950s, GooAPI, WorldcatAPIs, About):
             page_name = F.__name__
@@ -203,11 +204,14 @@ class Main(tk.Frame):
             compound=tk.TOP,
             cursor='hand2',
             width=15,
-            command=None)
+            command=lambda: controller.show_frame('UpgradeBibs'))
         self.upgradeBtn.image = upgradeICO
         self.upgradeBtn.grid(
             row=1, column=3, sticky='snew')
-        self.createToolTip(self.upgradeBtn, 'coming soon ...')
+        self.createToolTip(
+            self.upgradeBtn,
+            'Upgrade existing records and catalog new\n'
+            'materials using Worldcat')
 
         jsonQueryICO = tk.PhotoImage(file='./icons/json_query_icon.gif')
         self.jsonQueryBtn = ttk.Button(
@@ -281,18 +285,6 @@ class Main(tk.Frame):
 
         widget.bind('<Enter>', enter)
         widget.bind('<Leave>', leave)
-
-
-class UpgradeBib(tk.Frame):
-    """Upgrades bibs in a file by quering and finding fuller records in
-       WorldCat"""
-
-    def __init__(self, parent, controller, **app_data):
-        self.parent = parent
-        tk.Frame.__init__(self, parent)
-        self.controller = controller
-
-        
 
 
 class Reports(tk.Frame):
