@@ -2154,7 +2154,7 @@ class ProcessVendorFiles(tk.Frame):
         if self.last_directory_check.get() == 0:
             dir_opt['initialdir'] = MY_DOCS
             d = tkFileDialog.askdirectory(**dir_opt)
-            if d != '':
+            if d:
                 self.last_directory = d
                 paths = user_data['paths']
                 paths['pvr_default_save_dir'] = d
