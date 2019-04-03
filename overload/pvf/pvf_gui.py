@@ -2089,9 +2089,10 @@ class ProcessVendorFiles(tk.Frame):
             paths = user_data['paths']
             paths['pvr_last_open_dir'] = last_open_dir
             user_data['paths'] = paths
-            user_data.close()
 
             self.reset()
+
+        user_data.close()
 
     def ftp(self):
         if self.system.get() == '':
