@@ -7,7 +7,7 @@ import tkMessageBox
 
 from gui_utils import ToolTip, BusyManager
 from logging_setup import format_traceback, LogglyAdapter
-from setup_dirs import USER_DATA
+from setup_dirs import USER_DATA, MY_DOCS
 
 
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
@@ -38,7 +38,7 @@ class UpgradeBibs(tk.Frame):
         self.cat_rules = tk.StringVar()
         self.cat_source = tk.StringVar()
         self.source_fh = tk.StringVar()
-        self.dst_dir = tk.StringVar()
+        self.dst_fh = tk.StringVar()
         self.counter = tk.StringVar()
         self.nohits = tk.IntVar()
         self.found = tk.IntVar()
@@ -220,13 +220,13 @@ class UpgradeBibs(tk.Frame):
             row=2, column=1, sticky='snew')
         self.dstEnt = ttk.Entry(
             self.actionFrm,
-            textvariable=self.dst_dir)
+            textvariable=self.dst_fh)
         self.dstEnt.grid(
             row=2, column=2, columnspan=4, sticky='snew', pady=5)
         self.dstBtn = ttk.Button(
             self.actionFrm, image=searchICO,
             cursor='hand2',
-            command=self.find_out_directory)
+            command=self.find_destination)
         self.dstBtn.image = searchICO
         self.dstBtn.grid(
             row=2, column=7, sticky='new', pady=4)
@@ -323,13 +323,63 @@ class UpgradeBibs(tk.Frame):
             row=6, column=8, columnspan=3, sticky='sew')
 
     def find_source(self):
-        pass
+        # determine last used directory
+        user_data = shelve.open(USER_DATA)
+        paths = user_data['paths']
+        if 'pvr_last_open_dir' in paths:
+            last_open_dir = paths['pvr_last_open_dir']
+        else:
+            last_open_dir = MY_DOCS
 
-    def find_out_directory(self):
-        pass
+        # select files for processing
+        file = tkFileDialog.askopenfilename(
+            parent=self,
+            title='Select file',
+            filetypes=(('text files', '*.txt'),
+                       ('csv files', '*.csv'),
+                       ('tab files', '*.tsv')),
+            initialdir=last_open_dir)
+
+        if file:
+            self.source_fh.set(file)
+
+        user_data.close()
+
+    def find_destination(self):
+        # ask destination file
+        dst_fh = tkFileDialog.asksaveasfilename(
+            parent=self,
+            title='Save as',
+            # filetypes=(('marc file', '*.mrc')),
+            initialfile='worldcat_bibs.mrc',
+            initialdir=MY_DOCS)
+        if dst_fh:
+            self.dst_fh.set(dst_fh)
 
     def process(self):
-        pass
+        # validate all required elements are provided
+        issues = []
+
+        if not self.system.get():
+            issues.append('- system not selected')
+        if self.system.get() == 'NYPL' and not self.library.get():
+            issues.append('- missing library pramater')
+        if not self.action.get():
+            issues.append('- action not selected')
+        if not self.api.get():
+            issues.append('- API not selected')
+        if not self.encode_level.get():
+            issues.append('- encoding level not selected')
+
+        if self.source_fh.get() and self.dst_fh.get():
+            # both paths provided
+            print('OK')
+
+        if not self.source_fh.get():
+            self.find_source()
+
+        if not self.dst_fh.get():
+            self.find_destination()
 
     def report(self):
         pass
@@ -364,21 +414,30 @@ class UpgradeBibs(tk.Frame):
         # show available api crendentials for system
         # pull available API from user_data
         user_data = shelve.open(USER_DATA)
-        apis = user_data['WorldcatAPIs']
-        user_data.close()
+        try:
+            apis = user_data['WorldcatAPIs']
+            user_data.close()
 
-        if self.system.get() == 'NYPL':
-            self.apiCbx['values'] = apis['NYPL'].keys()
-        elif self.system.get() == 'BPL':
-            self.apiCbx['values'] = apis['BPL'].keys()
-
+            if self.system.get() == 'NYPL':
+                self.apiCbx['values'] = apis['NYPL'].keys()
+            elif self.system.get() == 'BPL':
+                self.apiCbx['values'] = apis['BPL'].keys()
+            self.apiCbx['state'] = 'readonly'
+        except KeyError:
+            m = 'Please complete Worldcat APIs setup first\n' \
+                'by going to Settings>Worldcat APIs and \n' \
+                'launching "auto credentials".'
+            tkMessageBox.showerror('Setup Error', m)
 
     def observer(self, *args):
         if self.activeW.get() == 'UpgradeBibs':
             # load drop-down choics
             self.systemCbx['values'] = ('BPL', 'NYPL')
+            self.systemCbx['state'] = 'readonly'
             self.libraryCbx['values'] = ('branches', 'research')
+            self.libraryCbx['state'] = 'readonly'
             self.actionCbx['values'] = ('upgrade', 'catalog')
+            self.actionCbx['state'] = 'readonly'
             self.encode_levelCbx['values'] = (
                 '# - Full level',
                 '1 - Full level, mat. not examined',
@@ -389,9 +448,10 @@ class UpgradeBibs(tk.Frame):
                 '7 - Minimal level',
                 '8 - Prepublication level'
             )
-
+            self.encode_levelCbx['state'] = 'readonly'
             self.encode_level.set('')
             self.rec_typeCbx['values'] = (
+                'any',
                 'a - Language material',
                 'c - Notated music',
                 'd - Manus. notated music',
@@ -407,7 +467,11 @@ class UpgradeBibs(tk.Frame):
                 'r - 3D artifact',
                 't - Manus. lang. material',
             )
+            self.rec_typeCbx['state'] = 'readonly'
             self.cat_rulesCbx['values'] = ('any', 'RDA-only')
             self.cat_rules.set('any')
+            self.cat_rulesCbx['state'] = 'readonly'
+            self.rec_type.set('any')
+            self.rec_typeCbx['state'] = 'readonly'
             self.cat_sourceCbx['values'] = ('any', 'DLC')
             self.cat_source.set('any')
