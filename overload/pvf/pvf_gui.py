@@ -2072,7 +2072,7 @@ class ProcessVendorFiles(tk.Frame):
             title='Select files',
             initialdir=last_open_dir)
 
-        if len(files) > 0:
+        if files:
             self.files = files
             # update selected qty
             self.file_count.set('{} file(s) selected:'.format(len(self.files)))
