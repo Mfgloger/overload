@@ -1,4 +1,7 @@
-from pymarc import Record, Field
+from io import BytesIO
+import xml.etree.ElementTree as ET
+
+from pymarc import Record, Field, parse_xml_to_array
 
 
 from bibs import InhouseBibMeta
@@ -72,3 +75,21 @@ def bibs2meta(results=None):
                 bibs_ids.add(meta.sierraId)
                 bibs.append(meta)
     return bibs
+
+
+def string2xml(marcxml_as_string):
+    return ET.fromstring(marcxml_as_string)
+
+
+def marcxml2array(marcxml):
+    """
+    serializes marcxml into pymarc array
+    args:
+        marcxml: xml
+    returns:
+        records: pymarc records array
+    """
+    records = BytesIO(ET.tostring(marcxml, encoding='utf-8'))
+    return parse_xml_to_array(records)
+
+
