@@ -1,6 +1,7 @@
 # handles initial ingests services credentials and
 # stores them in Windows Credential manager
 
+from ast import literal_eval
 from Crypto.Cipher import AES
 import json
 import keyring
@@ -150,3 +151,7 @@ def delete_from_vault(application, user):
         keyring.delete_password(application, user)
     except PasswordDeleteError:
         pass
+
+
+def evaluate_worldcat_creds(string):
+    return literal_eval(string)
