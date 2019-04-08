@@ -75,3 +75,13 @@ class WorldcatSearchSession(WorldcatSession):
         except requests.exceptions.ConnectionError:
             # log
             raise
+
+
+def evaluate_response(response):
+    if response.status_code == requests.codes.ok:
+        # code 200
+        return response.content
+    else:
+        # log the error code & message
+        print(response.json())  # temp
+        return None
