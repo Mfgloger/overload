@@ -180,6 +180,31 @@ def create_field_from_template(template):
     return field
 
 
+def create_initials_field(system, library, value):
+    """
+    creates intitials marc field
+    args:
+        system: str, NYPL or BPL
+        library: str, branches or research
+        value: str, value to be entered in subfield $a
+    returns:
+        field: pymarc Field object
+    """
+
+    if system == 'NYPL':
+        tag = '901'
+        if library == 'research':
+            subfields = ['a', value, 'b', 'CATRL']
+        else:
+            subfields = ['a', value, 'b', 'CATBL']
+    elif system == 'BPL':
+        tag = '947'
+        subfields = ['a', value]
+
+    return Field(tag=tag, indicators=[' ', ' '], subfields=subfields)
+
+
+
 def count_bibs(file):
     reader = read_marc21(file)
     bib_count = 0
@@ -545,6 +570,7 @@ def db_template_to_949(mat_format):
         indicators=[' ', ' '],
         subfields=['a', '*b2={};'.format(mat_format)])
     return field
+
 
 
 class BibMeta:
