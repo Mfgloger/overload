@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import (Column, ForeignKey, Integer, String,
+from sqlalchemy import (Boolean, Column, ForeignKey, Integer, PickleType, String,
                         create_engine)
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import relationship, sessionmaker
@@ -154,6 +154,57 @@ class FTPs(Base):
                "user='%s', password='%s', system='%s')>" % (
                    self.fid, self.name, self.host, self.folder,
                    self.user, self.password, self.system)
+
+
+class WCSourceBatch(Base):
+    """Worldcat module source file data"""
+
+    __tablename__ = 'wc_source_batch'
+    wcsbid = Column(Integer, primary_key=True)
+    file = Column(String, nullable=False)
+
+    meta = relationship('WCSourceMeta', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return "<WCSourceBatch(wcsid=%s, file=%s)>" % (
+            self.wcsbid,
+            self.file)
+
+
+class WCSourceMeta(Base):
+    """Worldcat module individual bib/order metadata"""
+
+    __tablename__ = 'wc_source_meta'
+    wcsmid = Column(Integer, primary_key=True)
+    wcsbid = Column(
+        Integer, ForeignKey('wc_source_batch.wcsbid'), nullable=False)
+    meta = Column(PickleType)
+
+    wchit = relationship('WCHit', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return "<WCSourceMeta(wcsmid=%s, wcsbid=%s)>" % (
+            self.wcsmid,
+            self.wcsbid)
+
+
+class WCHit(Base):
+    """
+    Worldcat results
+    """
+
+    __tablename__ = 'wc_hit'
+    wchid = Column(Integer, primary_key=True)
+    wcsmid = Column(
+        Integer, ForeignKey('wc_source_meta.wcsmid'), nullable=False)
+    hit = Column(Boolean, nullable=False)
+    marcxml = Column(PickleType)
+
+    def __repr__(self):
+        return "<WCHit(wchid=%s, wcsmid=%s, hit=%s)>" % (
+            self.wchid,
+            self.wcsmid,
+            self.hit)
 
 
 class DataAccessLayer:
