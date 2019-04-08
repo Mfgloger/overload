@@ -59,6 +59,7 @@ REQUIRED = [
     "rsa==4.0",
     "six==1.11.0",
     "SQLAlchemy==1.2.6",
+    "unidecode==1.0.23",
     "uritemplate==3.0.0",
     "urllib3==1.24.1"
 ]
