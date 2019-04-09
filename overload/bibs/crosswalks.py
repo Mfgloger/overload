@@ -81,6 +81,10 @@ def string2xml(marcxml_as_string):
     return ET.fromstring(marcxml_as_string)
 
 
+def xml2string(marcxml):
+    return ET.tostring(marcxml)
+
+
 def marcxml2array(marcxml):
     """
     serializes marcxml into pymarc array
