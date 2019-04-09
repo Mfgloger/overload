@@ -1,6 +1,6 @@
 # datastore functions
 
-from sqlalchemy.orm import load_only
+from sqlalchemy.orm import load_only, subqueryload
 
 
 from datastore import NYPLOrderTemplate
@@ -38,6 +38,14 @@ def retrieve_values(session, model, *args, **kwargs):
     return instances
 
 
+def retrieve_related(session, model, related, **kwargs):
+    # retrieves a record and related data from other
+    # tables based on created relationship
+    instances = session.query(model).options(
+        subqueryload(related)).filter_by(**kwargs).all()
+    return instances
+
+
 def retrieve_record(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).one()
     return instance
@@ -46,6 +54,12 @@ def retrieve_record(session, model, **kwargs):
 def delete_record(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).one()
     session.delete(instance)
+
+
+def delete_records(session, model, **kwargs):
+    instances = session.query(model).all()
+    for instance in instances:
+        session.delete(instance)
 
 
 def create_db_object(model, **kwargs):
