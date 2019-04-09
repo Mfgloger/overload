@@ -4,9 +4,16 @@ import csv
 from bibs.bibs import (BibOrderMeta, parse_isbn)
 from bibs.crosswalks import string2xml
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
-from db_worker import insert_or_ignore, delete_record, retrieve_values
+from db_worker import insert_or_ignore, delete_records, retrieve_values, retrieve_related
 from connectors.worldcat import (WorldcatSearchSession, evaluate_response)
 from credentials import get_from_vault, evaluate_worldcat_creds
+from criteria import meets_global_criteria, meets_user_criteria
+
+
+def update_progbar(progbar):
+    """creates progbar ticks"""
+    progbar['value'] += 1
+    progbar.update()
 
 
 def store_meta(model, record):
@@ -15,7 +22,7 @@ def store_meta(model, record):
 
 def remove_temp_data(source_fh):
     with session_scope() as db_session:
-        delete_record(db_session, WCSourceBatch, file=source_fh)
+        delete_records(db_session, WCSourceBatch)
 
 
 def get_credentials(api):
@@ -23,8 +30,9 @@ def get_credentials(api):
     return evaluate_worldcat_creds(creds)
 
 
-def launch_process(source_fh, progbar, counter, hits, nohits,
-                   id_type='isbn', api=None):
+def launch_process(source_fh, dst_fh, progbar, counter, hits, nohits,
+                   action, encode_level, rec_type, cat_rules, cat_source,
+                   id_type='ISBN', api=None):
     """
     work notes:
     1. iterate through the source files and extract bib/order metadata
@@ -41,7 +49,7 @@ def launch_process(source_fh, progbar, counter, hits, nohits,
         hits: tkinter IntVar
         nohits: tkinter IntVar
     """
-    # temp
+
     remove_temp_data(source_fh)
 
     # calculate max counter
@@ -49,10 +57,8 @@ def launch_process(source_fh, progbar, counter, hits, nohits,
         reader = csv.reader(file)
         c = 0
         for row in reader:
-            c +=1
-
-        # update progbar here
-        # update counter max
+            c += 1
+        progbar['maximum'] = c * 3
 
     with open(source_fh, 'r') as file:
         reader = csv.reader(file)
@@ -66,11 +72,14 @@ def launch_process(source_fh, progbar, counter, hits, nohits,
             batch_id = batch_rec.wcsbid
             if len(header) == 1:
                 # list of id
-                if id_type == 'isbn':
+                if id_type == 'ISBN':
                     for row in reader:
                         meta = BibOrderMeta(
                             isbn=[parse_isbn(row[0])])
-                        insert_or_ignore(db_session, WCSourceMeta, wcsbid=batch_id, meta=meta)
+                        insert_or_ignore(
+                            db_session, WCSourceMeta,
+                            wcsbid=batch_id, meta=meta)
+                        update_progbar(progbar)
             else:
                 # differenciate between correct sierra export (headers)
                 # and invalid formats
@@ -101,11 +110,14 @@ def launch_process(source_fh, progbar, counter, hits, nohits,
                             # convert from string to xml (or remain as string?)
                             doc = string2xml(res)
                             # persist
-                            insert_or_ignore(
+                            res = insert_or_ignore(
                                 db_session, WCHit, wcsmid=m.wcsmid,
                                 hit=True, marcxml=doc)
                         else:
                             not_found_counter += 1
+                            res = insert_or_ignore(
+                                db_session, WCHit, wcsmid=m.wcsmid,
+                                hit=False, marcxml=None)
 
                 elif m.meta.issn:
                     # query by ISSN
@@ -113,9 +125,21 @@ def launch_process(source_fh, progbar, counter, hits, nohits,
                 elif m.meta.upc:
                     # query by UPC
                     pass
+                update_progbar(progbar)
                 processed_counter += 1
 
         db_session.flush()
+
+        # verify found matches meet set criteria
+        metas = retrieve_related(
+            db_session, WCSourceMeta, 'wchit', wcsbid=batch_id)
+        for m in metas:
+            for x in m.wchit:
+                if x.hit:
+                    pass
+
+                update_progbar(progbar)
+
 
 
 
