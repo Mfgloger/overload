@@ -1,16 +1,27 @@
 # module encodes NYPL call number rules
 from pymarc import Field
-from unidecode import unidecode
+
+
+from callnum import get_last_name, get_first_letter
+from xml_bibs import get_literary_form
 
 # namespaces
 NS = {'marc': 'http://www.loc.gov/MARC21/slim'}
 
 
-def create_nypl_fiction_callnum(marcxml, lang):
+
+def create_nypl_fiction_callnum(lang, cuttering_fields):
     """
-    instead of marcxml use data from 100, 110, 111, 130?, and 245
-    this will make testing easier
+    creates pymarc Field with NYPL Branch call number
+    args:
+        lang: str, 3 character MARC language code
+        cuttering_fields: dict, cuttering fields options created by
+                          bibs.xml_bibs.get_cuttering_fields
+    returns:
+        field: pymarc Field object, 091 MARC field with a
+               full fiction call number
     """
+
     # langugage prefix
     lang_prefix = None
     if lang == 'eng':
@@ -25,34 +36,24 @@ def create_nypl_fiction_callnum(marcxml, lang):
 
     # main entry cutter
     cutter = None
-    for field in marcxml.findall('marc:datafield', NS):
-        if field.attrib['tag'] == '100':
-            for subfield in field.findall('marc:subfield', NS):
-                if subfield.attrib['code'] == 'a':
-                    cutter = subfield.text.split(',')[0].strip()
-                    if cutter[-1] == '.':
-                        cutter = cutter[:-1].strip()
-                    cutter = unidecode(unicode(cutter)).upper()
-                    break
-    if not cutter:
-        for field in marcxml.findall('marc:datafield', NS):
-            if field.attrib['tag'] == '245':
-                skip_chr = field.attrib['ind2'].strip()
-                if skip_chr:
-                    skip_chr = int(skip_chr)
-                else:
-                    skip_chr = 0
-                for subfield in field.findall('marc:subfield', NS):
-                    if subfield.attrib['code'] == 'a':
-                        cutter = subfield.text[skip_chr:].strip()[0]
-                        cutter = unidecode(unicode(cutter)).upper()
-                        break
+    if '100' in cuttering_fields:
+        # use last name
+        cutter = get_last_name(cuttering_fields['100'])
+    elif '110' in cuttering_fields:
+        cutter = get_first_letter(cuttering_fields['110'])
+    elif '111' in cuttering_fields:
+        cutter = get_first_letter(cuttering_fields['111'])
+    else:
+        cutter = get_first_letter(cuttering_fields['245'])
+
     # construct call number field
     subfields = []
+    field = None
     if lang_prefix:
         subfields.extend(['p', lang_prefix])
     subfields.extend(['a', 'FIC'])
     if cutter:
         subfields.extend(['c', cutter])
+        field = Field(tag='091', indicators=[' ', ' '], subfields=subfields)
 
-    return Field(tag='091', indicators=[' ', ' '], subfields=subfields)
+    return field
