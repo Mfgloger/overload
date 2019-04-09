@@ -204,7 +204,6 @@ def create_initials_field(system, library, value):
     return Field(tag=tag, indicators=[' ', ' '], subfields=subfields)
 
 
-
 def count_bibs(file):
     reader = read_marc21(file)
     bib_count = 0
@@ -570,7 +569,6 @@ def db_template_to_949(mat_format):
         indicators=[' ', ' '],
         subfields=['a', '*b2={};'.format(mat_format)])
     return field
-
 
 
 class BibMeta:
