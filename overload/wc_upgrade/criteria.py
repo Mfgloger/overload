@@ -1,5 +1,5 @@
 from bibs.xml_bibs import (NS, extract_record_type, get_literary_form,
-    get_record_leader, get_tag_008)
+    get_record_leader, get_tag_008, get_datafield_040, get_cat_lang)
 
 
 def is_fiction(marcxml):
@@ -12,16 +12,31 @@ def is_fiction(marcxml):
         return False
 
 
-def is_eng_cataloging(marcxml):
+def is_english_cataloging(marcxml):
     """
     args:
         marcxml
     """
+    field = get_datafield_040(marcxml)
+    code = get_cat_lang(field)
+    if not code or code == 'eng':
+        return True
+    else:
+        return False
+
+
+def normalize_rec_lvl_parameter(rec_lvl):
     pass
 
 
 def meets_user_criteria(marcxml, rec_lvl='level3', rec_type='any',
                         cat_rules='any', cat_source='any'):
+    """
+    verifies if record meets all criteria set by a user
+    args:
+        marcxml: xml
+        rec_lvl: str,
+    """
     pass
 
 
@@ -36,21 +51,14 @@ def meets_global_criteria(marcxml):
     returns:
         Boolean
     """
+
     failed = False
 
     # print materials and fiction only
 
     if not is_fiction(marcxml):
         failed = True
-
-    for field in marcxml.findall('marc:datafield', NS):
-        if field.attrib['tag'] == '040':
-            for subfield in field.findall('marc:subfield', NS):
-                if subfield.attrib['code'] == 'b':
-                    code = subfield.text.strip()
-                    if not code or code == 'eng':
-                        pass
-                    else:
-                        failed = True
+    if not is_english_cataloging(marcxml):
+        failed = True
 
     return failed
