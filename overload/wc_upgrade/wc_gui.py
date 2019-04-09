@@ -8,6 +8,7 @@ import tkMessageBox
 from gui_utils import ToolTip, BusyManager
 from logging_setup import format_traceback, LogglyAdapter
 from setup_dirs import USER_DATA, MY_DOCS
+from manager import launch_process
 
 
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
@@ -39,6 +40,9 @@ class UpgradeBibs(tk.Frame):
         self.cat_source = tk.StringVar()
         self.source_fh = tk.StringVar()
         self.dst_fh = tk.StringVar()
+        self.data_source = tk.StringVar()
+        self.data_source.trace('w', self.data_source_observer)
+        self.id_type = tk.StringVar()
         self.counter = tk.StringVar()
         self.nohits = tk.IntVar()
         self.found = tk.IntVar()
@@ -72,7 +76,7 @@ class UpgradeBibs(tk.Frame):
         self.paramsFrm.grid(
             row=1, column=1, columnspan=6, sticky='snew')
         self.paramsFrm.rowconfigure(0, minsize=10)
-        self.paramsFrm.rowconfigure(5, minsize=10)
+        self.paramsFrm.rowconfigure(6, minsize=10)
         self.paramsFrm.columnconfigure(0, minsize=10)
         self.paramsFrm.columnconfigure(3, minsize=20)
         self.paramsFrm.columnconfigure(6, minsize=10)
@@ -126,6 +130,18 @@ class UpgradeBibs(tk.Frame):
         self.apiCbx.grid(
             row=4, column=2, sticky='nsw', padx=5, pady=5)
 
+        self.dataSrcLbl = ttk.Label(
+            self.paramsFrm,
+            text='data source')
+        self.dataSrcLbl.grid(
+            row=5, column=1, sticky='snew')
+        self.dataSrcCbx = ttk.Combobox(
+            self.paramsFrm,
+            textvariable=self.data_source,
+            width=25)
+        self.dataSrcCbx.grid(
+            row=5, column=2, sticky='nsw', padx=5, pady=5)
+
         self.encode_levelLbl = ttk.Label(
             self.paramsFrm,
             text='record level:')
@@ -164,7 +180,7 @@ class UpgradeBibs(tk.Frame):
 
         self.cat_sourceLbl = ttk.Label(
             self.paramsFrm,
-            text='source:')
+            text='cat source:')
         self.cat_sourceLbl.grid(
             row=4, column=3, sticky='snew')
         self.cat_sourceCbx = ttk.Combobox(
@@ -173,6 +189,18 @@ class UpgradeBibs(tk.Frame):
             width=25)
         self.cat_sourceCbx.grid(
             row=4, column=4, sticky='nsw', padx=5, pady=5)
+
+        self.idTypeLbl = ttk.Label(
+            self.paramsFrm,
+            text='ID type')
+        self.idTypeLbl.grid(
+            row=5, column=3, sticky='snew')
+        self.idTypeCbx = ttk.Combobox(
+            self.paramsFrm,
+            textvariable=self.id_type,
+            width=25)
+        self.idTypeCbx.grid(
+            row=5, column=4, sticky='nsw', padx=5, pady=5)
 
         self.actionFrm = ttk.Frame(
             self.baseFrm,
@@ -373,7 +401,12 @@ class UpgradeBibs(tk.Frame):
 
         if self.source_fh.get() and self.dst_fh.get():
             # both paths provided
-            print('OK')
+            launch_process(
+                self.source_fh.get(), self.dst_fh.get(), self.progbar,
+                self.counter, self.found, self.nohits, self.action.get(),
+                self.encode_level.get(), self.rec_type.get(),
+                self.cat_rules.get(), self.cat_source.get(),
+                id_type=self.id_type.get(), api=self.api.get())
 
         if not self.source_fh.get():
             self.find_source()
@@ -429,6 +462,14 @@ class UpgradeBibs(tk.Frame):
                 'launching "auto credentials".'
             tkMessageBox.showerror('Setup Error', m)
 
+    def data_source_observer(self, *args):
+        if self.data_source.get() == 'IDs list':
+            self.idTypeCbx['state'] = '!disabled'
+            self.id_type.set('ISBN')
+        else:
+            self.id_type.set('')
+            self.idTypeCbx['state'] = 'disabled'
+
     def observer(self, *args):
         if self.activeW.get() == 'UpgradeBibs':
             # load drop-down choics
@@ -439,14 +480,9 @@ class UpgradeBibs(tk.Frame):
             self.actionCbx['values'] = ('upgrade', 'catalog')
             self.actionCbx['state'] = 'readonly'
             self.encode_levelCbx['values'] = (
-                '# - Full level',
-                '1 - Full level, mat. not examined',
-                '2 - Less-than-full level',
-                '3 - Abbreviated level',
-                '4 - Core level',
-                '5 - Partial level',
-                '7 - Minimal level',
-                '8 - Prepublication level'
+                'Level 1 - blank, I, 4 ',
+                'Level 2 & up - M, K, 7, 1, 2',
+                'Level 3 & up - 3, 8'
             )
             self.encode_levelCbx['state'] = 'readonly'
             self.encode_level.set('')
@@ -475,3 +511,9 @@ class UpgradeBibs(tk.Frame):
             self.rec_typeCbx['state'] = 'readonly'
             self.cat_sourceCbx['values'] = ('any', 'DLC')
             self.cat_source.set('any')
+            self.dataSrcCbx['values'] = ('Sierra export', 'IDs list')
+            self.dataSrcCbx['state'] = 'readonly'
+            self.data_source.set('IDs list')
+            self.idTypeCbx['values'] = (
+                'ISBN', 'ISSN', 'UPC', 'LCCN', 'OCLC #')
+            self.idTypeCbx['state'] = 'readonly'
