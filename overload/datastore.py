@@ -198,6 +198,7 @@ class WCHit(Base):
     wcsmid = Column(
         Integer, ForeignKey('wc_source_meta.wcsmid'), nullable=False)
     hit = Column(Boolean, nullable=False)
+    match = Column(String, default=None)  # or Integer? check responses
     marcxml = Column(PickleType)
 
     def __repr__(self):
