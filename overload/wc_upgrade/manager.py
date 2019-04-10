@@ -43,7 +43,7 @@ def request_record(session, oclcNo):
 
 
 def create_callNum(marcxml, system, library):
-    if system == 'BPL':
+    if system == 'NYPL' and library == 'branches':
         cuttering_opts = get_cuttering_fields(marcxml)
         tag_008 = get_tag_008(marcxml)
         lang = get_language_code(tag_008)
