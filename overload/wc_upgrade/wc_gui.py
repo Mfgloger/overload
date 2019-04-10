@@ -401,12 +401,17 @@ class UpgradeBibs(tk.Frame):
 
         if self.source_fh.get() and self.dst_fh.get():
             # both paths provided
-            launch_process(
-                self.source_fh.get(), self.dst_fh.get(), self.progbar,
-                self.counter, self.found, self.nohits, self.action.get(),
-                self.encode_level.get(), self.rec_type.get(),
-                self.cat_rules.get(), self.cat_source.get(),
-                id_type=self.id_type.get(), api=self.api.get())
+            try:
+                launch_process(
+                    self.source_fh.get(), self.dst_fh.get(), self.system.get(),
+                    self.library.get(), self.progbar,
+                    self.counter, self.found, self.nohits, self.action.get(),
+                    self.encode_level.get(), self.rec_type.get(),
+                    self.cat_rules.get(), self.cat_source.get(),
+                    id_type=self.id_type.get(), api=self.api.get())
+                tkMessageBox.showinfo('Processing', 'Processing complete.')
+            except Exception as e:
+                tkMessageBox.showerror('Error', e)
 
         if not self.source_fh.get():
             self.find_source()
@@ -415,10 +420,15 @@ class UpgradeBibs(tk.Frame):
             self.find_destination()
 
     def report(self):
-        pass
+        tkMessageBox.showinfo(
+            'Report',
+            'Detailed report here, that includes all retrieved and\n'
+            'processed records, option to make final selection and\n'
+            'mark bibs to update holdings')
 
     def display_help(self):
-        pass
+        tkMessageBox.showinfo(
+            'Help', 'Help info displayed here.')
 
     def set_logo(self):
         # change logo
