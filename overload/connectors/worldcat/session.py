@@ -1,8 +1,8 @@
 import requests
 import wskey
-
-
-BASE_URL = "http://www.worldcat.org"
+import user
+from bibs.crosswalks import string2xml
+from bibs.xml_bibs import NS
 
 
 class InvalidObject(Exception):
@@ -10,6 +10,32 @@ class InvalidObject(Exception):
 
     def __init__(self, message):
         self.message = message
+
+
+def get_wskey(key, secret, options=None):
+    app_wskey = wskey.Wskey(
+        key=key, secret=secret, options=options)
+    return app_wskey
+
+
+def get_user(authenticating_institution_id, principal_id, principal_idns):
+    app_user = user.User(
+        authenticating_institution_id=authenticating_institution_id,
+        principal_id=principal_id,
+        principal_idns=principal_idns)
+    return app_user
+
+
+def get_authorizaiton_header(
+        app_wskey, request_url, app_user, auth_params=None):
+    authorizaiton_header = app_wskey.get_hmac_signature(
+        method='GET',
+        request_url=request_url,
+        options={
+            'user': app_user,
+            'auth_params': auth_params
+        })
+    return authorizaiton_header
 
 
 def get_access_token(creds):
@@ -22,13 +48,13 @@ def get_access_token(creds):
     secret = creds['secret']
     authenticating_institution_id = creds['authenticating_institution_id']
     context_institution_id = creds['context_institution_id']
-    services = creds['scopes']
+    # services = creds['scopes']  # requires updating creds in vault
 
     # # Configure the wskey library object
     my_wskey = wskey.Wskey(
         key=key,
         secret=secret,
-        options={'services': services})
+        options={'services': ['WorldCatMetadataAPI']})  # pull from creds instead?
 
     # print(my_wskey)
 
@@ -47,45 +73,56 @@ class WorldcatSession(requests.Session):
         access token
     """
 
-    def __init__(self, base_url=BASE_URL, access_token=None):
+    def __init__(self, creds=None):
         requests.Session.__init__(self)
-        self.base_url = base_url
-        self.access_token = access_token
+        if not creds:
+            raise AttributeError('Session requrires worlcat credentials')
+
         self.timeout = (5, 5)
         self.headers.update({
-            'User-Agent': ''
+            'User-Agent': 'BookOps/Overload',
+
         })
 
 
-class WorldcatMetadataSession(WorldcatSession):
+class MetadataSession(WorldcatSession):
     """
-    Interface for getting full records from Worldcat and setting library holdings
+    Interface for getting full records from Worldcat and
+    setting library holdings
+    args:
+        creds: dict, Worldcat credentials
     """
 
-    def __init__(self, access_token=None):
-        WorldcatSession.__init__(self)
-
-        if not access_token:
-            raise AttributeError('Must include access token.')
+    def __init__(self, creds=None):
+        WorldcatSession.__init__(self, creds)
 
         self.base_url = 'https://worldcat.org/bib/data/'
-        # self.base_url = 'https://worldcat.org'
-        # self.base_url += '/bib/data/'
-        self.access_token = access_token
-        # self.headers.update({
-        #     # 'Accept': 'application/xml',
-        #     'Authorization': 'Bearer ' + self.access_token
-        # })
-        print(self.headers)
-        print(self.base_url)
+        self.wskey = get_wskey(creds['key'], creds['secret'])
+        self.user = get_user(
+            creds['authenticating_institution_id'],
+            creds['principal_id'],
+            creds['principal_idns'])
+
+    def prep_get_request(self, oclcNo):
+        request_url = self.base_url + '{}'.format(oclcNo)
+        authorization_header = get_authorizaiton_header(
+            self.wskey, request_url, self.user)
+        headers = {
+            'Accept': 'application/atom+xml;content="application/vnd.oclc.marc21+xml"',
+            'Authorization': authorization_header}
+
+        req = requests.Request('GET', request_url, headers=headers)
+        prepped_req = req.prepare()
+        return prepped_req
 
     def get_record(self, oclcNo):
-        url = self.base_url + '{}'.format(oclcNo)
+        prepped_request = self.prep_get_request(oclcNo)
+        # print(prepped_request.url)
+        # print(prepped_request.headers)
         # send request
         try:
-            response = self.get(
-                url, timeout=self.timeout)
-            print(response.url)
+            response = self.send(
+                prepped_request, timeout=self.timeout)
             return response
         except requests.exceptions.Timeout:
             # log error
@@ -97,22 +134,8 @@ class WorldcatMetadataSession(WorldcatSession):
     def set_holdings(self):
         pass
 
-    def prep_request(self, oclcNo):
-        url = self.base_url + '{}'.format(oclcNo)
-        headers = {
-            'Accept': 'application/atom+json',
-            'Authorization': 'Bearer {}'.format(self.access_token)}
 
-        req = requests.Request('GET', url, headers=headers)
-        prepped = req.prepare()
-        print(prepped.url)
-        print(prepped.headers)
-        resp = self.send(prepped)
-        print(resp.status_code)
-        print(resp.content)
-
-
-class WorldcatSearchSession(WorldcatSession):
+class SearchSession(WorldcatSession):
     """ Interface for querying WorldCat using Search API.
         Search API uses Wskey Lite authorization method:
         https://www.oclc.org/developer/develop/authentication/wskey-lite.en.html
@@ -120,10 +143,10 @@ class WorldcatSearchSession(WorldcatSession):
             wskey: str, Worldcat services key
     """
 
-    def __init__(self, wskey=None):
-        WorldcatSession.__init__(self)
-        self.base_url += '/webservices/catalog/'
-        self.wskey = wskey
+    def __init__(self, creds=None):
+        WorldcatSession.__init__(self, creds)
+        self.base_url = 'http://www.worldcat.org/webservices/catalog/'
+        self.wskey = creds['key']
         self.headers.update({
             'Accept': 'application/xml'
         })
@@ -169,3 +192,9 @@ def evaluate_response(response):
         # log the error code & message
         print(response.json())  # temp
         return None
+
+
+def extract_record_from_response(response):
+    response_body = string2xml(response)
+    record = response_body.find('.//atom:content/rb:response/marc:record', NS)
+    return record
