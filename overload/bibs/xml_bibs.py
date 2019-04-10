@@ -1,6 +1,8 @@
 # module used for work with MARCXML
 
-NS = {'marc': 'http://www.loc.gov/MARC21/slim'}
+NS = {'marc': 'http://www.loc.gov/MARC21/slim',
+      'atom': 'http://www.w3.org/2005/Atom',
+      'rb': 'http://worldcat.org/rb'}
 
 
 def extract_record_lvl(leader_string):
@@ -18,7 +20,7 @@ def extract_record_encoding(leader_string):
 def get_literary_form(leader_string, tag_008):
     rec_type = extract_record_type(leader_string)
     if rec_type == 'a':
-        return tag_008['33']
+        return tag_008[33]
     else:
         return
 
@@ -56,6 +58,12 @@ def get_datafield_040(marcxml):
     for field in marcxml.findall('marc:datafield', NS):
         if field.attrib['tag'] == '040':
             return field
+
+
+def get_oclcNo(marcxml):
+    for field in marcxml.findall('marc:controlfield', NS):
+        if field.attrib['tag'] == '001':
+            return field.text.strip()
 
 
 def get_cuttering_fields(marcxml):
