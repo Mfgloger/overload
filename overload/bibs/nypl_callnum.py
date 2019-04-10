@@ -9,7 +9,6 @@ from xml_bibs import get_literary_form
 NS = {'marc': 'http://www.loc.gov/MARC21/slim'}
 
 
-
 def create_nypl_fiction_callnum(lang, cuttering_fields):
     """
     creates pymarc Field with NYPL Branch call number
