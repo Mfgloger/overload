@@ -26,10 +26,21 @@ def is_english_cataloging(marcxml):
 
 
 def normalize_rec_lvl_parameter(rec_lvl):
-    pass
+    """
+    gui values:
+        'Level 1 - blank, I, 4 ',
+        'Level 2 & up - M, K, 7, 1, 2',
+        'Level 3 & up - 3, 8'
+    """
+    try:
+        lvl = rec_lvl[5]
+    except IndexError:
+        lvl = '1'
+
+    return lvl
 
 
-def meets_user_criteria(marcxml, rec_lvl='level3', rec_type='any',
+def meets_user_criteria(marcxml, rec_lvl, rec_type='any',
                         cat_rules='any', cat_source='any'):
     """
     verifies if record meets all criteria set by a user
