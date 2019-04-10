@@ -1,13 +1,19 @@
 # module controlling upgrade/catalog from Worldcat process
 import csv
 
-from bibs.bibs import (BibOrderMeta, parse_isbn)
-from bibs.crosswalks import string2xml
+from bibs.bibs import (BibOrderMeta, parse_isbn, create_initials_field, write_marc21)
+from bibs.crosswalks import string2xml, xml2string, marcxml2array
+from bibs.nypl_callnum import create_nypl_fiction_callnum
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
-from db_worker import insert_or_ignore, delete_records, retrieve_values, retrieve_related
-from connectors.worldcat.session import (WorldcatSearchSession, evaluate_response)
+from db_worker import (insert_or_ignore, delete_records,
+                       retrieve_values, retrieve_related, update_record)
+from connectors.worldcat.session import (SearchSession,
+                                         MetadataSession, evaluate_response,
+                                         extract_record_from_response)
 from credentials import get_from_vault, evaluate_worldcat_creds
 from criteria import meets_global_criteria, meets_user_criteria
+from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
+                           get_tag_008, get_language_code)
 
 
 def update_progbar(progbar):
@@ -30,7 +36,26 @@ def get_credentials(api):
     return evaluate_worldcat_creds(creds)
 
 
-def launch_process(source_fh, dst_fh, progbar, counter, hits, nohits,
+def request_record(session, oclcNo):
+    res = session.get_record(oclcNo)
+    res = evaluate_response(res)
+    return res
+
+
+def create_callNum(marcxml, system, library):
+    if system == 'BPL':
+        cuttering_opts = get_cuttering_fields(marcxml)
+        tag_008 = get_tag_008(marcxml)
+        lang = get_language_code(tag_008)
+        callNum = create_nypl_fiction_callnum(lang, cuttering_opts)
+        return callNum
+    else:
+        print('NOT IMPLEMENTED YET')
+        return None
+
+
+def launch_process(source_fh, dst_fh, system, library, progbar, counter,
+                   hits, nohits,
                    action, encode_level, rec_type, cat_rules, cat_source,
                    id_type='ISBN', api=None):
     """
@@ -58,7 +83,7 @@ def launch_process(source_fh, dst_fh, progbar, counter, hits, nohits,
         c = 0
         for row in reader:
             c += 1
-        progbar['maximum'] = c * 3
+        progbar['maximum'] = c * 2
 
     with open(source_fh, 'r') as file:
         reader = csv.reader(file)
@@ -93,7 +118,7 @@ def launch_process(source_fh, dst_fh, progbar, counter, hits, nohits,
     with session_scope() as db_session:
         metas = retrieve_values(
             db_session, WCSourceMeta, 'meta', wcsbid=batch_id)
-        with WorldcatSearchSession(wskey=creds['key']) as session:
+        with SearchSession(creds) as session:
             for m in metas:
                 if m.meta.wcid:
                     # query by OCLC number
@@ -112,12 +137,15 @@ def launch_process(source_fh, dst_fh, progbar, counter, hits, nohits,
                             # persist
                             res = insert_or_ignore(
                                 db_session, WCHit, wcsmid=m.wcsmid,
-                                hit=True, marcxml=doc)
+                                hit=True, search_marcxml=doc)
                         else:
                             not_found_counter += 1
                             res = insert_or_ignore(
                                 db_session, WCHit, wcsmid=m.wcsmid,
-                                hit=False, marcxml=None)
+                                hit=False, search_marcxml=None)
+
+                        hits.set(str(found_counter))
+                        nohits.set(str(not_found_counter))
 
                 elif m.meta.issn:
                     # query by ISSN
@@ -131,20 +159,48 @@ def launch_process(source_fh, dst_fh, progbar, counter, hits, nohits,
         db_session.flush()
 
         # verify found matches meet set criteria
-        metas = retrieve_related(
-            db_session, WCSourceMeta, 'wchit', wcsbid=batch_id)
-        for m in metas:
-            for x in m.wchit:
-                if x.hit:
-                    pass
+        with MetadataSession(creds) as session:
+            metas = retrieve_related(
+                db_session, WCSourceMeta, 'wchit', wcsbid=batch_id)
+            for m in metas:
+                for x in m.wchit:
+                    if x.hit:
+                        oclcNo = get_oclcNo(x.search_marcxml)
+                        res = request_record(session, oclcNo)
+                        if res:
+                            xml_record = extract_record_from_response(res)
+                            update_record(
+                                db_session, WCHit, x.wchid,
+                                match=oclcNo,
+                                match_marcxml=xml_record)
+
+                            # check if meet criteria
+                            if meets_global_criteria(xml_record) and \
+                                    meets_user_criteria(
+                                        xml_record,
+                                        encode_level,
+                                        rec_type,
+                                        cat_rules,
+                                        cat_source):
+
+                                # add call number & write to file
+
+                                callNum = create_callNum(
+                                    xml_record, system, library)
+                                initials = create_initials_field(
+                                    system, library, 'TEST GENERATED BIB TEST')
+                                marc_record = marcxml2array(xml_record)[0]
+                                if callNum:
+                                    marc_record.add_ordered_field(callNum)
+                                    marc_record.add_ordered_field(initials)
+
+                                    write_marc21(dst_fh, marc_record)
+
+                            else:
+                                # add counter for rejected bibs
+                                pass
 
                 update_progbar(progbar)
-
-
-
-
-    print(processed_counter)
-
 
 
 
