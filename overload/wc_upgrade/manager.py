@@ -5,7 +5,7 @@ from bibs.bibs import (BibOrderMeta, parse_isbn)
 from bibs.crosswalks import string2xml
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
 from db_worker import insert_or_ignore, delete_records, retrieve_values, retrieve_related
-from connectors.worldcat import (WorldcatSearchSession, evaluate_response)
+from connectors.worldcat.session import (WorldcatSearchSession, evaluate_response)
 from credentials import get_from_vault, evaluate_worldcat_creds
 from criteria import meets_global_criteria, meets_user_criteria
 
