@@ -198,14 +198,18 @@ class WCHit(Base):
     wcsmid = Column(
         Integer, ForeignKey('wc_source_meta.wcsmid'), nullable=False)
     hit = Column(Boolean, nullable=False)
+    setHoldings = Column(Boolean, default=False)
     match = Column(String, default=None)  # or Integer? check responses
     marcxml = Column(PickleType)
 
     def __repr__(self):
-        return "<WCHit(wchid=%s, wcsmid=%s, hit=%s)>" % (
-            self.wchid,
-            self.wcsmid,
-            self.hit)
+        return "<WCHit(wchid=%s, wcsmid=%s, hit=%s, setHoldings=%s," \
+            "match=%s)>" % (
+                self.wchid,
+                self.wcsmid,
+                self.hit,
+                self.setHoldings,
+                self.match)
 
 
 class DataAccessLayer:
