@@ -65,3 +65,9 @@ def delete_records(session, model, **kwargs):
 def create_db_object(model, **kwargs):
     instance = model(**kwargs)
     return instance
+
+
+def update_record(session, model, id, **kwargs):
+    instance = session.query(model).filter_by(wchid=id).one()
+    for key, value in kwargs.iteritems():
+        setattr(instance, key, value)
