@@ -199,8 +199,9 @@ class WCHit(Base):
         Integer, ForeignKey('wc_source_meta.wcsmid'), nullable=False)
     hit = Column(Boolean, nullable=False)
     setHoldings = Column(Boolean, default=False)
-    match = Column(String, default=None)  # or Integer? check responses
-    marcxml = Column(PickleType)
+    match = Column(String, default=None)
+    search_marcxml = Column(PickleType)
+    match_marcxml = Column(PickleType)
 
     def __repr__(self):
         return "<WCHit(wchid=%s, wcsmid=%s, hit=%s, setHoldings=%s," \
