@@ -1,6 +1,51 @@
 from unidecode import unidecode
 
 
+def is_short(tag_300a):
+    # shorter than 50 pages (kind of arbitrary)
+    short = False
+    if 'volume' in tag_300a or ' v.' in tag_300a:
+        # children's picture books are often unpaged and short
+        short = True
+    else:
+        words = tag_300a.split(' ')
+        for w in words:
+            try:
+                w_int = int(w)
+                if w_int < 50:
+                    short = True
+            except TypeError:
+                pass
+            except ValueError:
+                pass
+    return short
+
+
+def is_picture_book(audn_code, tag_300a):
+    """
+    for reference see https://www.oclc.org/bibformats/en/fixedfield/audn.html
+    args:
+        audn_code: str, one character MARC21 audience code
+        tag_300a: str, value of MARC21 tag 300, subfield $a (extend)
+    returns:
+        boolean
+    """
+    if audn_code in ('a', 'b'):
+        return True
+    elif audn_code == 'j':
+        if is_short(tag_300a):
+            return True
+    else:
+        return False
+
+
+def is_juvenile(audn_code):
+    if audn_code in ('a', 'b', 'c', 'j'):
+        return True
+    else:
+        return False
+
+
 def get_last_name(name_string):
     """
     isolates last name in a name string extracted from a record
