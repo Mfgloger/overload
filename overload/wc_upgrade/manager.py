@@ -1,8 +1,9 @@
 # module controlling upgrade/catalog from Worldcat process
 import csv
 
-from bibs.bibs import (BibOrderMeta, parse_isbn, create_initials_field, write_marc21)
-from bibs.crosswalks import string2xml, xml2string, marcxml2array
+from bibs.bibs import (BibOrderMeta, parse_isbn, create_initials_field,
+                       write_marc21)
+from bibs.crosswalks import string2xml, marcxml2array
 from bibs.nypl_callnum import create_nypl_fiction_callnum
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
 from db_worker import (insert_or_ignore, delete_records,
@@ -13,7 +14,7 @@ from connectors.worldcat.session import (SearchSession,
 from credentials import get_from_vault, evaluate_worldcat_creds
 from criteria import meets_global_criteria, meets_user_criteria
 from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
-                           get_tag_008, get_language_code)
+                           get_tag_008, get_record_leader, get_tag_300a)
 
 
 def update_progbar(progbar):
@@ -44,10 +45,12 @@ def request_record(session, oclcNo):
 
 def create_callNum(marcxml, system, library):
     if system == 'NYPL' and library == 'branches':
+        leader_string = get_record_leader(marcxml)
         cuttering_opts = get_cuttering_fields(marcxml)
         tag_008 = get_tag_008(marcxml)
-        lang = get_language_code(tag_008)
-        callNum = create_nypl_fiction_callnum(lang, cuttering_opts)
+        tag_300a = get_tag_300a(marcxml)
+        callNum = create_nypl_fiction_callnum(
+            leader_string, tag_008, tag_300a, cuttering_opts)
         return callNum
     else:
         print('NOT IMPLEMENTED YET')
