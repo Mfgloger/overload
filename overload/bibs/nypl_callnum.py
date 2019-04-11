@@ -2,14 +2,15 @@
 from pymarc import Field
 
 
-from callnum import get_last_name, get_first_letter
-from xml_bibs import get_literary_form
+from callnum import (get_last_name, get_first_letter, is_picture_book, is_juvenile)
+from xml_bibs import get_language_code, get_audience_code
 
 # namespaces
 NS = {'marc': 'http://www.loc.gov/MARC21/slim'}
 
 
-def create_nypl_fiction_callnum(lang, cuttering_fields):
+def create_nypl_fiction_callnum(
+        leader_string, tag_008, tag_300a, cuttering_fields):
     """
     creates pymarc Field with NYPL Branch call number
     args:
@@ -22,6 +23,7 @@ def create_nypl_fiction_callnum(lang, cuttering_fields):
     """
 
     # langugage prefix
+    lang = get_language_code(tag_008)
     lang_prefix = None
     if lang == 'eng':
         # no lang prefix
@@ -30,8 +32,14 @@ def create_nypl_fiction_callnum(lang, cuttering_fields):
         # raise as error?
         # not valid
         pass
+    elif lang is None:
+        # raise error?
+        pass
     else:
         lang_prefix = lang.upper()
+
+    # audience
+    audn_code = get_audience_code(leader_string, tag_008)
 
     # main entry cutter
     cutter = None
@@ -47,10 +55,17 @@ def create_nypl_fiction_callnum(lang, cuttering_fields):
 
     # construct call number field
     subfields = []
+    subfield_p_values = []
     field = None
+    if is_juvenile(audn_code):
+        subfield_p_values.append('J')
     if lang_prefix:
-        subfields.extend(['p', lang_prefix])
-    subfields.extend(['a', 'FIC'])
+        subfield_p_values.append(lang_prefix)
+        subfields.extend(['p', ' '.join(subfield_p_values)])
+    if is_picture_book(audn_code, tag_300a):
+        subfields.extend(['a', 'PIC'])
+    else:
+        subfields.extend(['a', 'FIC'])
     if cutter:
         subfields.extend(['c', cutter])
         field = Field(tag='091', indicators=[' ', ' '], subfields=subfields)
