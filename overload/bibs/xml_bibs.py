@@ -25,6 +25,14 @@ def get_literary_form(leader_string, tag_008):
         return
 
 
+def get_audience_code(leader_string, tag_008):
+    rec_type = extract_record_type(leader_string)
+    if rec_type == 'a':
+        return tag_008[22]
+    else:
+        return
+
+
 def get_language_code(tag_008):
     """
     extracts language code form control field 008
@@ -64,6 +72,14 @@ def get_oclcNo(marcxml):
     for field in marcxml.findall('marc:controlfield', NS):
         if field.attrib['tag'] == '001':
             return field.text.strip()
+
+
+def get_tag_300a(marcxml):
+    for field in marcxml.findall('marc:datafield', NS):
+        if field.attrib['tag'] == '300':
+            for subfield in field.findall('marc:subfield', NS):
+                if subfield.attrib['code'] == 'a':
+                    return subfield.text.strip()
 
 
 def get_cuttering_fields(marcxml):
