@@ -1,4 +1,5 @@
 import logging
+import os.path
 import shelve
 import Tkinter as tk
 import ttk
@@ -386,38 +387,42 @@ class UpgradeBibs(tk.Frame):
 
     def process(self):
         # validate all required elements are provided
-        issues = []
-
-        if not self.system.get():
-            issues.append('- system not selected')
-        if self.system.get() == 'NYPL' and not self.library.get():
-            issues.append('- missing library pramater')
-        if not self.action.get():
-            issues.append('- action not selected')
-        if not self.api.get():
-            issues.append('- API not selected')
-        if not self.encode_level.get():
-            issues.append('- encoding level not selected')
-
-        if self.source_fh.get() and self.dst_fh.get():
-            # both paths provided
-            try:
-                launch_process(
-                    self.source_fh.get(), self.dst_fh.get(), self.system.get(),
-                    self.library.get(), self.progbar,
-                    self.counter, self.found, self.nohits, self.action.get(),
-                    self.encode_level.get(), self.rec_type.get(),
-                    self.cat_rules.get(), self.cat_source.get(),
-                    id_type=self.id_type.get(), api=self.api.get())
-                tkMessageBox.showinfo('Processing', 'Processing complete.')
-            except Exception as e:
-                tkMessageBox.showerror('Error', e)
-
+        self.progbar['value'] = 0
         if not self.source_fh.get():
             self.find_source()
 
         if not self.dst_fh.get():
             self.find_destination()
+
+        issues = []
+
+        if not self.system.get():
+            issues.append('- system not selected')
+        if self.system.get() == 'NYPL' and not self.library.get():
+            issues.append('- library parameter is required')
+        if not self.action.get():
+            issues.append('- action parameter is required')
+        if not self.api.get():
+            issues.append('- API not selected')
+        if not self.encode_level.get():
+            issues.append('- encoding level not selected')
+
+        if issues:
+            issues.insert(0, 'Parameters error(s):\n')
+            tkMessageBox.showerror('Error', '\n'.join(issues))
+        else:
+            if self.source_fh.get() and self.dst_fh.get():
+                # both paths provided
+                # wrap later in an exception catching & displaying
+                launch_process(
+                    self.source_fh.get(), self.dst_fh.get(),
+                    self.system.get(), self.library.get(), self.progbar,
+                    self.counter, self.found, self.nohits,
+                    self.action.get(), self.encode_level.get(),
+                    self.rec_type.get(), self.cat_rules.get(),
+                    self.cat_source.get(),
+                    id_type=self.id_type.get(), api=self.api.get())
+                tkMessageBox.showinfo('Processing', 'Processing complete.')
 
     def report(self):
         tkMessageBox.showinfo(
