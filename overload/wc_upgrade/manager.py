@@ -2,7 +2,7 @@
 import csv
 
 from bibs.bibs import (BibOrderMeta, parse_isbn, create_initials_field,
-                       write_marc21)
+                       write_marc21, remove_oclcNo_prefix, create_controlfield)
 from bibs.crosswalks import string2xml, marcxml2array
 from bibs.nypl_callnum import create_nypl_fiction_callnum
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
@@ -55,6 +55,13 @@ def create_callNum(marcxml, system, library):
     else:
         print('NOT IMPLEMENTED YET')
         return None
+
+
+def nypl_oclcNo_field(marcxml):
+    oclcNo = get_oclcNo(marcxml)
+    oclcNo = remove_oclcNo_prefix(oclcNo)
+    tag_001 = create_controlfield('001', oclcNo)
+    return tag_001
 
 
 def launch_process(source_fh, dst_fh, system, library, progbar, counter,
@@ -190,21 +197,26 @@ def launch_process(source_fh, dst_fh, system, library, progbar, counter,
 
                                 callNum = create_callNum(
                                     xml_record, system, library)
-                                initials = create_initials_field(
-                                    system, library, 'TEST GENERATED BIB TEST')
-                                marc_record = marcxml2array(xml_record)[0]
                                 if callNum:
+                                    initials = create_initials_field(
+                                        system, library, 'CATbot')
+                                    marc_record = marcxml2array(xml_record)[0]
                                     marc_record.add_ordered_field(callNum)
                                     marc_record.add_ordered_field(initials)
+                                    if system == 'NYPL':
+                                        tag_001 = nypl_oclcNo_field(xml_record)
+                                        marc_record.remove_fields('001')
+                                        marc_record.add_ordered_field(tag_001)
 
                                     write_marc21(dst_fh, marc_record)
+                                else:
+                                    print('Unable to construct call number')
 
                             else:
-                                # add counter for rejected bibs
+                                print('Did not meet criteria')
                                 pass
 
                 update_progbar(progbar)
-
 
 
     # remove_temp_data(source_fh)
