@@ -204,6 +204,33 @@ def create_initials_field(system, library, value):
     return Field(tag=tag, indicators=[' ', ' '], subfields=subfields)
 
 
+def create_controlfield(tag, data):
+    return Field(
+        tag=tag,
+        data=data)
+
+
+def remove_oclcNo_prefix(oclcNo):
+    """
+    removes OCLC Number prefix
+    for example:
+        ocm00012345 => 00012345 (8 digits numbers 1-99999999)
+        ocn00012345 => 00012345 (9 digits numbers 100000000 to 999999999)
+        on000123456  => 000123456 (10+ digits numbers 1000000000 and higher)
+    args:
+        oclcNo: str, OCLC Number
+    returns:
+        oclcNo: str, OCLC without any prefix
+    """
+    oclcNo = oclcNo.strip()
+    if 'ocm' in oclcNo or 'ocn' in oclcNo:
+        return oclcNo[3:]
+    elif 'on' in oclcNo:
+        return oclcNo[2:]
+    else:
+        return oclcNo
+
+
 def count_bibs(file):
     reader = read_marc21(file)
     bib_count = 0
