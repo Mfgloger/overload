@@ -1,16 +1,6 @@
-from bibs.xml_bibs import (NS, extract_record_type, get_literary_form,
-    get_record_leader, get_tag_008, get_datafield_040, get_cat_lang,
-    extract_record_lvl)
-
-
-def is_fiction(marcxml):
-    leader = get_record_leader(marcxml)
-    tag_008 = get_tag_008(marcxml)
-    code = get_literary_form(leader, tag_008)
-    if code in ('1', 'f', 'j'):
-        return True
-    else:
-        return False
+from bibs.xml_bibs import (get_record_leader, get_datafield_040,
+                           get_cat_lang, extract_record_lvl)
+from callnum import is_picture_book, is_fiction
 
 
 def is_english_cataloging(marcxml):
@@ -95,7 +85,8 @@ def meets_global_criteria(marcxml):
 
     # print materials and fiction only
 
-    if is_fiction(marcxml) and is_english_cataloging(marcxml):
+    if (is_fiction(marcxml) and is_english_cataloging(marcxml)) or \
+            (is_english_cataloging(marcxml) and is_picture_book(marcxml)):
         return True
     else:
         return False
