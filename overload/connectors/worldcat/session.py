@@ -190,7 +190,7 @@ def evaluate_response(response):
         return response.content
     else:
         # log the error code & message
-        print(response.json())  # temp
+        print(response.content)  # temp
         return None
 
 
