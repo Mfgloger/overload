@@ -46,6 +46,22 @@ def is_juvenile(audn_code):
         return False
 
 
+def get_literary_form(leader_string, tag_008):
+    rec_type = extract_record_type(leader_string)
+    if rec_type == 'a':
+        return tag_008[33]
+    else:
+        return
+
+
+def is_fiction(leader_string, tag_008):
+    code = get_literary_form(leader_string, tag_008)
+    if code in ('1', 'f', 'j'):
+        return True
+    else:
+        return False
+
+
 def get_last_name(name_string):
     """
     isolates last name in a name string extracted from a record
