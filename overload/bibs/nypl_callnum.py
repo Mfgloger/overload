@@ -2,7 +2,8 @@
 from pymarc import Field
 
 
-from callnum import (get_last_name, get_first_letter, is_picture_book, is_juvenile)
+from callnum import (get_last_name, get_first_letter,
+                     is_picture_book, is_juvenile)
 from xml_bibs import get_language_code, get_audience_code
 
 # namespaces
