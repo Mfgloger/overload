@@ -2,10 +2,9 @@
 from pymarc import Field
 
 
-from callnum import (get_last_name, get_first_letter,
-                     is_picture_book, is_juvenile)
-from xml_bibs import get_language_code, get_audience_code
-
+from parsers import (parse_last_name, parse_first_letter,
+                     is_picture_book, is_juvenile, get_language_code,
+                     get_audience_code)
 # namespaces
 NS = {'marc': 'http://www.loc.gov/MARC21/slim'}
 
@@ -46,13 +45,13 @@ def create_nypl_fiction_callnum(
     cutter = None
     if '100' in cuttering_fields:
         # use last name
-        cutter = get_last_name(cuttering_fields['100'])
+        cutter = parse_last_name(cuttering_fields['100'])
     elif '110' in cuttering_fields:
-        cutter = get_first_letter(cuttering_fields['110'])
+        cutter = parse_first_letter(cuttering_fields['110'])
     elif '111' in cuttering_fields:
-        cutter = get_first_letter(cuttering_fields['111'])
+        cutter = parse_first_letter(cuttering_fields['111'])
     else:
-        cutter = get_first_letter(cuttering_fields['245'])
+        cutter = parse_first_letter(cuttering_fields['245'])
 
     # construct call number field
     subfields = []

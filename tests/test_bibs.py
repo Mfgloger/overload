@@ -4,28 +4,27 @@ import unittest
 from pymarc import Record, Field, MARCReader, JSONReader
 import os
 
-from context import bibs
-from context import OverloadError
+from context import bibs, parsers
 
 
 class TestUtils(unittest.TestCase):
     """Test utilities functions used in Overload"""
 
     def test_parse_isbn_10_digits_only(self):
-        self.assertIsNotNone(bibs.parse_isbn('83-922033-1-3'))
+        self.assertIsNotNone(parsers.parse_isbn('83-922033-1-3'))
 
     def test_parse_isbn_13_digit_only(self):
-        self.assertIsNotNone(bibs.parse_isbn('9788374147323'))
+        self.assertIsNotNone(parsers.parse_isbn('9788374147323'))
 
     def test_parse_isbn_10_digit_x(self):
-        self.assertIsNotNone(bibs.parse_isbn('061543326X'))
+        self.assertIsNotNone(parsers.parse_isbn('061543326X'))
 
     def test_parse_isbn_13_digit_x(self):
-        self.assertIsNotNone(bibs.parse_isbn('978141049620x (hardcover)'))
+        self.assertIsNotNone(parsers.parse_isbn('978141049620x (hardcover)'))
 
     # def test_parse_incorrect_isbn(self):
     #     # make corrections to isbn parser
-    #     self.assertIsNone(bibs.parse_isbn(
+    #     self.assertIsNone(parsers.parse_isbn(
     #         '5060099503825'),
     #         msg='isbn parser should be able to recognize'
                 # ' identificators that are not ISBNs')
@@ -36,17 +35,17 @@ class TestParseUPC(unittest.TestCase):
 
     def test_parsing_good_UPC(self):
         self.assertEqual(
-            bibs.parse_upc('6706878182'),
+            parsers.parse_upc('6706878182'),
             '6706878182')
 
     def test_parsing_UPC_with_price(self):
         self.assertEqual(
-            bibs.parse_upc('8616227633 : $19.98'),
+            parsers.parse_upc('8616227633 : $19.98'),
             '8616227633')
 
     def test_parsing_alphanumberic_UPC(self):
         self.assertEqual(
-            bibs.parse_upc('M215104174'),
+            parsers.parse_upc('M215104174'),
             'M215104174')
 
 
@@ -55,17 +54,17 @@ class TestParseISSN(unittest.TestCase):
 
     def test_parsing_good_digit_only_ISSN(self):
         self.assertEqual(
-            bibs.parse_issn('0378-5955'),
+            parsers.parse_issn('0378-5955'),
             '03785955')
 
     def test_parsing_good_digit_x_ISSN(self):
         self.assertEqual(
-            bibs.parse_issn('2434-561X'),
+            parsers.parse_issn('2434-561X'),
             '2434561X')
 
     def test_parsing_incorrect_ISSN(self):
         self.assertIsNone(
-            bibs.parse_issn('M215104174'))
+            parsers.parse_issn('M215104174'))
 
 
 class TestParseSierraID(unittest.TestCase):

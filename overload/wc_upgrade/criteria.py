@@ -1,6 +1,5 @@
-from bibs.xml_bibs import (get_record_leader, get_datafield_040,
-                           get_cat_lang, extract_record_lvl)
-from callnum import is_picture_book, is_fiction
+from bibs.xml_bibs import get_record_leader, get_datafield_040, get_cat_lang
+from bibs.parsers import extract_record_lvl, is_picture_book, is_fiction
 
 
 def is_english_cataloging(marcxml):

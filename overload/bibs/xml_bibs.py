@@ -5,45 +5,6 @@ NS = {'marc': 'http://www.loc.gov/MARC21/slim',
       'rb': 'http://worldcat.org/rb'}
 
 
-def extract_record_lvl(leader_string):
-    return leader_string[17]
-
-
-def extract_record_type(leader_string):
-    return leader_string[6]
-
-
-def extract_record_encoding(leader_string):
-    return leader_string[9]
-
-
-def get_literary_form(leader_string, tag_008):
-    rec_type = extract_record_type(leader_string)
-    if rec_type == 'a':
-        return tag_008[33]
-    else:
-        return
-
-
-def get_audience_code(leader_string, tag_008):
-    rec_type = extract_record_type(leader_string)
-    if rec_type == 'a':
-        return tag_008[22]
-    else:
-        return
-
-
-def get_language_code(tag_008):
-    """
-    extracts language code form control field 008
-    args:
-        tag_008: str, value of MARC field 008
-    returns:
-        code: str, 3 character long language code
-    """
-    return tag_008[35:38]
-
-
 def get_record_leader(marcxml):
     for field in marcxml.findall('marc:leader', NS):
         return field.text

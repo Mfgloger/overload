@@ -2,47 +2,12 @@
 
 from pymarc import MARCReader, JSONReader, MARCWriter, Field
 from pymarc.exceptions import RecordLengthInvalid, RecordDirectoryInvalid
-import re
 from datetime import datetime
+
+
 from errors import OverloadError
+from parsers import parse_isbn, parse_issn, parse_upc, parse_sierra_id
 from sierra_dicts import NBIB_DEFAULT_LOCATIONS
-
-
-def parse_isbn(field):
-    field = field.replace('-', '')
-    p = re.compile(r'^(97[8|9])?\d{9}[\dxX]')
-
-    m = re.search(p, field)
-    if m:
-        return str(m.group(0))
-    else:
-        return None
-
-
-def parse_issn(field):
-    p = re.compile(r'^(\d{4}-\d{3}[\dxX]$)')
-    m = re.search(p, field)
-    if m:
-        return str(m.group(0).replace('-', ''))
-    else:
-        return None
-
-
-def parse_upc(field):
-    return field.split(' ')[0]
-
-
-def parse_sierra_id(field):
-    try:
-        p = re.compile(r'\.b\d{8}.|\.o\d{7}.')
-
-        m = re.match(p, field)
-        if m:
-            return str(m.group())[2:-1]
-        else:
-            return None
-    except TypeError:
-        return None
 
 
 def read_marc21(file):
@@ -208,27 +173,6 @@ def create_controlfield(tag, data):
     return Field(
         tag=tag,
         data=data)
-
-
-def remove_oclcNo_prefix(oclcNo):
-    """
-    removes OCLC Number prefix
-    for example:
-        ocm00012345 => 00012345 (8 digits numbers 1-99999999)
-        ocn00012345 => 00012345 (9 digits numbers 100000000 to 999999999)
-        on000123456  => 000123456 (10+ digits numbers 1000000000 and higher)
-    args:
-        oclcNo: str, OCLC Number
-    returns:
-        oclcNo: str, OCLC without any prefix
-    """
-    oclcNo = oclcNo.strip()
-    if 'ocm' in oclcNo or 'ocn' in oclcNo:
-        return oclcNo[3:]
-    elif 'on' in oclcNo:
-        return oclcNo[2:]
-    else:
-        return oclcNo
 
 
 def count_bibs(file):

@@ -1,8 +1,9 @@
 # module controlling upgrade/catalog from Worldcat process
 import csv
 
-from bibs.bibs import (BibOrderMeta, parse_isbn, create_initials_field,
-                       write_marc21, remove_oclcNo_prefix, create_controlfield)
+from bibs.bibs import (BibOrderMeta, create_initials_field,
+                       write_marc21, create_controlfield)
+from bibs.parsers import (parse_isbn, remove_oclcNo_prefix)
 from bibs.crosswalks import string2xml, marcxml2array
 from bibs.nypl_callnum import create_nypl_fiction_callnum
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
