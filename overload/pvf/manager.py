@@ -20,7 +20,7 @@ from bibs.crosswalks import platform2meta, bibs2meta
 from bibs.dedup import dedup_marc_file
 from datastore import session_scope, Vendor, \
     PVR_Batch, PVR_File, NYPLOrderTemplate
-from db_worker import insert_or_ignore, retrieve_values, \
+from db_worker import insert_or_ignore, retrieve_records, \
     retrieve_record, update_nypl_template, delete_record
 from errors import OverloadError, APITokenExpiredError
 from logging_setup import LogglyAdapter
@@ -653,8 +653,8 @@ def save_stats():
 def get_template_names(agent):
     # agent arg must be 3 letter code
     with session_scope() as session:
-        values = retrieve_values(
-            session, NYPLOrderTemplate, 'tName', agent=agent)
+        values = retrieve_records(
+            session, NYPLOrderTemplate, agent=agent)
         return [x.tName for x in values]
 
 
