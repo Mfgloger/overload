@@ -20,7 +20,7 @@ import tkFileDialog
 
 
 from datastore import session_scope, PVR_Batch
-from db_worker import retrieve_values
+from db_worker import retrieve_records
 from connectors import goo
 from connectors.goo_settings.scopes import SHEET_SCOPE, FDRIVE_SCOPE
 from connectors.goo_settings.access_names import GAPP, GUSER
@@ -583,7 +583,7 @@ class Reports(tk.Frame):
 
             # find out date values for PFV report
             with session_scope() as session:
-                records = retrieve_values(session, PVR_Batch, 'timestamp')
+                records = retrieve_records(session, PVR_Batch)
                 values = list(
                     set([record.timestamp[:7] for record in records]))
             self.userReportCbx['values'] = values
