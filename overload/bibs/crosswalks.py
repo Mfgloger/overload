@@ -82,7 +82,7 @@ def string2xml(marcxml_as_string):
 
 
 def xml2string(marcxml):
-    return ET.tostring(marcxml)
+    return ET.tostring(marcxml, encoding='utf-8')
 
 
 def marcxml2array(marcxml):
