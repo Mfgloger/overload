@@ -86,16 +86,16 @@ def is_picture_book(audn_code, tag_300a):
         return False
 
 
-def is_juvenile(audn_code):
-    if audn_code in ('a', 'b', 'c', 'j'):
+def is_fiction(leader_string, tag_008):
+    code = get_literary_form(leader_string, tag_008)
+    if code in ('1', 'f', 'j'):
         return True
     else:
         return False
 
 
-def is_fiction(leader_string, tag_008):
-    code = get_literary_form(leader_string, tag_008)
-    if code in ('1', 'f', 'j'):
+def is_juvenile(audn_code):
+    if audn_code in ('a', 'b', 'c', 'j'):
         return True
     else:
         return False
