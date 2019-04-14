@@ -1,5 +1,4 @@
 import logging
-import os.path
 import shelve
 import Tkinter as tk
 import ttk
@@ -44,16 +43,19 @@ class UpgradeBibs(tk.Frame):
         self.data_source = tk.StringVar()
         self.data_source.trace('w', self.data_source_observer)
         self.id_type = tk.StringVar()
-        self.counter = tk.StringVar()
+        self.proc_label = tk.StringVar()
         self.nohits = tk.IntVar()
         self.found = tk.IntVar()
+        self.meet_crit_counter = tk.IntVar()
+        self.fail_user_crit_counter = tk.IntVar()
+        self.fail_glob_crit_counter = tk.IntVar()
 
         # logos
         self.nyplLogo = tk.PhotoImage(file='./icons/nyplLogo.gif')
         self.bplLogo = tk.PhotoImage(file='./icons/bplLogo.gif')
 
         # layout of the main frame
-        self.rowconfigure(0, minsize=30)
+        self.rowconfigure(0, minsize=10)
         self.rowconfigure(2, minsize=10)
         self.columnconfigure(0, minsize=5)
         self.columnconfigure(2, minsize=5)
@@ -211,15 +213,16 @@ class UpgradeBibs(tk.Frame):
             row=3, column=1, columnspan=6, sticky='snew')
         self.actionFrm.rowconfigure(0, minsize=10)
         self.actionFrm.rowconfigure(3, minsize=20)
-        self.actionFrm.rowconfigure(5, minsize=20)
+        self.actionFrm.rowconfigure(5, minsize=5)
         self.actionFrm.rowconfigure(7, minsize=10)
-        self.actionFrm.rowconfigure(8, minsize=30)
-        self.actionFrm.rowconfigure(10, minsize=10)
+        self.actionFrm.rowconfigure(10, minsize=20)
+        self.actionFrm.rowconfigure(12, minsize=10)
         self.actionFrm.columnconfigure(0, minsize=10)
-        self.actionFrm.columnconfigure(3, minsize=250)
-        self.actionFrm.columnconfigure(2, minsize=20)
-        self.actionFrm.columnconfigure(6, minsize=20)
-        self.actionFrm.columnconfigure(8, minsize=10)
+        self.actionFrm.columnconfigure(2, minsize=5)
+        self.actionFrm.columnconfigure(4, minsize=50)
+        self.actionFrm.columnconfigure(6, minsize=5)
+        self.actionFrm.columnconfigure(7, minsize=100)
+        self.actionFrm.columnconfigure(8, minsize=5)
 
         # source row
         self.sourceLbl = ttk.Label(
@@ -231,7 +234,7 @@ class UpgradeBibs(tk.Frame):
             self.actionFrm,
             textvariable=self.source_fh)
         self.sourceEnt.grid(
-            row=1, column=2, columnspan=4, sticky='snew', pady=5)
+            row=1, column=3, columnspan=8, sticky='snew', pady=5)
         searchICO = tk.PhotoImage(file='./icons/search.gif')
         self.sourceBtn = ttk.Button(
             self.actionFrm, image=searchICO,
@@ -239,7 +242,7 @@ class UpgradeBibs(tk.Frame):
             command=self.find_source)
         self.sourceBtn.image = searchICO
         self.sourceBtn.grid(
-            row=1, column=7, sticky='new', pady=4)
+            row=1, column=11, sticky='ne', padx=5, pady=5)
 
         # destination row
         self.dstLbl = ttk.Label(
@@ -251,58 +254,104 @@ class UpgradeBibs(tk.Frame):
             self.actionFrm,
             textvariable=self.dst_fh)
         self.dstEnt.grid(
-            row=2, column=2, columnspan=4, sticky='snew', pady=5)
+            row=2, column=3, columnspan=8, sticky='snew', pady=5)
         self.dstBtn = ttk.Button(
             self.actionFrm, image=searchICO,
             cursor='hand2',
             command=self.find_destination)
         self.dstBtn.image = searchICO
         self.dstBtn.grid(
-            row=2, column=7, sticky='new', pady=4)
+            row=2, column=11, sticky='ne', padx=5, pady=5)
 
         # progess area
-        self.progLbl = ttk.Label(
+        self.prog1Lbl = ttk.Label(
             self.actionFrm,
             text='progress')
-        self.progLbl.grid(
+        self.prog1Lbl.grid(
             row=4, column=1, sticky='snew')
-        self.progbar = ttk.Progressbar(
+        self.progbar1 = ttk.Progressbar(
             self.actionFrm,
             mode='determinate',
             orient=tk.HORIZONTAL,)
-        self.progbar.grid(
-            row=4, column=2, columnspan=4, sticky='snew')
-        self.counterLbl = ttk.Label(
+        self.progbar1.grid(
+            row=4, column=3, columnspan=2, sticky='snew')
+        self.prog2Lbl = ttk.Label(
             self.actionFrm,
-            textvariable=self.counter)
-        self.counterLbl.grid(
-            row=4, column=7, sticky='snew')
+            textvariable=self.proc_label)
+        self.prog2Lbl.grid(
+            row=4, column=5, sticky='sne', padx=10)
+        self.progbar2 = ttk.Progressbar(
+            self.actionFrm,
+            mode='determinate',
+            orient=tk.HORIZONTAL,)
+        self.progbar2.grid(
+            row=4, column=6, columnspan=2, sticky='snew')
 
         self.tallyLbl = ttk.Label(
             self.actionFrm,
             text='status')
         self.tallyLbl.grid(
-            row=6, column=1, sticky='snew')
+            row=6, column=3, sticky='snew')
+
         self.foundLbl = ttk.Label(
             self.actionFrm,
-            text='found:')
+            text='OCLC match:')
         self.foundLbl.grid(
-            row=6, column=2, sticky='snew')
+            row=7, column=3, sticky='snew')
+
         self.foundcounterLbl = ttk.Label(
             self.actionFrm,
             textvariable=self.found)
         self.foundcounterLbl.grid(
-            row=6, column=3, sticky='snw')
+            row=7, column=4, sticky='snw')
+
         self.nohitsLbl = ttk.Label(
             self.actionFrm,
-            text='not found:')
+            text='no match found:')
         self.nohitsLbl.grid(
-            row=7, column=2, sticky='snew')
+            row=8, column=3, sticky='snew')
+
         self.nohitscounterLbl = ttk.Label(
             self.actionFrm,
             textvariable=self.nohits)
         self.nohitscounterLbl.grid(
-            row=7, column=3, sticky='snw')
+            row=8, column=4, sticky='snw')
+
+        self.meetCritLbl = ttk.Label(
+            self.actionFrm,
+            text='meets criteria:')
+        self.meetCritLbl.grid(
+            row=7, column=5, sticky='snew')
+
+        self.meetCritCounterLbl = ttk.Label(
+            self.actionFrm,
+            textvariable=self.meet_crit_counter)
+        self.meetCritCounterLbl.grid(
+            row=7, column=6, columnspan=2, sticky='snw')
+
+        self.userCritFailLbl = ttk.Label(
+            self.actionFrm,
+            text='failed user criteria:')
+        self.userCritFailLbl.grid(
+            row=8, column=5, sticky='snew')
+
+        self.userCritFailCounterLbl = ttk.Label(
+            self.actionFrm,
+            textvariable=self.fail_user_crit_counter)
+        self.userCritFailCounterLbl.grid(
+            row=8, column=6, columnspan=2, sticky='snw')
+
+        self.globCritFailLbl = ttk.Label(
+            self.actionFrm,
+            text='failed global criteria:')
+        self.globCritFailLbl.grid(
+            row=9, column=5, sticky='snew')
+
+        self.globCritFailCounterLbl = ttk.Label(
+            self.actionFrm,
+            textvariable=self.fail_glob_crit_counter)
+        self.globCritFailCounterLbl.grid(
+            row=9, column=6, columnspan=2, sticky='snw')
 
         # action buttons
         self.processBtn = ttk.Button(
@@ -312,7 +361,7 @@ class UpgradeBibs(tk.Frame):
             cursor='hand2',
             width=12)
         self.processBtn.grid(
-            row=9, column=1, sticky='nw')
+            row=11, column=3, sticky='nw')
 
         self.reportBtn = ttk.Button(
             self.actionFrm,
@@ -321,7 +370,7 @@ class UpgradeBibs(tk.Frame):
             cursor='hand2',
             width=12)
         self.reportBtn.grid(
-            row=9, column=3, sticky='nw')
+            row=11, column=5, sticky='nw')
 
         # right panel
         # default logo & navigation buttons
@@ -386,8 +435,9 @@ class UpgradeBibs(tk.Frame):
             self.dst_fh.set(dst_fh)
 
     def process(self):
+        self.reset()
+
         # validate all required elements are provided
-        self.progbar['value'] = 0
         if not self.source_fh.get():
             self.find_source()
 
@@ -407,6 +457,22 @@ class UpgradeBibs(tk.Frame):
         if not self.encode_level.get():
             issues.append('- encoding level not selected')
 
+        # temp issues
+        if self.system.get() == 'BPL':
+            issues.append('- BPL functionality not developed')
+        if self.library.get() == 'research':
+            issues.append('- Research functionality not developed')
+        if self.action.get() == 'update':
+            issues.append('- updating functionality not developed')
+        if self.rec_type.get() != 'any':
+            issues.append('- record type functionality not developed')
+        if self.cat_rules.get() != 'any':
+            issues.append('- cat rules functionality not developed')
+        if self.cat_source.get() != 'any':
+            issues.append('- cat source functionality not developed')
+        if self.id_type.get() != 'ISBN':
+            issues.append('- only ISBN id is permitted at the moment')
+
         if issues:
             issues.insert(0, 'Parameters error(s):\n')
             tkMessageBox.showerror('Error', '\n'.join(issues))
@@ -416,8 +482,10 @@ class UpgradeBibs(tk.Frame):
                 # wrap later in an exception catching & displaying
                 launch_process(
                     self.source_fh.get(), self.dst_fh.get(),
-                    self.system.get(), self.library.get(), self.progbar,
-                    self.counter, self.found, self.nohits,
+                    self.system.get(), self.library.get(), self.progbar1,
+                    self.progbar2, self.proc_label,
+                    self.found, self.nohits, self.meet_crit_counter,
+                    self.fail_user_crit_counter, self.fail_glob_crit_counter,
                     self.action.get(), self.encode_level.get(),
                     self.rec_type.get(), self.cat_rules.get(),
                     self.cat_source.get(),
@@ -434,6 +502,15 @@ class UpgradeBibs(tk.Frame):
     def display_help(self):
         tkMessageBox.showinfo(
             'Help', 'Help info displayed here.')
+
+    def reset(self):
+        self.progbar1['value'] = 0
+        self.progbar2['value'] = 0
+        self.found.set(0)
+        self.nohits.set(0)
+        self.meet_crit_counter.set(0)
+        self.fail_user_crit_counter.set(0)
+        self.fail_glob_crit_counter.set(0)
 
     def set_logo(self):
         # change logo
@@ -467,8 +544,10 @@ class UpgradeBibs(tk.Frame):
             user_data.close()
 
             if self.system.get() == 'NYPL':
+                self.api.set('')
                 self.apiCbx['values'] = apis['NYPL'].keys()
             elif self.system.get() == 'BPL':
+                self.api.set('')
                 self.apiCbx['values'] = apis['BPL'].keys()
             self.apiCbx['state'] = 'readonly'
         except KeyError:

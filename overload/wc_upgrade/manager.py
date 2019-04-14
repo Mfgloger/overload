@@ -7,10 +7,10 @@ from bibs.parsers import (parse_isbn, remove_oclcNo_prefix)
 from bibs.crosswalks import string2xml, marcxml2array
 from bibs.nypl_callnum import create_nypl_fiction_callnum
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
-from db_worker import (insert_or_ignore, delete_records,
-                       retrieve_values, retrieve_related, update_record)
-from connectors.worldcat.session import (SearchSession,
-                                         MetadataSession, evaluate_response,
+from db_worker import (insert_or_ignore, delete_all_table_data,
+                       retrieve_records, retrieve_related, update_record)
+from connectors.worldcat.session import (SearchSession, MetadataSession,
+                                         is_positive_response, no_match,
                                          extract_record_from_response)
 from credentials import get_from_vault, evaluate_worldcat_creds
 from criteria import meets_global_criteria, meets_user_criteria
@@ -28,9 +28,10 @@ def store_meta(model, record):
     pass
 
 
-def remove_temp_data(source_fh):
+def remove_previous_process_data():
     with session_scope() as db_session:
-        delete_records(db_session, WCSourceBatch)
+        # deletes WCSourceBatch data and all related tables
+        delete_all_table_data(db_session, WCSourceBatch)
 
 
 def get_credentials(api):
@@ -39,9 +40,11 @@ def get_credentials(api):
 
 
 def request_record(session, oclcNo):
-    res = session.get_record(oclcNo)
-    res = evaluate_response(res)
-    return res
+    if oclcNo:
+        res = session.get_record(oclcNo)
+        if is_positive_response(res) and not no_match(res):
+            xml_record = extract_record_from_response(res)
+            return xml_record
 
 
 def create_callNum(marcxml, system, library):
@@ -65,8 +68,9 @@ def nypl_oclcNo_field(marcxml):
     return tag_001
 
 
-def launch_process(source_fh, dst_fh, system, library, progbar, counter,
-                   hits, nohits,
+def launch_process(source_fh, dst_fh, system, library, progbar1, progbar2,
+                   process_label, hits, nohits, meet_crit_counter,
+                   fail_user_crit_counter, fail_glob_crit_counter,
                    action, encode_level, rec_type, cat_rules, cat_source,
                    id_type='ISBN', api=None):
     """
@@ -86,15 +90,19 @@ def launch_process(source_fh, dst_fh, system, library, progbar, counter,
         nohits: tkinter IntVar
     """
 
-    remove_temp_data(source_fh)
+    remove_previous_process_data()
 
     # calculate max counter
+    process_label.set('reading:')
     with open(source_fh, 'r') as file:
         reader = csv.reader(file)
+        # skip header
+        reader.next()
         c = 0
         for row in reader:
             c += 1
-        progbar['maximum'] = c * 2
+        progbar1['maximum'] = c * 4
+        progbar2['maximum'] = c
 
     with open(source_fh, 'r') as file:
         reader = csv.reader(file)
@@ -115,7 +123,8 @@ def launch_process(source_fh, dst_fh, system, library, progbar, counter,
                         insert_or_ignore(
                             db_session, WCSourceMeta,
                             wcsbid=batch_id, meta=meta)
-                        update_progbar(progbar)
+                        update_progbar(progbar1)
+                        update_progbar(progbar2)
             else:
                 # differenciate between correct sierra export (headers)
                 # and invalid formats
@@ -126,9 +135,13 @@ def launch_process(source_fh, dst_fh, system, library, progbar, counter,
     not_found_counter = 0
     creds = get_credentials(api)
 
+    # query Worldcat
+    process_label.set('querying:')
+    # reset progbar2
+    progbar2['value'] = 0
     with session_scope() as db_session:
-        metas = retrieve_values(
-            db_session, WCSourceMeta, 'meta', wcsbid=batch_id)
+        metas = retrieve_records(
+            db_session, WCSourceMeta, wcsbid=batch_id)
         with SearchSession(creds) as session:
             for m in metas:
                 if m.meta.wcid:
@@ -140,11 +153,11 @@ def launch_process(source_fh, dst_fh, system, library, progbar, counter,
                 elif m.meta.isbn:
                     for i in m.meta.isbn:
                         res = session.lookup_by_isbn(i)
-                        res = evaluate_response(res)
-                        if res:
+                        if is_positive_response(res) and \
+                                not no_match(res):
                             found_counter += 1
                             # convert from string to xml (or remain as string?)
-                            doc = string2xml(res)
+                            doc = string2xml(res.content)
                             # persist
                             res = insert_or_ignore(
                                 db_session, WCHit, wcsmid=m.wcsmid,
@@ -155,8 +168,8 @@ def launch_process(source_fh, dst_fh, system, library, progbar, counter,
                                 db_session, WCHit, wcsmid=m.wcsmid,
                                 hit=False, search_marcxml=None)
 
-                        hits.set(str(found_counter))
-                        nohits.set(str(not_found_counter))
+                        hits.set(found_counter)
+                        nohits.set(not_found_counter)
 
                 elif m.meta.issn:
                     # query by ISSN
@@ -164,12 +177,17 @@ def launch_process(source_fh, dst_fh, system, library, progbar, counter,
                 elif m.meta.upc:
                     # query by UPC
                     pass
-                update_progbar(progbar)
+                update_progbar(progbar1)
+                update_progbar(progbar2)
                 processed_counter += 1
 
-        db_session.flush()
+        db_session.commit()
 
         # verify found matches meet set criteria
+        process_label.set('downloading:')
+        # reset progbar2
+        progbar2['value'] = 0
+
         with MetadataSession(creds) as session:
             metas = retrieve_related(
                 db_session, WCSourceMeta, 'wchit', wcsbid=batch_id)
@@ -177,47 +195,60 @@ def launch_process(source_fh, dst_fh, system, library, progbar, counter,
                 for x in m.wchit:
                     if x.hit:
                         oclcNo = get_oclcNo(x.search_marcxml)
-                        res = request_record(session, oclcNo)
-                        if res:
-                            xml_record = extract_record_from_response(res)
+                        xml_record = request_record(session, oclcNo)
+                        if xml_record is not None:
                             update_record(
                                 db_session, WCHit, x.wchid,
                                 match=oclcNo,
                                 match_marcxml=xml_record)
+                update_progbar(progbar1)
+                update_progbar(progbar2)
+        db_session.commit()
 
-                            # check if meet criteria
-                            if meets_global_criteria(xml_record) and \
-                                    meets_user_criteria(
-                                        xml_record,
-                                        encode_level,
-                                        rec_type,
-                                        cat_rules,
-                                        cat_source):
+        # check if meet criteria & write (will be replaced with user selection)
+        process_label.set('compiling:')
+        progbar2['value'] = 0
+        rows = retrieve_records(
+            db_session, WCHit, hit=True)
+        for row in rows:
+            xml_record = row.match_marcxml
+            if meets_global_criteria(xml_record):
+                if meets_user_criteria(
+                        xml_record,
+                        encode_level,
+                        rec_type,
+                        cat_rules,
+                        cat_source):
 
-                                # add call number & write to file
+                    # add call number & write to file
+                    callNum = create_callNum(
+                        xml_record, system, library)
+                    if callNum:
+                        meet_crit_counter.set(meet_crit_counter.get() + 1)
+                        initials = create_initials_field(
+                            system, library, 'CATbot')
+                        marc_record = marcxml2array(xml_record)[0]
+                        marc_record.add_ordered_field(callNum)
+                        marc_record.add_ordered_field(initials)
+                        if system == 'NYPL':
+                            tag_001 = nypl_oclcNo_field(xml_record)
+                            marc_record.remove_fields('001')
+                            marc_record.add_ordered_field(tag_001)
 
-                                callNum = create_callNum(
-                                    xml_record, system, library)
-                                if callNum:
-                                    initials = create_initials_field(
-                                        system, library, 'CATbot')
-                                    marc_record = marcxml2array(xml_record)[0]
-                                    marc_record.add_ordered_field(callNum)
-                                    marc_record.add_ordered_field(initials)
-                                    if system == 'NYPL':
-                                        tag_001 = nypl_oclcNo_field(xml_record)
-                                        marc_record.remove_fields('001')
-                                        marc_record.add_ordered_field(tag_001)
+                        write_marc21(dst_fh, marc_record)
 
-                                    write_marc21(dst_fh, marc_record)
-                                else:
-                                    print('Unable to construct call number')
+                    else:
+                        fail_glob_crit_counter.set(
+                            fail_glob_crit_counter.get() + 1)
+                else:
+                    fail_user_crit_counter.set(
+                        fail_user_crit_counter.get() + 1)
+            else:
+                fail_glob_crit_counter.set(fail_glob_crit_counter.get() + 1)
 
-                            else:
-                                print('Did not meet criteria')
-                                pass
+            update_progbar(progbar1)
+            update_progbar(progbar2)
 
-                update_progbar(progbar)
-
-
-    # remove_temp_data(source_fh)
+    # show completed
+    progbar1['value'] = progbar1['maximum']
+    progbar2['value'] = progbar2['maximum']
