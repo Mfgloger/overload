@@ -1,5 +1,7 @@
-from bibs.xml_bibs import get_record_leader, get_datafield_040, get_cat_lang
-from bibs.parsers import extract_record_lvl, is_picture_book, is_fiction
+from bibs.xml_bibs import (get_record_leader, get_datafield_040,
+                           get_cat_lang, get_tag_008, get_tag_300a)
+from bibs.parsers import (extract_record_lvl, is_picture_book, is_fiction,
+                          get_audience_code)
 
 
 def is_english_cataloging(marcxml):
@@ -83,9 +85,15 @@ def meets_global_criteria(marcxml):
     """
 
     # print materials and fiction only
+    leader_string = get_record_leader(marcxml)
+    tag_008 = get_tag_008(marcxml)
+    audn_code = get_audience_code(leader_string, tag_008)
+    tag_300a = get_tag_300a(marcxml)
 
-    if (is_fiction(marcxml) and is_english_cataloging(marcxml)) or \
-            (is_english_cataloging(marcxml) and is_picture_book(marcxml)):
+    if (is_fiction(leader_string, tag_008) and
+            is_english_cataloging(marcxml)) or \
+            (is_english_cataloging(marcxml) and
+                is_picture_book(audn_code, tag_300a)):
         return True
     else:
         return False
