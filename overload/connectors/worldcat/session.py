@@ -1,4 +1,6 @@
 import requests
+
+
 import wskey
 import user
 from bibs.crosswalks import string2xml
@@ -184,17 +186,29 @@ class SearchSession(WorldcatSession):
             raise
 
 
-def evaluate_response(response):
+def is_positive_response(response):
     if response.status_code == requests.codes.ok:
         # code 200
-        return response.content
+        return True
     else:
         # log the error code & message
         print(response.content)  # temp
-        return None
+        return False
+
+
+def no_match(response):
+    response_body = string2xml(response.content)
+    try:
+        message = response_body[0][1].text
+        if message == 'Record does not exist':
+            return True
+        else:
+            return False
+    except IndexError:
+        return False
 
 
 def extract_record_from_response(response):
-    response_body = string2xml(response)
+    response_body = string2xml(response.content)
     record = response_body.find('.//atom:content/rb:response/marc:record', NS)
     return record
