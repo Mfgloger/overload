@@ -32,9 +32,8 @@ def insert_or_ignore(session, model, **kwargs):
     return instance
 
 
-def retrieve_values(session, model, *args, **kwargs):
-    instances = session.query(model).filter_by(**kwargs).options(
-        load_only(*args)).all()
+def retrieve_records(session, model, **kwargs):
+    instances = session.query(model).filter_by(**kwargs).all()
     return instances
 
 
@@ -56,7 +55,7 @@ def delete_record(session, model, **kwargs):
     session.delete(instance)
 
 
-def delete_records(session, model, **kwargs):
+def delete_all_table_data(session, model):
     instances = session.query(model).all()
     for instance in instances:
         session.delete(instance)
