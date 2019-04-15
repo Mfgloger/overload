@@ -1,12 +1,14 @@
 # module general call number rules
 from pymarc import Field
+
+
 from parsers import (parse_last_name, parse_first_letter,
                      parse_language_prefix,
-                     is_picture_book, is_juvenile, get_language_code,
+                     is_picture_book, is_juvenile,
                      get_audience_code)
 
 
-def create_nypl_fiction_callnum(
+def create_bpl_fiction_callnum(
         leader_string, tag_008, tag_300a, cuttering_fields):
     """
     creates pymarc Field with NYPL Branch call number
@@ -38,19 +40,17 @@ def create_nypl_fiction_callnum(
 
     # construct call number field
     subfields = []
-    subfield_p_values = []
     field = None
-    if is_juvenile(audn_code):
-        subfield_p_values.append('J')
     if lang_prefix:
-        subfield_p_values.append(lang_prefix)
-        subfields.extend(['p', ' '.join(subfield_p_values)])
+        subfields.extend(['a', lang_prefix])
     if is_picture_book(audn_code, tag_300a):
-        subfields.extend(['a', 'PIC'])
+        subfields.extend(['a', 'J-E'])
+        subfields.extend(['a', cutter])
+    elif is_juvenile:
+        subfields.extend(['a', 'J', 'a' 'FIC', 'a', cutter])
     else:
-        subfields.extend(['a', 'FIC'])
-    if cutter:
-        subfields.extend(['c', cutter])
-        field = Field(tag='091', indicators=[' ', ' '], subfields=subfields)
+        subfields.extend(['a', 'FIC', 'a', cutter])
 
+    field = Field(tag='099', indicators=[' ', ' '], subfields=subfields)
+    print(subfields)
     return field

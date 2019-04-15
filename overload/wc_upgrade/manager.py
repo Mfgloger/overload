@@ -5,6 +5,7 @@ from bibs.bibs import (BibOrderMeta, create_initials_field,
                        write_marc21, create_controlfield)
 from bibs.parsers import (parse_isbn, remove_oclcNo_prefix)
 from bibs.crosswalks import string2xml, marcxml2array
+from bibs.bpl_callnum import create_bpl_fiction_callnum
 from bibs.nypl_callnum import create_nypl_fiction_callnum
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
 from db_worker import (insert_or_ignore, delete_all_table_data,
@@ -48,12 +49,17 @@ def request_record(session, oclcNo):
 
 
 def create_callNum(marcxml, system, library):
+    leader_string = get_record_leader(marcxml)
+    cuttering_opts = get_cuttering_fields(marcxml)
+    tag_008 = get_tag_008(marcxml)
+    tag_300a = get_tag_300a(marcxml)
+
     if system == 'NYPL' and library == 'branches':
-        leader_string = get_record_leader(marcxml)
-        cuttering_opts = get_cuttering_fields(marcxml)
-        tag_008 = get_tag_008(marcxml)
-        tag_300a = get_tag_300a(marcxml)
         callNum = create_nypl_fiction_callnum(
+            leader_string, tag_008, tag_300a, cuttering_opts)
+        return callNum
+    elif system == 'BPL':
+        callNum = create_bpl_fiction_callnum(
             leader_string, tag_008, tag_300a, cuttering_opts)
         return callNum
     else:

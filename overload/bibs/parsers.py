@@ -134,6 +134,24 @@ def parse_issn(field):
         return None
 
 
+def parse_language_prefix(tag_008):
+    lang = get_language_code(tag_008)
+    lang_prefix = None
+    if lang == 'eng':
+        # no lang prefix
+        pass
+    elif lang == 'und':
+        # raise as error?
+        # not valid
+        pass
+    elif lang is None:
+        # raise error?
+        pass
+    else:
+        lang_prefix = lang.upper()
+    return lang_prefix
+
+
 def parse_last_name(name_string):
     """
     isolates last name in a name string extracted from a record

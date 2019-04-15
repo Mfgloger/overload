@@ -458,8 +458,6 @@ class UpgradeBibs(tk.Frame):
             issues.append('- encoding level not selected')
 
         # temp issues
-        if self.system.get() == 'BPL':
-            issues.append('- BPL functionality not developed')
         if self.library.get() == 'research':
             issues.append('- Research functionality not developed')
         if self.action.get() == 'update':
