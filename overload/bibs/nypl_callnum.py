@@ -2,8 +2,18 @@
 from pymarc import Field
 from parsers import (parse_last_name, parse_first_letter,
                      parse_language_prefix,
-                     is_picture_book, is_juvenile, get_language_code,
+                     is_picture_book, is_juvenile,
                      get_audience_code)
+
+
+def remove_special_characters(data):
+    """
+    this may need to be more sophistacated than below...
+    """
+    data = data.replace('-', ' ')
+    data = data.replace("'", '')
+    data = data.replace('`', '')
+    return data
 
 
 def create_nypl_fiction_callnum(
@@ -29,6 +39,7 @@ def create_nypl_fiction_callnum(
     if '100' in cuttering_fields:
         # use last name
         cutter = parse_last_name(cuttering_fields['100'])
+        cutter = remove_special_characters(cutter)
     elif '110' in cuttering_fields:
         cutter = parse_first_letter(cuttering_fields['110'])
     elif '111' in cuttering_fields:
