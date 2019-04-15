@@ -111,7 +111,7 @@ def parse_first_letter(field_string):
         first_chr: str, one character in upper case
     """
 
-    return unidecode(unicode(field_string)).upper()
+    return unidecode(unicode(field_string[0])).upper()
 
 
 def parse_isbn(field):
