@@ -46,11 +46,10 @@ def create_bpl_fiction_callnum(
     if is_picture_book(audn_code, tag_300a):
         subfields.extend(['a', 'J-E'])
         subfields.extend(['a', cutter])
-    elif is_juvenile:
-        subfields.extend(['a', 'J', 'a' 'FIC', 'a', cutter])
+    elif is_juvenile(audn_code):
+        subfields.extend(['a', 'J', 'a', 'FIC', 'a', cutter])
     else:
         subfields.extend(['a', 'FIC', 'a', cutter])
 
     field = Field(tag='099', indicators=[' ', ' '], subfields=subfields)
-    print(subfields)
     return field
