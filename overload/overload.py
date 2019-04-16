@@ -34,6 +34,7 @@ from pvf.reports import cumulative_nypl_stats, cumulative_bpl_stats, \
     cumulative_vendor_stats
 from setup_dirs import *
 from wc_upgrade.wc_gui import UpgradeBibs
+from getbib.gui import GetBibs
 
 
 def updates(manual=True):
@@ -117,7 +118,8 @@ class MainApplication(tk.Tk):
         # spawn Overload frames
         self.frames = {}
         for F in (
-                Main, ProcessVendorFiles, UpgradeBibs, Reports,
+                Main, ProcessVendorFiles, UpgradeBibs,
+                GetBibs, Reports,
                 Settings, DefaultDirs, SierraAPIs, PlatformAPIs,
                 Z3950s, GooAPI, WorldcatAPIs, About):
             page_name = F.__name__
@@ -139,6 +141,9 @@ class MainApplication(tk.Tk):
         navig_menu.add_command(label='upgrade bibs',
                                command=lambda: self.show_frame(
                                    'UpgradeBib'))
+        navig_menu.add_command(label='get bib',
+                               command=lambda: self.show_frame(
+                                   'GetBibs'))
         navig_menu.add_command(label='settings',
                                command=lambda: self.show_frame('Settings'))
         navig_menu.add_separator()
@@ -213,22 +218,23 @@ class Main(tk.Frame):
             'Upgrade existing records and catalog new\n'
             'materials using Worldcat')
 
-        jsonQueryICO = tk.PhotoImage(file='./icons/json_query_icon.gif')
-        self.jsonQueryBtn = ttk.Button(
-            self, image=jsonQueryICO,
-            text='JSON query',
+        getBibICO = tk.PhotoImage(file='./icons/getbib.gif')
+        self.getBibBtn = ttk.Button(
+            self, image=getBibICO,
+            text='get bib',
             compound=tk.TOP,
             cursor='hand2',
             width=15,
-            command=None)
-        self.jsonQueryBtn.image = jsonQueryICO
-        self.jsonQueryBtn.grid(
+            command=lambda: controller.show_frame('GetBibs'))
+        self.getBibBtn.image = getBibICO
+        self.getBibBtn.grid(
             row=1, column=5, sticky='snew')
         self.createToolTip(
-            self.jsonQueryBtn,
-            'creates Sierra List\n'
-            'query in JSON format\n'
-            '(coming soon...)')
+            self.getBibBtn,
+            'retrieves marc records\n'
+            'or Sierra bib numbers\n'
+            'based on list of ISBNs,\n'
+            'or other IDs')
 
         nextICO = tk.PhotoImage(file='./icons/killer_tool.gif')
         self.nextToolBtn = ttk.Button(
