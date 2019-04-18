@@ -799,13 +799,13 @@ class BibOrderMeta():
             wcid=None, isbn=[], issn=None, upc=[],
             timestamp=None, callType=None, matContent=None):
 
-        self.bid = bid
+        self.sierraId = bid
         self.oid = oid
-        self.lcid = lcid
-        self.wcid = wcid
-        self.isbn = isbn
-        self.issn = issn
-        self.upc = upc
+        self.t010 = lcid
+        self.t001 = wcid
+        self.t020 = isbn
+        self.t022 = issn
+        self.t024 = upc
         self.timestamp = timestamp
         self.callType = callType
         self.contentType = matContent
@@ -814,13 +814,13 @@ class BibOrderMeta():
         return "<BibOrderMeta(bid=%s, oid=%s, lcid=%s, wcid=%s, " \
             "isbn=%s, issn=%s, upc=%s, timestamp=%s, callType=%s, "\
             "contentType=%s)>" % (
-                self.bid,
+                self.sierraId,
                 self.oid,
-                self.lcid,
-                self.wcid,
-                self.isbn,
-                self.issn,
-                self.upc,
+                self.t010,
+                self.t001,
+                self.t020,
+                self.t022,
+                self.t024,
                 self.timestamp,
                 self.callType,
                 self.contentType)
