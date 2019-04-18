@@ -33,7 +33,7 @@ from pvf.pvf_gui import ProcessVendorFiles
 from pvf.reports import cumulative_nypl_stats, cumulative_bpl_stats, \
     cumulative_vendor_stats
 from setup_dirs import *
-from wc_upgrade.wc_gui import UpgradeBibs
+from wc2sierra.gui import Worldcat2Sierra
 from getbib.gui import GetBibs
 
 
@@ -118,7 +118,7 @@ class MainApplication(tk.Tk):
         # spawn Overload frames
         self.frames = {}
         for F in (
-                Main, ProcessVendorFiles, UpgradeBibs,
+                Main, ProcessVendorFiles, Worldcat2Sierra,
                 GetBibs, Reports,
                 Settings, DefaultDirs, SierraAPIs, PlatformAPIs,
                 Z3950s, GooAPI, WorldcatAPIs, About):
@@ -140,7 +140,7 @@ class MainApplication(tk.Tk):
                                    'ProcessVendorFiles'))
         navig_menu.add_command(label='upgrade bibs',
                                command=lambda: self.show_frame(
-                                   'UpgradeBib'))
+                                   'Worldcat2Sierra'))
         navig_menu.add_command(label='get bib',
                                command=lambda: self.show_frame(
                                    'GetBibs'))
@@ -205,11 +205,11 @@ class Main(tk.Frame):
         upgradeICO = tk.PhotoImage(file='./icons/upgrade.gif')
         self.upgradeBtn = ttk.Button(
             self, image=upgradeICO,
-            text='upgrade bib',
+            text='worldcat2sierra',
             compound=tk.TOP,
             cursor='hand2',
             width=15,
-            command=lambda: controller.show_frame('UpgradeBibs'))
+            command=lambda: controller.show_frame('Worldcat2Sierra'))
         self.upgradeBtn.image = upgradeICO
         self.upgradeBtn.grid(
             row=1, column=3, sticky='snew')

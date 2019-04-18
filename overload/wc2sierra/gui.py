@@ -14,7 +14,7 @@ from manager import launch_process
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
-class UpgradeBibs(tk.Frame):
+class Worldcat2Sierra(tk.Frame):
     """
     GUI for module upgrading records from Worldcat
     """
@@ -63,7 +63,7 @@ class UpgradeBibs(tk.Frame):
         # layout of the base frame
         self.baseFrm = ttk.LabelFrame(
             self,
-            text='Upgrade Bibs')
+            text='Worldcat2Sierra')
         self.baseFrm.grid(
             row=1, column=1, rowspan=6, sticky='snew')
         self.baseFrm.rowconfigure(0, minsize=10)
@@ -563,7 +563,7 @@ class UpgradeBibs(tk.Frame):
             self.idTypeCbx['state'] = 'disabled'
 
     def observer(self, *args):
-        if self.activeW.get() == 'UpgradeBibs':
+        if self.activeW.get() == 'Worldcat2Sierra':
             # load drop-down choics
             self.systemCbx['values'] = ('BPL', 'NYPL')
             self.systemCbx['state'] = 'readonly'
