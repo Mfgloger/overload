@@ -369,11 +369,11 @@ class GetBibs(tk.Frame):
                 else:
                     name = None
                     method = None
-                self.target = {'target': name, 'method': method}
+                self.target = {'name': name, 'method': method}
 
                 launch_process(
                     self.library.get(), self.target, self.id_type.get(),
-                    self.source_fh.get(), self.dst_fh)
+                    self.source_fh.get(), self.dst_fh, self.progbar)
                 tkMessageBox.showinfo('Processing', 'Processing complete.')
 
     def report(self):
