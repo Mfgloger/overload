@@ -392,6 +392,7 @@ class GetBibs(tk.Frame):
         self.progbar['value'] = 0
         self.hit_counter.set(0)
         self.nohit_counter.set(0)
+        self.update()
 
     def set_logo(self):
         # change logo
