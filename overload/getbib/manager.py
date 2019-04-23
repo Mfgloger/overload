@@ -3,9 +3,11 @@ import logging
 import shelve
 
 
-from bibs import BibOrderMeta
-from errors import OverloadError
+from bibs.bibs import BibOrderMeta
+from errors import OverloadError, APITokenExpiredError
 from logging_setup import LogglyAdapter
+from bibs.crosswalks import platform2meta
+from pvf.analyzer import PVR_NYPLReport, PVR_BPLReport
 from pvf.platform_comms import open_platform_session, platform_queries_manager
 from setup_dirs import USER_DATA
 
@@ -23,7 +25,8 @@ def run_platform_queries(api_type, session, meta_in, matchpoint):
 
 
 def launch_process(
-        system, library, target, id_type, output, source_fh, dst_fh, progbar):
+        system, library, target, id_type, action, source_fh, dst_fh,
+        progbar, hit_counter, nohit_counter):
     """
     manages retrieval of bibs or bibs numbers based on
     args:
@@ -64,7 +67,6 @@ def launch_process(
             target['name']))
         user_data = shelve.open(USER_DATA)
         target = user_data['Z3950s'][target['name']]
-        print(target)
         user_data.close()
 
     if target['method'] == 'Platform API':
@@ -77,11 +79,54 @@ def launch_process(
         elif id_type == 'OCLC #':
             matchpoint = '001'
         else:
-            raise ValueError
+            raise OverloadError(
+                'Query by {} not yet implemented'.format(
+                    id_type))
 
         for i in ids:
-            # meta = BibOrderMeta(
-            #     )
-            result = platform_queries_manager(
-                target['method'], session, meta, matchpoint)
+            meta_in = BibOrderMeta()  # like vendor meta in PVR
+            meta_in.dstLibrary = library
+            if id_type == 'ISBN':
+                meta_in.t020 = [i]
+            elif id_type == 'ISSN':
+                meta_in.t022 = [i]
+            elif id_type == 'UPC':
+                meta_in.t024 = [i]
+            elif id_type == 'OCLC #':
+                meta_in.t001 = i
 
+            # query NYPL Platform
+            try:
+                result = platform_queries_manager(
+                    target['method'], session, meta_in, matchpoint)
+                # print(result)
+
+            except APITokenExpiredError:
+                module_logger.info(
+                    'Platform token expired. '
+                    'Requesting new one and opening new session.')
+                session = open_platform_session(target['method'])
+                result = platform_queries_manager(
+                    target['method'], session, meta_in, matchpoint)
+
+            meta_out = []
+            if result[0] == 'hit':
+                hit_counter.set(hit_counter.get() + 1)
+                meta_out = platform2meta(result[1])  # may include multipe bibs
+            elif result[0] == 'nohit':
+                nohit_counter.set(nohit_counter.get() + 1)
+
+            if system == 'NYPL':
+                analysis = PVR_NYPLReport('cat', meta_in, meta_out)
+            elif system == 'BPL':
+                analysis = PVR_BPLReport('cat', meta_in, meta_out)
+
+            if analysis.target_sierraId:
+                target_sierraId = 'b{}a'.format(analysis.target_sierraId)
+                with open(dst_fh, 'a') as csvfile:
+                    out = csv.writer(
+                        csvfile, delimiter=' ',
+                        lineterminator='\n',
+                        quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    out.writerow([target_sierraId])
+            progbar['value'] += 1

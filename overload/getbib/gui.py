@@ -37,8 +37,8 @@ class GetBibs(tk.Frame):
         self.target = None
         self.dst_fh = tk.StringVar()
         self.id_type = tk.StringVar()
-        self.nohits = tk.IntVar()
-        self.found = tk.IntVar()
+        self.hit_counter = tk.IntVar()
+        self.nohit_counter = tk.IntVar()
         self.source_fh = tk.StringVar()
         self.dst_fh = tk.StringVar()
 
@@ -223,7 +223,7 @@ class GetBibs(tk.Frame):
 
         self.foundcounterLbl = ttk.Label(
             self.actionFrm,
-            textvariable=self.found)
+            textvariable=self.hit_counter)
         self.foundcounterLbl.grid(
             row=7, column=4, sticky='snw')
 
@@ -235,7 +235,7 @@ class GetBibs(tk.Frame):
 
         self.nohitscounterLbl = ttk.Label(
             self.actionFrm,
-            textvariable=self.nohits)
+            textvariable=self.nohit_counter)
         self.nohitscounterLbl.grid(
             row=8, column=4, sticky='snw')
 
@@ -314,8 +314,7 @@ class GetBibs(tk.Frame):
         dst_fh = tkFileDialog.asksaveasfilename(
             parent=self,
             title='Save as',
-            # filetypes=(('marc file', '*.mrc')),
-            initialfile='bibNos.csv',
+            initialfile='bibNos.txt',
             initialdir=MY_DOCS)
         if dst_fh:
             self.dst_fh.set(dst_fh)
@@ -372,8 +371,10 @@ class GetBibs(tk.Frame):
                 self.target = {'name': name, 'method': method}
 
                 launch_process(
-                    self.library.get(), self.target, self.id_type.get(),
-                    self.source_fh.get(), self.dst_fh, self.progbar)
+                    self.system.get(), self.library.get(), self.target,
+                    self.id_type.get(), self.action.get(),
+                    self.source_fh.get(), self.dst_fh.get(), self.progbar,
+                    self.hit_counter, self.nohit_counter)
                 tkMessageBox.showinfo('Processing', 'Processing complete.')
 
     def report(self):
@@ -389,8 +390,8 @@ class GetBibs(tk.Frame):
 
     def reset(self):
         self.progbar['value'] = 0
-        self.found.set(0)
-        self.nohits.set(0)
+        self.hit_counter.set(0)
+        self.nohit_counter.set(0)
 
     def set_logo(self):
         # change logo
@@ -448,11 +449,15 @@ class GetBibs(tk.Frame):
         if self.activeW.get() == 'GetBibs':
             # load drop-down choics
             self.systemCbx['values'] = ('BPL', 'NYPL')
+            self.system.set('NYPL')
             self.systemCbx['state'] = 'readonly'
             self.libraryCbx['values'] = ('branches', 'research')
+            self.library.set('branches')
             self.libraryCbx['state'] = 'readonly'
             self.actionCbx['values'] = ('get bib #', 'get marc record')
+            self.action.set('get bib #')
             self.actionCbx['state'] = 'readonly'
             self.idTypeCbx['values'] = (
                 'ISBN', 'ISSN', 'UPC', 'LCCN', 'OCLC #')
+            self.id_type.set('ISBN')
             self.idTypeCbx['state'] = 'readonly'
