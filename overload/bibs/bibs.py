@@ -795,32 +795,52 @@ class BibOrderMeta():
     """
 
     def __init__(
-            self, bid=None, oid=None, lcid=None,
-            wcid=None, isbn=[], issn=None, upc=[],
-            timestamp=None, callType=None, matContent=None):
+            self, dstLibrary=None, sierraId=None, oid=None, lcid=None,
+            wcid=None, timestamp=None, isbn=[], issn=[], upc=[],
+            locations=None, poPerLine=None,
+            code2=None, oFormat=None):
 
-        self.sierraId = bid
+        self.dstLibrary = dstLibrary
+        self.sierraId = sierraId
         self.oid = oid
-        self.t010 = lcid
         self.t001 = wcid
+        self.t005 = timestamp
+        self.t010 = lcid
         self.t020 = isbn
         self.t022 = issn
         self.t024 = upc
-        self.timestamp = timestamp
-        self.callType = callType
-        self.contentType = matContent
+        self.locations = locations
+        self.poPerLine = poPerLine
+        self.code2 = code2
+        self.oFormat = oFormat
+        self.vendor = None
+        self.contentType = None
+        self.callType = None
+        self.audnType = None
+        self.bCallNumber = None
+
+    def _determine_callNumber(self):
+        pass
 
     def __repr__(self):
-        return "<BibOrderMeta(bid=%s, oid=%s, lcid=%s, wcid=%s, " \
-            "isbn=%s, issn=%s, upc=%s, timestamp=%s, callType=%s, "\
-            "contentType=%s)>" % (
+        return "<BibOrderMeta(dstLibrary='%s', sierraId='%s', oid='%s', " \
+            "lcid='%s', t001='%s', t005=%s, t020='%s', t022='%s', " \
+            "t024='%s', locations='%s', " \
+            "poPerLine='%s', code2='%s', oFormat='%s', vendor='%s', " \
+            "callType='%s', audnType='%s')>" % (
+                self.dstLibrary,
                 self.sierraId,
                 self.oid,
-                self.t010,
                 self.t001,
+                self.t005,
+                self.t010,
                 self.t020,
                 self.t022,
                 self.t024,
-                self.timestamp,
+                self.locations,
+                self.poPerLine,
+                self.code2,
+                self.oFormat,
+                self.vendor,
                 self.callType,
-                self.contentType)
+                self.audnType)
