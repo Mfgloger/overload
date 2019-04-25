@@ -152,6 +152,9 @@ class SearchSession(WorldcatSession):
         self.headers.update({
             'Accept': 'application/xml'
         })
+        self.payload = {
+            'wskey': self.wskey
+        }
 
         if not self.wskey:
             raise TypeError('Missing wskey argument')
@@ -170,19 +173,36 @@ class SearchSession(WorldcatSession):
         """
 
         url = self.base_url + 'content/isbn/{}'.format(isbn)
-        payload = {
-            'wskey': self.wskey
-        }
         # send request
         try:
             response = self.get(
-                url, params=payload, timeout=self.timeout)
+                url, params=self.payload, timeout=self.timeout)
             return response
         except requests.exceptions.Timeout:
             # log error
             raise
         except requests.exceptions.ConnectionError:
             # log
+            raise
+
+    def lookup_by_oclcNo(self, oclcNo):
+        """
+        Use to get a record with particular OCLC number
+        args:
+            oclcNo: str, OCLC number
+        returns:
+            response: class requests.models.Response, default
+                      Worldcat format is marcxml
+        """
+
+        url = self.base_url + 'content/{}'.format(oclcNo)
+        try:
+            response = self.get(
+                url, params=self.payload, timeout=self.timeout)
+            return response
+        except requests.exceptions.Timeout:
+            raise
+        except requests.exceptions.ConnectionError:
             raise
 
 
