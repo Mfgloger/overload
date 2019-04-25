@@ -17,7 +17,7 @@ def remove_special_characters(data):
 
 
 def create_nypl_fiction_callnum(
-        leader_string, tag_008, tag_300a, cuttering_fields):
+        leader_string, tag_008, tag_300a, cuttering_fields, order_data):
     """
     creates pymarc Field with NYPL Branch call number
     args:
@@ -51,17 +51,21 @@ def create_nypl_fiction_callnum(
     subfields = []
     subfield_p_values = []
     field = None
-    if is_juvenile(audn_code):
-        subfield_p_values.append('J')
-    if lang_prefix:
-        subfield_p_values.append(lang_prefix)
-        subfields.extend(['p', ' '.join(subfield_p_values)])
-    if is_picture_book(audn_code, tag_300a):
-        subfields.extend(['a', 'PIC'])
+    if order_data:
+        print(order_data)
+
     else:
-        subfields.extend(['a', 'FIC'])
-    if cutter:
-        subfields.extend(['c', cutter])
-        field = Field(tag='091', indicators=[' ', ' '], subfields=subfields)
+        if is_juvenile(audn_code):
+            subfield_p_values.append('J')
+        if lang_prefix:
+            subfield_p_values.append(lang_prefix)
+            subfields.extend(['p', ' '.join(subfield_p_values)])
+        if is_picture_book(audn_code, tag_300a):
+            subfields.extend(['a', 'PIC'])
+        else:
+            subfields.extend(['a', 'FIC'])
+        if cutter:
+            subfields.extend(['c', cutter])
+            field = Field(tag='091', indicators=[' ', ' '], subfields=subfields)
 
     return field

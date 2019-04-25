@@ -9,7 +9,7 @@ from parsers import (parse_last_name, parse_first_letter,
 
 
 def create_bpl_fiction_callnum(
-        leader_string, tag_008, tag_300a, cuttering_fields):
+        leader_string, tag_008, tag_300a, cuttering_fields, order_data):
     """
     creates pymarc Field with NYPL Branch call number
     args:
@@ -41,15 +41,20 @@ def create_bpl_fiction_callnum(
     # construct call number field
     subfields = []
     field = None
-    if lang_prefix:
-        subfields.extend(['a', lang_prefix])
-    if is_picture_book(audn_code, tag_300a):
-        subfields.extend(['a', 'J-E'])
-        subfields.extend(['a', cutter])
-    elif is_juvenile(audn_code):
-        subfields.extend(['a', 'J', 'a', 'FIC', 'a', cutter])
-    else:
-        subfields.extend(['a', 'FIC', 'a', cutter])
+    if not order_data:
+        if lang_prefix:
+            subfields.extend(['a', lang_prefix])
+        if is_picture_book(audn_code, tag_300a):
+            subfields.extend(['a', 'J-E'])
+            subfields.extend(['a', cutter])
+        elif is_juvenile(audn_code):
+            subfields.extend(['a', 'J', 'a', 'FIC', 'a', cutter])
+        else:
+            subfields.extend(['a', 'FIC', 'a', cutter])
 
-    field = Field(tag='099', indicators=[' ', ' '], subfields=subfields)
-    return field
+        field = Field(tag='099', indicators=[' ', ' '], subfields=subfields)
+        return field
+    else:
+        raise ValueError(
+            'Creation of call numbers for BPL based on order'
+            'data not implemented yet')
