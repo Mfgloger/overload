@@ -1,5 +1,6 @@
 # module controlling upgrade/catalog from Worldcat process
 import csv
+import logging
 
 from bibs.bibs import (BibOrderMeta, create_initials_field,
                        write_marc21, create_controlfield)
@@ -7,16 +8,24 @@ from bibs.parsers import (parse_isbn, remove_oclcNo_prefix)
 from bibs.crosswalks import string2xml, marcxml2array
 from bibs.bpl_callnum import create_bpl_fiction_callnum
 from bibs.nypl_callnum import create_nypl_fiction_callnum
-from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
-from db_worker import (insert_or_ignore, delete_all_table_data,
-                       retrieve_records, retrieve_related, update_record)
+from bibs.sierra_dicts import NW2SEXPORT_COLS, BW2SEXPORT_COLS
+from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
+                           get_tag_008, get_record_leader, get_tag_300a)
 from connectors.worldcat.session import (SearchSession, MetadataSession,
                                          is_positive_response, no_match,
                                          extract_record_from_response)
 from credentials import get_from_vault, evaluate_worldcat_creds
 from criteria import meets_global_criteria, meets_user_criteria
-from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
-                           get_tag_008, get_record_leader, get_tag_300a)
+from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
+from db_worker import (insert_or_ignore, delete_all_table_data,
+                       retrieve_record,
+                       retrieve_records, retrieve_related, update_record)
+from errors import OverloadError
+from logging_setup import LogglyAdapter
+from source_parsers import sierra_export_data
+
+
+module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def update_progbar(progbar):
@@ -33,9 +42,11 @@ def remove_previous_process_data():
     with session_scope() as db_session:
         # deletes WCSourceBatch data and all related tables
         delete_all_table_data(db_session, WCSourceBatch)
+        module_logger.debug('Data from previous run has been deleted.')
 
 
 def get_credentials(api):
+    module_logger.debug('Acquiring Worldcat credentials.')
     creds = get_from_vault(api, 'Overload')
     return evaluate_worldcat_creds(creds)
 
@@ -43,12 +54,20 @@ def get_credentials(api):
 def request_record(session, oclcNo):
     if oclcNo:
         res = session.get_record(oclcNo)
+        module_logger.info('Metadata API request: {}'.format(res.url))
         if is_positive_response(res) and not no_match(res):
+            module_logger.info('Match found.')
             xml_record = extract_record_from_response(res)
             return xml_record
+        else:
+            module_logger.info('No record found.')
+    else:
+        module_logger.info(
+            'Metadata API request skipped: no data to query')
 
 
-def create_callNum(marcxml, system, library):
+def create_callNum(marcxml, system, library, order_data=None):
+    module_logger.debug('Creating call number.')
     leader_string = get_record_leader(marcxml)
     cuttering_opts = get_cuttering_fields(marcxml)
     tag_008 = get_tag_008(marcxml)
@@ -56,14 +75,16 @@ def create_callNum(marcxml, system, library):
 
     if system == 'NYPL' and library == 'branches':
         callNum = create_nypl_fiction_callnum(
-            leader_string, tag_008, tag_300a, cuttering_opts)
+            leader_string, tag_008, tag_300a, cuttering_opts, order_data)
         return callNum
     elif system == 'BPL':
         callNum = create_bpl_fiction_callnum(
-            leader_string, tag_008, tag_300a, cuttering_opts)
+            leader_string, tag_008, tag_300a, cuttering_opts, order_data)
         return callNum
     else:
-        print('NOT IMPLEMENTED YET')
+        module_logger.warning(
+            'Call number creation for {}-{} not implemented yet'.format(
+                system, library))
         return None
 
 
@@ -74,7 +95,8 @@ def nypl_oclcNo_field(marcxml):
     return tag_001
 
 
-def launch_process(source_fh, dst_fh, system, library, progbar1, progbar2,
+def launch_process(source_fh, data_source, dst_fh, system, library,
+                   progbar1, progbar2,
                    process_label, hits, nohits, meet_crit_counter,
                    fail_user_crit_counter, fail_glob_crit_counter,
                    action, encode_level, rec_type, cat_rules, cat_source,
@@ -95,7 +117,7 @@ def launch_process(source_fh, dst_fh, system, library, progbar1, progbar2,
         hits: tkinter IntVar
         nohits: tkinter IntVar
     """
-
+    module_logger.debug('Launching W2S process.')
     remove_previous_process_data()
 
     # calculate max counter
@@ -103,25 +125,40 @@ def launch_process(source_fh, dst_fh, system, library, progbar1, progbar2,
     with open(source_fh, 'r') as file:
         reader = csv.reader(file)
         # skip header
-        reader.next()
+        header = reader.next()
+        # check if Sierra export file has a correct structure
+        if data_source == 'Sierra export':
+            if system == 'NYPL':
+                if header != NW2SEXPORT_COLS:
+                    raise OverloadError(
+                        'Sierra Export format incorrect.\nPlease refer to help'
+                        'for more info.')
+            elif system == 'BPL':
+                if header != BW2SEXPORT_COLS:
+                    raise OverloadError(
+                        'Sierra Export format incorrect.\nPlease refer to help'
+                        'for more info.')
+
+        # calculate pogbar max values
         c = 0
         for row in reader:
             c += 1
         progbar1['maximum'] = c * 4
         progbar2['maximum'] = c
 
-    with open(source_fh, 'r') as file:
-        reader = csv.reader(file)
-        # sniff what type of data it is
-        header = reader.next()
-        with session_scope() as db_session:
-            # create batch record
-            batch_rec = insert_or_ignore(
-                db_session, WCSourceBatch, file=source_fh)
-            db_session.flush()
-            batch_id = batch_rec.wcsbid
-            if len(header) == 1:
-                # list of id
+    with session_scope() as db_session:
+        # create batch record
+        batch_rec = insert_or_ignore(
+            db_session, WCSourceBatch, file=source_fh)
+        db_session.flush()
+        batch_id = batch_rec.wcsbid
+
+        # parse depending on the data source
+        if data_source == 'IDs list':
+            with open(source_fh, 'r') as file:
+                reader = csv.reader(file)
+                # skip header
+                reader.next()
                 if id_type == 'ISBN':
                     for row in reader:
                         meta = BibOrderMeta(
@@ -131,10 +168,12 @@ def launch_process(source_fh, dst_fh, system, library, progbar1, progbar2,
                             wcsbid=batch_id, meta=meta)
                         update_progbar(progbar1)
                         update_progbar(progbar2)
-            else:
-                # differenciate between correct sierra export (headers)
-                # and invalid formats
-                pass
+        elif data_source == 'Sierra export':
+            data = sierra_export_data(source_fh, system, library)
+            for meta in data:
+                insert_or_ignore(
+                    db_session, WCSourceMeta,
+                    wcsbid=batch_id, meta=meta)
 
     processed_counter = 0
     found_counter = 0
@@ -150,37 +189,54 @@ def launch_process(source_fh, dst_fh, system, library, progbar1, progbar2,
             db_session, WCSourceMeta, wcsbid=batch_id)
         with SearchSession(creds) as session:
             for m in metas:
-                if m.meta.wcid:
-                    # query by OCLC number
-                    pass
-                elif m.meta.lcid:
+                hit = False
+                if m.meta.t001:
+                    res = session.lookup_by_oclcNo(m.meta.t001)
+                    if is_positive_response(res) and \
+                            not no_match(res):
+                        found_counter += 1
+                        hit = True
+                        doc = string2xml(res.content)
+                        res = insert_or_ignore(
+                            db_session, WCHit, wcsmid=m.wcsmid,
+                            hit=hit, search_marcxml=doc)
+                    else:
+                        not_found_counter += 1
+                        res = insert_or_ignore(
+                            db_session, WCHit, wcsmid=m.wcsmid,
+                            hit=hit, search_marcxml=None)
+
+                    hits.set(found_counter)
+                    nohits.set(not_found_counter)
+                if m.meta.t010 and not hit:
                     # query by LC number
                     pass
-                elif m.meta.isbn:
-                    for i in m.meta.isbn:
+                if m.meta.t020 and not hit:
+                    # later change to iterating through all ISBNs
+                    # and selecting the best bib
+                    # for now just first ISBN is considered
+                    for i in m.meta.t020:
                         res = session.lookup_by_isbn(i)
                         if is_positive_response(res) and \
                                 not no_match(res):
                             found_counter += 1
+                            hit = True
                             # convert from string to xml (or remain as string?)
                             doc = string2xml(res.content)
                             # persist
                             res = insert_or_ignore(
                                 db_session, WCHit, wcsmid=m.wcsmid,
-                                hit=True, search_marcxml=doc)
+                                hit=hit, search_marcxml=doc)
                         else:
                             not_found_counter += 1
                             res = insert_or_ignore(
                                 db_session, WCHit, wcsmid=m.wcsmid,
-                                hit=False, search_marcxml=None)
+                                hit=hit, search_marcxml=None)
 
                         hits.set(found_counter)
                         nohits.set(not_found_counter)
-
-                elif m.meta.issn:
-                    # query by ISSN
-                    pass
-                elif m.meta.upc:
+                        break  # remove when iterating through all ISBNs
+                if m.meta.t024 and not hit:
                     # query by UPC
                     pass
                 update_progbar(progbar1)
@@ -227,8 +283,16 @@ def launch_process(source_fh, dst_fh, system, library, progbar1, progbar2,
                         cat_source):
 
                     # add call number & write to file
-                    callNum = create_callNum(
-                        xml_record, system, library)
+                    if data_source == 'Sierra export':
+                        order_data = retrieve_record(
+                            db_session, WCSourceMeta, wcsmid=row.wcsmid).meta
+
+                        callNum = create_callNum(
+                            xml_record, system, library, order_data)
+                    else:
+                        callNum = create_callNum(
+                            xml_record, system, library)
+
                     if callNum:
                         meet_crit_counter.set(meet_crit_counter.get() + 1)
                         initials = create_initials_field(
