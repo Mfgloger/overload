@@ -468,7 +468,8 @@ class Worldcat2Sierra(tk.Frame):
             issues.append('- cat rules functionality not developed')
         if self.cat_source.get() != 'any':
             issues.append('- cat source functionality not developed')
-        if self.id_type.get() != 'ISBN':
+        if self.data_source.get() == 'IDs list' and \
+                self.id_type.get() != 'ISBN':
             issues.append('- only ISBN id is permitted at the moment')
 
         if issues:
@@ -479,8 +480,9 @@ class Worldcat2Sierra(tk.Frame):
                 # both paths provided
                 # wrap later in an exception catching & displaying
                 launch_process(
-                    self.source_fh.get(), self.dst_fh.get(),
-                    self.system.get(), self.library.get(), self.progbar1,
+                    self.source_fh.get(), self.data_source.get(),
+                    self.dst_fh.get(), self.system.get(),
+                    self.library.get(), self.progbar1,
                     self.progbar2, self.proc_label,
                     self.found, self.nohits, self.meet_crit_counter,
                     self.fail_user_crit_counter, self.fail_glob_crit_counter,
