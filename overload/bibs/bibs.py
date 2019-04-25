@@ -795,39 +795,115 @@ class BibOrderMeta():
     """
 
     def __init__(
-            self, dstLibrary=None, sierraId=None, oid=None, lcid=None,
-            wcid=None, timestamp=None, isbn=[], issn=[], upc=[],
-            locations=None, poPerLine=None,
-            code2=None, oFormat=None):
+            self, system=None, dstLibrary=None, sierraId=None,
+            oid=None, t010=None, t001=None, t005=None,
+            t020=[], t024=[], locs=None, venNote=None,
+            code2=None, code4=None, oFormat=None, vendor=None):
 
+        self.system = system
         self.dstLibrary = dstLibrary
         self.sierraId = sierraId
         self.oid = oid
-        self.t001 = wcid
-        self.t005 = timestamp
-        self.t010 = lcid
-        self.t020 = isbn
-        self.t022 = issn
-        self.t024 = upc
-        self.locations = locations
-        self.poPerLine = poPerLine
+        self.t001 = t001
+        self.t005 = t005
+        self.t010 = t010
+        self.t020 = t020
+        self.t024 = t024
+        self.venNote = venNote
         self.code2 = code2
+        self.code4 = code4
+        self.locs = locs
         self.oFormat = oFormat
-        self.vendor = None
-        self.contentType = None
+        self.vendor = vendor
+        # self.contentType = None
         self.callType = None
         self.audnType = None
-        self.bCallNumber = None
+
+        self._normalize_data()
+        self._determine_audience()
+        # self._determine_callNumber()
+
+    def _normalize_data(self):
+        try:
+            self.venNote == self.venNote.lower()
+        except TypeError:
+            pass
+
+        try:
+            self.code2 = self.code2.lower()
+        except TypeError:
+            pass
+
+        try:
+            self.code4 = self.code4.lower()
+        except TypeError:
+            pass
+
+        try:
+            self.locs = self.locs.lower()
+        except TypeError:
+            pass
+
+        try:
+            self.oFormat = self.oFormat.lower()
+        except TypeError:
+            pass
+
+        try:
+            self.vendor = self.vendor.lower()
+        except TypeError:
+            pass
+
+    def _determine_audience(self):
+        # default audn is adult/young adult
+        self.audnType = 'a'
+        if self.system == 'NYPL':
+            # use first location code only
+            try:
+                loc_audn = self.locs[2]
+            except IndexError:
+                loc_audn = None
+            except TypeError:
+                loc_audn = None
+
+            if loc_audn not in ('a', 'j', 'y'):
+                loc_audn = None
+
+            if self.code4 in ('n', '-', None):
+                c4_audn = None
+            else:
+                c4_audn = self.code4
+
+            if loc_audn and not c4_audn:
+                self.audnType = loc_audn
+            elif c4_audn and not loc_audn:
+                self.audnType = c4_audn
+            elif loc_audn == c4_audn:
+                self.audnType = c4_audn
+            else:
+                self.audnType = None
+
+        elif self.system == 'BPL':
+            raise ValueError(
+                'BPL BibOrdMeta _determine_audience not implemented yet')
+        else:
+            raise ValueError
 
     def _determine_callNumber(self):
-        pass
+        """
+        only easy, picture books and fiction
+        """
+
+
+
 
     def __repr__(self):
-        return "<BibOrderMeta(dstLibrary='%s', sierraId='%s', oid='%s', " \
-            "lcid='%s', t001='%s', t005=%s, t020='%s', t022='%s', " \
-            "t024='%s', locations='%s', " \
-            "poPerLine='%s', code2='%s', oFormat='%s', vendor='%s', " \
+        return "<BibOrderMeta(system='%s', dstLibrary='%s', sierraId='%s', " \
+            " oid='%s', t001='%s', t005='%s', t010='%s', t020='%s', " \
+            "t024='%s', locs='%s', venNote='%s', " \
+            "code2='%s', code4='%s', oFormat='%s', vendor='%s', " \
             "callType='%s', audnType='%s')>" % (
+                self.system,
                 self.dstLibrary,
                 self.sierraId,
                 self.oid,
@@ -835,11 +911,11 @@ class BibOrderMeta():
                 self.t005,
                 self.t010,
                 self.t020,
-                self.t022,
                 self.t024,
-                self.locations,
-                self.poPerLine,
+                self.locs,
+                self.venNote,
                 self.code2,
+                self.code4,
                 self.oFormat,
                 self.vendor,
                 self.callType,
