@@ -817,15 +817,18 @@ class BibOrderMeta():
         self.vendor = vendor
         # self.contentType = None
         self.callType = None
+        self.callLabel = None
+        self.wlPrefix = self._has_world_language_prefix()
         self.audnType = None
 
         self._normalize_data()
         self._determine_audience()
-        # self._determine_callNumber()
+        self.fiction_location = self._has_fiction_location_code()
+        self._determine_callNumber()
 
     def _normalize_data(self):
         try:
-            self.venNote == self.venNote.lower()
+            self.venNote = self.venNote.lower()
         except TypeError:
             pass
 
@@ -853,6 +856,23 @@ class BibOrderMeta():
             self.vendor = self.vendor.lower()
         except TypeError:
             pass
+
+    def _has_world_language_prefix(self):
+        if self.system == 'NYPL':
+            try:
+                if self.locs[4] == 'l':
+                    self.wlPrefix = True
+                else:
+                    return False
+            except IndexError:
+                return False
+            except TypeError:
+                return False
+        elif self.system == 'BPL':
+            raise ValueError(
+                'BPL BibOrdMeta _has_world_lang_prefix not implemented yet')
+        else:
+            raise ValueError
 
     def _determine_audience(self):
         # default audn is adult/young adult
@@ -889,20 +909,73 @@ class BibOrderMeta():
         else:
             raise ValueError
 
+    def _has_fiction_location_code(self):
+        """
+        checks only first location and assumes the rest is the same
+        """
+        if self.system == 'NYPL':
+            try:
+                if self.locs[4] in ('a', 'f', 'i', 'y', 'l'):
+                    return True
+                else:
+                    return False
+            except IndexError:
+                return None
+        elif self.system == 'BPL':
+            raise ValueError(
+                'BPL BibOrdMeta _has_fiction_location_code not'
+                'implemented yet')
+        else:
+            raise ValueError
+
     def _determine_callNumber(self):
         """
-        only easy, picture books and fiction
+        only easy, picture books, fiction, and genres for NYPL
         """
+        if self.system == 'NYPL':
+            if self.fiction_location:
+                if self.locs[4] == 'i':
+                    self.callType = 'pic'
+                elif self.locs[4] == 'a':
+                    self.callType = 'eas'
+                elif self.locs[4] in ('f', 'y'):
+                    self.callType = 'fic'
+                elif self.locs[4] == 'l':
+                    self.callType = 'und'  # undetermined for world lang
 
+                if self.venNote in ('m', 'e,m', 'n,m', 't,m'):
+                    self.callType = 'mys'  # MYSTERY
+                elif self.venNote in ('r', 'e,r', 'n,r', 't,r'):
+                    self.callType = 'rom'  # ROMANCE
+                elif self.venNote in ('s', 'e,s', 'n,s', 't,s'):
+                    self.callType = 'sfn'  # SCI-FI
+                elif self.venNote in ('w', 'e,w', 'n,w', 't,w'):
+                    self.callType = 'wes'  # WESTERN
+                elif self.venNote in ('u', 'e,u', 'n,u', 't,u'):
+                    self.callType = 'urb'  # URBAN
 
-
+            if self.venNote in ('t', 't,m', 't,r', 't,s', 't,w', 't,u'):
+                self.callLabel = 'lgp'  # large print
+            elif 'hol' in self.venNote:
+                # note HOLIDAY label takes precedence over YR when applied
+                # together; must go first
+                self.callLabel = 'hol'  # holiday
+            elif 'yr' in self.venNote:
+                self.callLabel = 'yrd'  # young reader
+            elif self.venNote == 'l':
+                self.callLabel = 'cla'  # classics
+            elif self.venNote == 'g':
+                self.callLabel = 'gra'  # graphic novel
+            elif self.venNote == 'bil':
+                self.callLabel = 'bil'  # bilingual
 
     def __repr__(self):
         return "<BibOrderMeta(system='%s', dstLibrary='%s', sierraId='%s', " \
             " oid='%s', t001='%s', t005='%s', t010='%s', t020='%s', " \
             "t024='%s', locs='%s', venNote='%s', " \
             "code2='%s', code4='%s', oFormat='%s', vendor='%s', " \
-            "callType='%s', audnType='%s')>" % (
+            "callLabel='%s', callType='%s', audnType='%s', fic_loc='%s', " \
+            "wlPrefix='%s')>" % (
                 self.system,
                 self.dstLibrary,
                 self.sierraId,
@@ -918,5 +991,8 @@ class BibOrderMeta():
                 self.code4,
                 self.oFormat,
                 self.vendor,
+                self.callLabel,
                 self.callType,
-                self.audnType)
+                self.audnType,
+                self.fiction_location,
+                self.wlPrefix)
