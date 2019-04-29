@@ -820,6 +820,8 @@ class BibOrderMeta():
         self.callLabel = None
         self.wlPrefix = self._has_world_language_prefix()
         self.audnType = None
+        self.bCallNumber = None
+        self.rCallNumber = None
 
         self._normalize_data()
         self._determine_audience()
@@ -829,32 +831,33 @@ class BibOrderMeta():
     def _normalize_data(self):
         try:
             self.venNote = self.venNote.lower()
-        except TypeError:
+        except AttributeError:
             pass
 
         try:
             self.code2 = self.code2.lower()
-        except TypeError:
+        except AttributeError:
             pass
 
         try:
             self.code4 = self.code4.lower()
-        except TypeError:
+        except AttributeError:
             pass
 
         try:
             self.locs = self.locs.lower()
-        except TypeError:
+        except AttributeError:
             pass
 
         try:
             self.oFormat = self.oFormat.lower()
-        except TypeError:
+        except AttributeError:
             pass
 
         try:
             self.vendor = self.vendor.lower()
-        except TypeError:
+
+        except AttributeError:
             pass
 
     def _has_world_language_prefix(self):
@@ -921,6 +924,8 @@ class BibOrderMeta():
                     return False
             except IndexError:
                 return None
+            except TypeError:
+                return None
         elif self.system == 'BPL':
             raise ValueError(
                 'BPL BibOrdMeta _has_fiction_location_code not'
@@ -932,42 +937,45 @@ class BibOrderMeta():
         """
         only easy, picture books, fiction, and genres for NYPL
         """
-        if self.system == 'NYPL':
-            if self.fiction_location:
-                if self.locs[4] == 'i':
-                    self.callType = 'pic'
-                elif self.locs[4] == 'a':
-                    self.callType = 'eas'
-                elif self.locs[4] in ('f', 'y'):
-                    self.callType = 'fic'
-                elif self.locs[4] == 'l':
-                    self.callType = 'und'  # undetermined for world lang
+        try:
+            if self.system == 'NYPL':
+                if self.fiction_location:
+                    if self.locs[4] == 'i':
+                        self.callType = 'pic'
+                    elif self.locs[4] == 'a':
+                        self.callType = 'eas'
+                    elif self.locs[4] in ('f', 'y'):
+                        self.callType = 'fic'
+                    elif self.locs[4] == 'l':
+                        self.callType = 'und'  # undetermined for world lang
 
-                if self.venNote in ('m', 'e,m', 'n,m', 't,m'):
-                    self.callType = 'mys'  # MYSTERY
-                elif self.venNote in ('r', 'e,r', 'n,r', 't,r'):
-                    self.callType = 'rom'  # ROMANCE
-                elif self.venNote in ('s', 'e,s', 'n,s', 't,s'):
-                    self.callType = 'sfn'  # SCI-FI
-                elif self.venNote in ('w', 'e,w', 'n,w', 't,w'):
-                    self.callType = 'wes'  # WESTERN
-                elif self.venNote in ('u', 'e,u', 'n,u', 't,u'):
-                    self.callType = 'urb'  # URBAN
+                    if self.venNote in ('m', 'e,m', 'n,m', 't,m'):
+                        self.callType = 'mys'  # MYSTERY
+                    elif self.venNote in ('r', 'e,r', 'n,r', 't,r'):
+                        self.callType = 'rom'  # ROMANCE
+                    elif self.venNote in ('s', 'e,s', 'n,s', 't,s'):
+                        self.callType = 'sfn'  # SCI-FI
+                    elif self.venNote in ('w', 'e,w', 'n,w', 't,w'):
+                        self.callType = 'wes'  # WESTERN
+                    elif self.venNote in ('u', 'e,u', 'n,u', 't,u'):
+                        self.callType = 'urb'  # URBAN
 
-            if self.venNote in ('t', 't,m', 't,r', 't,s', 't,w', 't,u'):
-                self.callLabel = 'lgp'  # large print
-            elif 'hol' in self.venNote:
-                # note HOLIDAY label takes precedence over YR when applied
-                # together; must go first
-                self.callLabel = 'hol'  # holiday
-            elif 'yr' in self.venNote:
-                self.callLabel = 'yrd'  # young reader
-            elif self.venNote == 'l':
-                self.callLabel = 'cla'  # classics
-            elif self.venNote == 'g':
-                self.callLabel = 'gra'  # graphic novel
-            elif self.venNote == 'bil':
-                self.callLabel = 'bil'  # bilingual
+                if self.venNote in ('t', 't,m', 't,r', 't,s', 't,w', 't,u'):
+                    self.callLabel = 'lgp'  # large print
+                elif 'hol' in self.venNote:
+                    # note HOLIDAY label takes precedence over YR when applied
+                    # together; must go first
+                    self.callLabel = 'hol'  # holiday
+                elif 'yr' in self.venNote:
+                    self.callLabel = 'yrd'  # young reader
+                elif self.venNote == 'l':
+                    self.callLabel = 'cla'  # classics
+                elif self.venNote == 'g':
+                    self.callLabel = 'gra'  # graphic novel
+                elif self.venNote == 'bil':
+                    self.callLabel = 'bil'  # bilingual
+        except TypeError:
+            pass
 
     def __repr__(self):
         return "<BibOrderMeta(system='%s', dstLibrary='%s', sierraId='%s', " \

@@ -84,7 +84,7 @@ def launch_process(
         user_data.close()
 
     for i in ids:
-        meta_in = BibOrderMeta()  # like vendor meta in PVR
+        meta_in = BibOrderMeta(system=system, dstLibrary=library)  # like vendor meta in PVR
         meta_in.dstLibrary = library
         if id_type == 'ISBN':
             meta_in.t020 = [i]
