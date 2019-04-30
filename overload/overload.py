@@ -881,7 +881,7 @@ class SierraAPIs(tk.Frame):
             user_data.close()
 
             # store critical data in Windows Vault
-            credentials.standard_to_vault(
+            credentials.store_in_vault(
                 self.host.get(), client_id, client_secret)
 
             tkMessageBox.showinfo('Input', 'Settings have been saved')
@@ -1193,7 +1193,7 @@ class PlatformAPIs(tk.Frame):
             user_data.close()
 
             # store critical data in Windows Vault
-            credentials.standard_to_vault(
+            credentials.store_to_vault(
                 oauth_server, client_id, client_secret)
 
             tkMessageBox.showinfo('Input', 'Settings have been saved')
