@@ -162,6 +162,8 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                 if id_type == 'ISBN':
                     for row in reader:
                         meta = BibOrderMeta(
+                            system=system,
+                            dstLibrary=library,
                             t020=[parse_isbn(row[0])])
                         insert_or_ignore(
                             db_session, WCSourceMeta,
