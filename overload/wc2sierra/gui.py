@@ -307,7 +307,7 @@ class Worldcat2Sierra(tk.Frame):
 
         self.nohitsLbl = ttk.Label(
             self.actionFrm,
-            text='no match found:')
+            text='match not found:')
         self.nohitsLbl.grid(
             row=8, column=3, sticky='snew')
 
@@ -425,12 +425,20 @@ class Worldcat2Sierra(tk.Frame):
 
     def find_destination(self):
         # ask destination file
+        user_data = shelve.open(USER_DATA)
+        paths = user_data['paths']
+        if 'pvr_last_open_dir' in paths:
+            last_open_dir = paths['pvr_last_open_dir']
+        else:
+            last_open_dir = MY_DOCS
+        user_data.close()
+
         dst_fh = tkFileDialog.asksaveasfilename(
             parent=self,
             title='Save as',
             # filetypes=(('marc file', '*.mrc')),
             initialfile='worldcat_bibs.mrc',
-            initialdir=MY_DOCS)
+            initialdir=last_open_dir)
         if dst_fh:
             self.dst_fh.set(dst_fh)
 
