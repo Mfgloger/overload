@@ -213,10 +213,10 @@ class Main(tk.Frame):
         self.upgradeBtn.image = upgradeICO
         self.upgradeBtn.grid(
             row=1, column=3, sticky='snew')
-        self.createToolTip(
-            self.upgradeBtn,
-            'Upgrade existing records and catalog new\n'
-            'materials using Worldcat')
+        # self.createToolTip(
+        #     self.upgradeBtn,
+        #     'Upgrade existing records and catalog new\n'
+        #     'materials using Worldcat')
 
         getBibICO = tk.PhotoImage(file='./icons/getbib.gif')
         self.getBibBtn = ttk.Button(
@@ -229,12 +229,12 @@ class Main(tk.Frame):
         self.getBibBtn.image = getBibICO
         self.getBibBtn.grid(
             row=1, column=5, sticky='snew')
-        self.createToolTip(
-            self.getBibBtn,
-            'retrieves marc records\n'
-            'or Sierra bib numbers\n'
-            'based on list of ISBNs,\n'
-            'or other IDs')
+        # self.createToolTip(
+        #     self.getBibBtn,
+        #     'retrieves marc records\n'
+        #     'or Sierra bib numbers\n'
+        #     'based on list of ISBNs,\n'
+        #     'or other IDs')
 
         nextICO = tk.PhotoImage(file='./icons/killer_tool.gif')
         self.nextToolBtn = ttk.Button(
@@ -264,9 +264,9 @@ class Main(tk.Frame):
         self.reportsBtn.image = reportsICO
         self.reportsBtn.grid(
             row=3, column=1, sticky='snew')
-        self.createToolTip(
-            self.reportsBtn,
-            'user monthly reports')
+        # self.createToolTip(
+        #     self.reportsBtn,
+        #     'user monthly reports')
 
         settingsICO = tk.PhotoImage(file='./icons/settings.gif')
         self.settingsBtn = ttk.Button(
