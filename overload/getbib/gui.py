@@ -217,7 +217,7 @@ class GetBibs(tk.Frame):
 
         self.foundLbl = ttk.Label(
             self.actionFrm,
-            text='found:')
+            text='matched:')
         self.foundLbl.grid(
             row=7, column=3, sticky='snew')
 
@@ -229,7 +229,7 @@ class GetBibs(tk.Frame):
 
         self.nohitsLbl = ttk.Label(
             self.actionFrm,
-            text='no bib found:')
+            text='not matched:')
         self.nohitsLbl.grid(
             row=8, column=3, sticky='snew')
 
@@ -311,11 +311,20 @@ class GetBibs(tk.Frame):
 
     def find_destination(self):
         # ask destination file
+        # determine last used directory
+        user_data = shelve.open(USER_DATA)
+        paths = user_data['paths']
+        if 'pvr_last_open_dir' in paths:
+            last_open_dir = paths['pvr_last_open_dir']
+        else:
+            last_open_dir = MY_DOCS
+        user_data.close()
+
         dst_fh = tkFileDialog.asksaveasfilename(
             parent=self,
             title='Save as',
             initialfile='bibNos.txt',
-            initialdir=MY_DOCS)
+            initialdir=last_open_dir)
         if dst_fh:
             self.dst_fh.set(dst_fh)
 
