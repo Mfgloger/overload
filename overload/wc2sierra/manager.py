@@ -311,6 +311,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                             marc_record.remove_fields('001')
                             marc_record.add_ordered_field(tag_001)
                         write_marc21(dst_fh, marc_record)
+
                     elif action == 'catalog':
                         if meets_catalog_criteria(xml_record):
                             # add call number & write to file
