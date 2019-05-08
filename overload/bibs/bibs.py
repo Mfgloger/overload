@@ -38,6 +38,7 @@ def create_target_id_field(system, bNumber):
             'incorrect Sierra bib number encountered '
             'while creating target id field')
     bNumber = '.b{}a'.format(bNumber)
+    system = system.lower()
     if system == 'bpl':
         return Field(
             tag='907',
