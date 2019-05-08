@@ -10,6 +10,12 @@ def get_record_leader(marcxml):
         return field.text
 
 
+def get_tag_005(marcxml):
+    for field in marcxml.findall('marc:controlfield', NS):
+        if field.attrib['tag'] == '005':
+            return field.text
+
+
 def get_tag_008(marcxml):
     for field in marcxml.findall('marc:controlfield', NS):
         if field.attrib['tag'] == '008':
