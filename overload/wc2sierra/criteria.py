@@ -1,5 +1,6 @@
 from bibs.xml_bibs import (get_record_leader, get_datafield_040,
-                           get_cat_lang, get_tag_008, get_tag_300a)
+                           get_cat_lang, get_tag_005, get_tag_008,
+                           get_tag_300a)
 from bibs.parsers import (extract_record_lvl, is_picture_book, is_fiction,
                           get_audience_code)
 
@@ -65,16 +66,39 @@ def meets_user_criteria(marcxml, rec_lvl, rec_type='any',
     else:
         return False
 
-
     # add the rest of criteria here
     # rec type
     # cat rules
     # cat source
 
 
-def meets_global_criteria(marcxml):
+def meets_upgrade_criteria(marcxml, local_timestamp=None):
     """
-    sets global criteria for accepted Worldcat records;
+    Validates bibliographic record meets upgrade criteria
+    args:
+        marcxml: xml, bibliographic record in MARCXML format
+    returns:
+        Boolean
+    """
+
+    if is_english_cataloging(marcxml):
+        if local_timestamp:
+            # compare
+            wc_timestamp = float(get_tag_005(marcxml))
+            if float(local_timestamp) < wc_timestamp:
+                # worldcat record has been updated
+                return True
+            else:
+                return False
+        else:
+            return True
+    else:
+        return False
+
+
+def meets_catalog_criteria(marcxml):
+    """
+    sets criteria for Worldcat records to be fully cataloged;
     at the moment records we will process only print fiction
     materials, records must follow anglo-american cataloging
     rules (040$b blank or eng)
@@ -90,10 +114,8 @@ def meets_global_criteria(marcxml):
     audn_code = get_audience_code(leader_string, tag_008)
     tag_300a = get_tag_300a(marcxml)
 
-    if (is_fiction(leader_string, tag_008) and
-            is_english_cataloging(marcxml)) or \
-            (is_english_cataloging(marcxml) and
-                is_picture_book(audn_code, tag_300a)):
+    if is_fiction(leader_string, tag_008) or \
+            is_picture_book(audn_code, tag_300a):
         return True
     else:
         return False

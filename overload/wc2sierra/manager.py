@@ -3,7 +3,8 @@ import csv
 import logging
 
 from bibs.bibs import (BibOrderMeta, create_initials_field,
-                       write_marc21, create_controlfield)
+                       write_marc21, create_controlfield,
+                       create_target_id_field)
 from bibs.parsers import (parse_isbn, remove_oclcNo_prefix)
 from bibs.crosswalks import string2xml, marcxml2array
 from bibs.bpl_callnum import create_bpl_fiction_callnum
@@ -15,7 +16,8 @@ from connectors.worldcat.session import (SearchSession, MetadataSession,
                                          is_positive_response, no_match,
                                          extract_record_from_response)
 from credentials import get_from_vault, evaluate_worldcat_creds
-from criteria import meets_global_criteria, meets_user_criteria
+from criteria import (meets_upgrade_criteria, meets_catalog_criteria,
+                      meets_user_criteria)
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
 from db_worker import (insert_or_ignore, delete_all_table_data,
                        retrieve_record,
@@ -276,47 +278,76 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
             db_session, WCHit, hit=True)
         for row in rows:
             xml_record = row.match_marcxml
-            if meets_global_criteria(xml_record):
+
+            if meets_upgrade_criteria(xml_record):
                 if meets_user_criteria(
                         xml_record,
                         encode_level,
                         rec_type,
                         cat_rules,
                         cat_source):
+                    if action == 'upgrade':
+                        meet_crit_counter.set(
+                            meet_crit_counter.get() + 1)
 
-                    # add call number & write to file
-                    if data_source == 'Sierra export':
-                        order_data = retrieve_record(
-                            db_session, WCSourceMeta, wcsmid=row.wcsmid).meta
-
-                        callNum = create_callNum(
-                            xml_record, system, library, order_data)
-                    else:
-                        callNum = create_callNum(
-                            xml_record, system, library)
-
-                    if callNum:
-                        meet_crit_counter.set(meet_crit_counter.get() + 1)
-                        initials = create_initials_field(
-                            system, library, 'CATbot')
                         marc_record = marcxml2array(xml_record)[0]
-                        marc_record.add_ordered_field(callNum)
-                        marc_record.add_ordered_field(initials)
+
+                        # check if Sierra bib # provided and use
+                        # for overlay command line
+                        if data_source == 'Sierra export':
+                            order_data = retrieve_record(
+                                db_session,
+                                WCSourceMeta,
+                                wcsmid=row.wcsmid).meta
+                            if order_data.sierraId:
+                                overlay_tag = create_target_id_field(
+                                    system,
+                                    order_data.sierraId)
+                                marc_record.add_ordered_field(
+                                    overlay_tag)
+
                         if system == 'NYPL':
                             tag_001 = nypl_oclcNo_field(xml_record)
                             marc_record.remove_fields('001')
                             marc_record.add_ordered_field(tag_001)
-
                         write_marc21(dst_fh, marc_record)
+                    elif action == 'catalog':
+                        if meets_catalog_criteria(xml_record):
+                            # add call number & write to file
+                            if data_source == 'Sierra export':
+                                order_data = retrieve_record(
+                                    db_session,
+                                    WCSourceMeta,
+                                    wcsmid=row.wcsmid).meta
 
-                    else:
-                        fail_glob_crit_counter.set(
-                            fail_glob_crit_counter.get() + 1)
+                                callNum = create_callNum(
+                                    xml_record, system, library, order_data)
+                            else:
+                                callNum = create_callNum(
+                                    xml_record, system, library)
+
+                            if callNum:
+                                meet_crit_counter.set(
+                                    meet_crit_counter.get() + 1)
+                                initials = create_initials_field(
+                                    system, library, 'W2Sbot')
+                                marc_record = marcxml2array(xml_record)[0]
+                                marc_record.add_ordered_field(callNum)
+                                marc_record.add_ordered_field(initials)
+                                if system == 'NYPL':
+                                    tag_001 = nypl_oclcNo_field(xml_record)
+                                    marc_record.remove_fields('001')
+                                    marc_record.add_ordered_field(tag_001)
+                                write_marc21(dst_fh, marc_record)
+                        else:
+                            fail_glob_crit_counter.set(
+                                fail_glob_crit_counter.get() + 1)
                 else:
                     fail_user_crit_counter.set(
                         fail_user_crit_counter.get() + 1)
             else:
-                fail_glob_crit_counter.set(fail_glob_crit_counter.get() + 1)
+                fail_glob_crit_counter.set(
+                    fail_glob_crit_counter.get() + 1)
 
             update_progbar(progbar1)
             update_progbar(progbar2)
