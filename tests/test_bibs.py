@@ -308,7 +308,7 @@ class TestBibsUtilities(unittest.TestCase):
         self.assertEqual(
             str(command),
             '=949  \\\\$a*recs=a;bn=zzzzz;')
-        
+
     def test_set_nypl_sierra_bib_default_location_for_research_new(self):
         # test when no command line present
         bib = bibs.set_nypl_sierra_bib_default_location('research', self.marc_bib)
@@ -636,6 +636,74 @@ class TestTemplate_to_961(unittest.TestCase):
         self.assertEqual(
             str(field),
             '=961  \\\\$hg')
+
+
+class TestNYPLBranchBibOrderMeta(unittest.TestCase):
+    """
+    Tests of creation of order data object
+    """
+
+    def setUp(self):
+        self.system = 'NYPL'
+        self.library = 'branches'
+
+    def test_no_sierra_order_data_scenario(self):
+        """when data source is a list of ISBN only"""
+        data = bibs.BibOrderMeta(
+            system=self.system,
+            dstLibrary = self.library,
+            t020=['9780810129511'])
+
+        self.assertEqual(data.system, 'NYPL')
+        self.assertEqual(data.dstLibrary, 'branches')
+        self.assertIsNone(data.sierraId)
+        self.assertIsNone(data.oid)
+        self.assertIsNone(data.t001)
+        self.assertIsNone(data.t005)
+        self.assertIsNone(data.t010)
+        self.assertEqual(data.t024, [])
+        self.assertIsNone(data.venNote)
+        self.assertIsNone(data.code2)
+        self.assertIsNone(data.code4)
+        self.assertIsNone(data.locs)
+        self.assertIsNone(data.vendor)
+        self.assertIsNone(data.callType)
+        self.assertIsNone(data.callLabel)
+        self.assertFalse(data.wlPrefix)
+        self.assertIsNone(data.audnType)
+        self.assertIsNone(data.bCallNumber)
+        self.assertIsNone(data.rCallNumber)
+
+    def test_sierra_order_data_scenario(self):
+        """when data source is a list of ISBN only"""
+        data = bibs.BibOrderMeta(
+            system=self.system,
+            dstLibrary=self.library,
+            sierraId='sierraid_001',
+            oid='oid_001',
+            t001='control_field_001',
+            locs='aga0l,baa0l',
+            t020=['9780810129511'])
+
+        self.assertEqual(data.system, 'NYPL')
+        self.assertEqual(data.dstLibrary, 'branches')
+        self.assertEqual(data.sierraId, 'sierraid_001')
+        self.assertEqual(data.oid, 'oid_001')
+        self.assertEqual(data.t001, 'control_field_001')
+        self.assertIsNone(data.t005)
+        self.assertIsNone(data.t010)
+        self.assertEqual(data.t024, [])
+        self.assertIsNone(data.venNote)
+        self.assertIsNone(data.code2)
+        self.assertIsNone(data.code4)
+        self.assertEqual(data.locs, 'aga0l,baa0l')
+        self.assertIsNone(data.vendor)
+        self.assertEqual(data.callType, 'und')
+        self.assertIsNone(data.callLabel)
+        self.assertTrue(data.wlPrefix)
+        self.assertEqual(data.audnType, 'a')
+        self.assertIsNone(data.bCallNumber)
+        self.assertIsNone(data.rCallNumber)
 
 
 if __name__ == '__main__':
