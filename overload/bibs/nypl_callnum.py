@@ -59,7 +59,7 @@ def create_nypl_fiction_callnum(
         # language element
         if lang_prefix and order_data.wlPrefix:
             subfield_p_values.append(lang_prefix)
-            subfields.extend(['p', ' '.join(subfield_p_values)])
+            # subfields.extend(['p', ' '.join(subfield_p_values)])
 
         if subfield_p_values:
             subfields.extend(['p', ' '.join(subfield_p_values)])
@@ -104,6 +104,8 @@ def create_nypl_fiction_callnum(
             subfields.extend(['a', 'WESTERN'])
         elif order_data.callType == 'urb':
             subfields.extend(['a', 'URBAN'])
+        elif order_data.callType == 'und':
+            subfields.extend(['a', 'FIC'])
 
     else:
         if is_juvenile(audn_code):

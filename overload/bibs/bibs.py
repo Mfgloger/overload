@@ -865,7 +865,7 @@ class BibOrderMeta():
         if self.system == 'NYPL':
             try:
                 if self.locs[4] == 'l':
-                    self.wlPrefix = True
+                    return True
                 else:
                     return False
             except IndexError:
