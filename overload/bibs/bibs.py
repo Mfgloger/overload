@@ -543,6 +543,14 @@ def db_template_to_949(mat_format):
     return field
 
 
+def create_command_line_field(command):
+    field = Field(
+        tag='949',
+        indicators=[' ', ' '],
+        subfields=['a', command])
+    return field
+
+
 class BibMeta:
     """
     creates a general record meta object
