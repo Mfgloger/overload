@@ -4,7 +4,7 @@ import logging
 
 from bibs.bibs import (BibOrderMeta, create_initials_field,
                        write_marc21, create_controlfield,
-                       create_target_id_field)
+                       create_target_id_field, create_command_line_field)
 from bibs.parsers import (parse_isbn, remove_oclcNo_prefix)
 from bibs.crosswalks import string2xml, marcxml2array
 from bibs.bpl_callnum import create_bpl_fiction_callnum
@@ -307,9 +307,18 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                                     overlay_tag)
 
                         if system == 'NYPL':
+                            marc_record.remove_fields('001', '949')
                             tag_001 = nypl_oclcNo_field(xml_record)
-                            marc_record.remove_fields('001')
                             marc_record.add_ordered_field(tag_001)
+                            tag_949 = create_command_line_field(
+                                '*b3=h;')
+                            marc_record.add_ordered_field(tag_949)
+
+                        initials = create_initials_field(
+                            system, library, 'W2Sbot')
+                        # add Sierra bib code 3
+
+                        marc_record.add_ordered_field(initials)
                         write_marc21(dst_fh, marc_record)
 
                     elif action == 'catalog':
@@ -336,9 +345,12 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                                 marc_record.add_ordered_field(callNum)
                                 marc_record.add_ordered_field(initials)
                                 if system == 'NYPL':
+                                    marc_record.remove_fields('001', '949')
                                     tag_001 = nypl_oclcNo_field(xml_record)
-                                    marc_record.remove_fields('001')
                                     marc_record.add_ordered_field(tag_001)
+                                    tag_949 = create_command_line_field(
+                                        '*b3=h;')
+                                    marc_record.add_ordered_field(tag_949)
                                 write_marc21(dst_fh, marc_record)
                         else:
                             fail_glob_crit_counter.set(
