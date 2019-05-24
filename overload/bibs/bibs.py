@@ -6,7 +6,8 @@ from datetime import datetime
 
 
 from errors import OverloadError
-from parsers import parse_isbn, parse_issn, parse_upc, parse_sierra_id
+from parsers import (parse_isbn, parse_issn, parse_upc, parse_sierra_id,
+                     remove_oclcNo_prefix)
 from sierra_dicts import NBIB_DEFAULT_LOCATIONS
 
 
@@ -881,8 +882,15 @@ class BibOrderMeta():
             except TypeError:
                 return False
         elif self.system == 'BPL':
-            raise ValueError(
-                'BPL BibOrdMeta _has_world_lang_prefix not implemented yet')
+            try:
+                if self.locs[4] == 'l':
+                    return True
+                else:
+                    return False
+            except IndexError:
+                return False
+            except TypeError:
+                return False
         else:
             raise ValueError
 
@@ -916,8 +924,9 @@ class BibOrderMeta():
                 self.audnType = None
 
         elif self.system == 'BPL':
-            raise ValueError(
-                'BPL BibOrdMeta _determine_audience not implemented yet')
+            pass
+            # raise ValueError(
+            #     'BPL BibOrdMeta _determine_audience not implemented yet')
         else:
             raise ValueError
 
@@ -936,9 +945,10 @@ class BibOrderMeta():
             except TypeError:
                 return None
         elif self.system == 'BPL':
-            raise ValueError(
-                'BPL BibOrdMeta _has_fiction_location_code not'
-                'implemented yet')
+            pass
+            # raise ValueError(
+            #     'BPL BibOrdMeta _has_fiction_location_code not'
+                # 'implemented yet')
         else:
             raise ValueError
 
