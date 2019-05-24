@@ -196,6 +196,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                 hit = False
                 if m.meta.t001:
                     res = session.lookup_by_oclcNo(m.meta.t001)
+
                     if is_positive_response(res) and \
                             not no_match(res):
                         found_counter += 1
@@ -216,7 +217,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                     # query by LC number
                     pass
                 if m.meta.t020 and not hit:
-                    # later change to iterating through all ISBNs
+                    # later change to iterate through all ISBNs
                     # and selecting the best bib
                     # for now just first ISBN is considered
                     for i in m.meta.t020:
