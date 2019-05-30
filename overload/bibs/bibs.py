@@ -831,7 +831,7 @@ class BibOrderMeta():
         self.wlPrefix = self._has_world_language_prefix()
         self.audnType = None
         self.bCallNumber = None
-        self.rCallNumber = None
+        self.rCallNumber = []
 
         self._normalize_data()
         self._determine_audience()

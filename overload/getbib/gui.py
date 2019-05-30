@@ -33,9 +33,9 @@ class GetBibs(tk.Frame):
         self.system.trace('w', self.system_observer)
         self.library = tk.StringVar()
         self.action = tk.StringVar()
+        self.action.trace('w', self.action_observer)
         self.api = tk.StringVar()
         self.target = None
-        self.dst_fh = tk.StringVar()
         self.id_type = tk.StringVar()
         self.hit_counter = tk.IntVar()
         self.nohit_counter = tk.IntVar()
@@ -350,10 +350,8 @@ class GetBibs(tk.Frame):
             issues.append('- API not selected')
 
         # temp issues
-        if self.library.get() == 'research':
-            issues.append('- Research functionality not developed')
-        if self.action.get() == 'update':
-            issues.append('- updating functionality not developed')
+        if self.action.get() == 'get marc record':
+            issues.append('- get marc record functionality not developed')
         if self.id_type.get() != 'ISBN':
             issues.append('- only ISBN id is permitted at the moment')
 
@@ -361,7 +359,7 @@ class GetBibs(tk.Frame):
             issues.insert(0, 'Parameters error(s):\n')
             tkMessageBox.showerror('Error', '\n'.join(issues))
         else:
-            if self.source_fh.get() and self.dst_fh.get():
+            if self.source_fh.get():
                 # both paths provided
                 # wrap later in an exception catching & displaying
                         # record used connection target
@@ -454,6 +452,14 @@ class GetBibs(tk.Frame):
             self.apiCbx['values'] = apis
             self.apiCbx['state'] = 'readonly'
             user_data.close()
+
+    def action_observer(self, *args):
+        if self.action.get() == 'get bib #':
+            self.dstEnt['state'] = 'disabled'
+            self.dstBtn['state'] = 'disabled'
+        elif self.action.get() == 'get marc record':
+            self.dstEnt['state'] = 'normal'
+            self.dstBtn['state'] = 'normal'
 
     def observer(self, *args):
         if self.activeW.get() == 'GetBibs':

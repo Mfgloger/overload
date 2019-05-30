@@ -1,5 +1,6 @@
 import csv
 import logging
+import os
 import shelve
 
 
@@ -9,8 +10,10 @@ from logging_setup import LogglyAdapter
 from bibs.crosswalks import platform2meta, bibs2meta
 from pvf.analyzer import PVR_NYPLReport, PVR_BPLReport
 from pvf.platform_comms import open_platform_session, platform_queries_manager
-from setup_dirs import USER_DATA
+from setup_dirs import USER_DATA, TEMP_DIR
 from pvf.z3950_comms import z3950_query_manager
+from utils import save2csv
+
 
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
@@ -35,11 +38,17 @@ def launch_process(
         target: dict, keys = name, method
         id_type: str, one of ISBN, ISSN, LCCN, OCLC number, or UPC
         output: str, MARC or bib #
-        source_fh: str, path to source file
         dst_fh: str, path to destination file
         progbar: tkinter widget
 
     """
+    # temp report
+    report_fh = os.path.join(TEMP_DIR, 'getbib-report.csv')
+    try:
+        os.remove(report_fh)
+    except WindowsError:
+        pass
+    header = None
 
     # calc progbar maximum
     ids = []
@@ -84,7 +93,8 @@ def launch_process(
         user_data.close()
 
     for i in ids:
-        meta_in = BibOrderMeta(system=system, dstLibrary=library)  # like vendor meta in PVR
+        meta_in = BibOrderMeta(
+            system=system, dstLibrary=library)  # like vendor meta in PVR
         meta_in.dstLibrary = library
         if id_type == 'ISBN':
             meta_in.t020 = [i]
@@ -95,10 +105,11 @@ def launch_process(
         elif id_type == 'OCLC #':
             meta_in.t001 = i
 
+        module_logger.debug(str(meta_in))
+
         # query NYPL Platform
         if target['method'] == 'Platform API':
             try:
-                print('query')
                 result = platform_queries_manager(
                     target['method'], session, meta_in, matchpoint)
             except APITokenExpiredError:
@@ -130,14 +141,17 @@ def launch_process(
             analysis = PVR_NYPLReport('cat', meta_in, meta_out)
         elif system == 'BPL':
             analysis = PVR_BPLReport('cat', meta_in, meta_out)
+        module_logger.debug(str(analysis))
 
-        if analysis.target_sierraId:
-            target_sierraId = 'b{}a'.format(analysis.target_sierraId)
-            with open(dst_fh, 'a') as csvfile:
-                out = csv.writer(
-                    csvfile, delimiter=' ',
-                    lineterminator='\n',
-                    quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                out.writerow([target_sierraId])
+        if not header:
+            header = analysis.to_dict().keys()
+            save2csv(report_fh, header)
+        row = analysis.to_dict().values()
+        save2csv(report_fh, row)
+
         progbar['value'] += 1
         progbar.update()
+
+
+def show_last_batch_report():
+    pass
