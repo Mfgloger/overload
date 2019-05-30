@@ -1,3 +1,4 @@
+import csv
 import hashlib
 import os
 from datetime import datetime
@@ -34,3 +35,19 @@ def convert2date_obj(str, pattern):
     if stamp.year == 1900:
         stamp = stamp.replace(year=datetime.today().year)
     return stamp
+
+
+def save2csv(dst_fh, row):
+    """
+    Appends a list with data to a dst_fh csv
+    args:
+        dst_fh: str, output file
+        row: list, list of values to write in a row
+    """
+
+    with open(dst_fh, 'a') as csvfile:
+        out = csv.writer(
+            csvfile, delimiter=',',
+            lineterminator='\n',
+            quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        out.writerow(row)
