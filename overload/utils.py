@@ -1,7 +1,9 @@
-import csv
+import unicodecsv as csv
 import hashlib
 import os
 from datetime import datetime
+
+from pandas import read_csv
 
 
 def md5(text):
@@ -47,7 +49,22 @@ def save2csv(dst_fh, row):
 
     with open(dst_fh, 'a') as csvfile:
         out = csv.writer(
-            csvfile, delimiter=',',
+            csvfile,
+            encoding='utf-8',
+            delimiter=',',
             lineterminator='\n',
             quotechar='"', quoting=csv.QUOTE_MINIMAL)
         out.writerow(row)
+
+
+def csv2df(csvfile):
+    """
+    Converts csv data into pandas dataframe
+    args:
+        csvfile: str, path to csvfile including processing data
+    returns:
+        df: pandas dataframe
+    """
+
+    df = read_csv(csvfile, header=0, na_values=['[]'])
+    return df

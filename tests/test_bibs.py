@@ -625,7 +625,7 @@ class TestTemplate_to_961(unittest.TestCase):
         field = bibs.db_template_to_961(self.temp, vfield)
         self.assertEqual(
             str(field),
-            '=961  \\\\$aa$v1$mm')
+            '=961  \\\\$v1$aa$mm')
 
     def test_1(self):
         vfield = Field(
@@ -672,7 +672,7 @@ class TestNYPLBranchBibOrderMeta(unittest.TestCase):
         self.assertFalse(data.wlPrefix)
         self.assertIsNone(data.audnType)
         self.assertIsNone(data.bCallNumber)
-        self.assertIsNone(data.rCallNumber)
+        self.assertEqual(data.rCallNumber, [])
 
     def test_sierra_order_data_scenario(self):
         """when data source is a list of ISBN only"""
@@ -703,7 +703,7 @@ class TestNYPLBranchBibOrderMeta(unittest.TestCase):
         self.assertTrue(data.wlPrefix)
         self.assertEqual(data.audnType, 'a')
         self.assertIsNone(data.bCallNumber)
-        self.assertIsNone(data.rCallNumber)
+        self.assertEqual(data.rCallNumber, [])
 
 
 if __name__ == '__main__':
