@@ -132,6 +132,7 @@ class PVR_NYPLReport(PVRReport):
                         if call_match:
                             self.callNo_match = True
                             self._set_target_id(meta.sierraId)
+                            self.target_title = meta.title
                             self.target_callNo = meta.bCallNumber
                             if meta.catSource == 'inhouse':
                                 self.action = 'attach'
@@ -147,6 +148,7 @@ class PVR_NYPLReport(PVRReport):
                         else:
                             if c == n:
                                 self._set_target_id(meta.sierraId)
+                                self.target_title = meta.title
                                 self.target_callNo = meta.bCallNumber
                                 if meta.catSource == 'inhouse':
                                     self.action = 'attach'
@@ -163,6 +165,7 @@ class PVR_NYPLReport(PVRReport):
                         self.callNo_match = True
                         # set_target_id
                         self._set_target_id(meta.sierraId)
+                        self.target_title = meta.title
                         self.target_callNo = ','.join(meta.rCallNumber)
                         if meta.catSource == 'inhouse':
                             self.action = 'attach'
@@ -181,6 +184,7 @@ class PVR_NYPLReport(PVRReport):
                         # no other bibs to consider
                         self.callNo_match = True
                         self._set_target_id(meta.sierraId)
+                        self.target_title = meta.title
                         self.action = 'overlay'
         if n > 1:
             self.inhouse_dups = [meta.sierraId for meta in self._matched]
@@ -233,6 +237,7 @@ class PVR_NYPLReport(PVRReport):
             'vendor_callNo': self.vendor_callNo,
             'inhouse_dups': self.inhouse_dups,
             'target_sierraId': self.target_sierraId,
+            'target_title': self.target_title,
             'mixed': self.mixed,
             'other': self.other,
             'action': self.action}

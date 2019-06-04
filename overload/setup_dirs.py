@@ -13,6 +13,7 @@ USER_DATA = os.path.join(APP_DIR, 'user_data')
 DATASTORE = os.path.join(APP_DIR, 'datastore.db')  # move some user_data here
 BATCH_STATS = os.path.join(TEMP_DIR, 'batch_stats')
 BATCH_META = os.path.join(TEMP_DIR, 'batch_meta')
+GETBIB_REP = os.path.join(TEMP_DIR, 'getbib-report.csv')
 WORLDCAT_CREDS = 'Overload Creds/Worldcat'
 GOO_CREDS = 'Overload Creds/Google/goo_credentials.bin'
 GOO_FOLDERS = 'Overload Creds/Google/goo_folders.json'

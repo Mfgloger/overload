@@ -1,3 +1,4 @@
+from datetime import datetime
 import csv
 import logging
 import os
@@ -10,7 +11,7 @@ from logging_setup import LogglyAdapter
 from bibs.crosswalks import platform2meta, bibs2meta
 from pvf.analyzer import PVR_NYPLReport, PVR_BPLReport
 from pvf.platform_comms import open_platform_session, platform_queries_manager
-from setup_dirs import USER_DATA, TEMP_DIR
+from setup_dirs import USER_DATA, GETBIB_REP
 from pvf.z3950_comms import z3950_query_manager
 from utils import save2csv
 
@@ -43,25 +44,31 @@ def launch_process(
 
     """
     # temp report
-    report_fh = os.path.join(TEMP_DIR, 'getbib-report.csv')
+    timestamp_start = datetime.now()
     try:
-        os.remove(report_fh)
+        os.remove(GETBIB_REP)
     except WindowsError:
         pass
     header = None
 
-    # calc progbar maximum
-    ids = []
+    # calc progbar maximum and dedup
+    ids = set()
+    dups = set()
     with open(source_fh) as source:
         reader = csv.reader(source)
         # skip header
         reader.next()
         c = 0
+        d = 0
         for row in reader:
             rid = row[0].strip()
             if rid:
                 c += 1
-                ids.append(rid)
+                if rid in ids:
+                    d += 1
+                    dups.add(rid)
+                else:
+                    ids.add(rid)
         progbar['maximum'] = c
 
     # determine correct matchpoint based on id_type
@@ -145,13 +152,27 @@ def launch_process(
 
         if not header:
             header = analysis.to_dict().keys()
-            save2csv(report_fh, header)
+            header.insert(0, 'pos')
+            save2csv(GETBIB_REP, header)
+        analysis.target_sierraId = 'b{}a'.format(analysis.target_sierraId)
         row = analysis.to_dict().values()
-        save2csv(report_fh, row)
+        row.insert(0, progbar['value'])
+        save2csv(GETBIB_REP, row)
 
         progbar['value'] += 1
         progbar.update()
 
-
-def show_last_batch_report():
-    pass
+    # record data about the batch
+    timestamp_end = datetime.now()
+    user_data = shelve.open(USER_DATA)
+    user_data['getbib_batch'] = {
+        'timestamp': timestamp_start,
+        'time_elapsed': timestamp_end - timestamp_start,
+        'total_queries': c,
+        'target': target,
+        'hits': hit_counter.get(),
+        'misses': nohit_counter.get(),
+        'dup_count': d,
+        'dups': dups
+    }
+    user_data.close()

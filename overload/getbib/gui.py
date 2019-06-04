@@ -9,6 +9,7 @@ from gui_utils import ToolTip, BusyManager
 from logging_setup import format_traceback, LogglyAdapter
 from setup_dirs import USER_DATA, MY_DOCS
 from manager import launch_process
+from gui_results import ResultsView
 
 
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
@@ -335,7 +336,8 @@ class GetBibs(tk.Frame):
         if not self.source_fh.get():
             self.find_source()
 
-        if not self.dst_fh.get():
+        if self.action.get() == 'get marc record' and \
+                not self.dst_fh.get():
             self.find_destination()
 
         issues = []
@@ -385,11 +387,7 @@ class GetBibs(tk.Frame):
                 tkMessageBox.showinfo('Processing', 'Processing complete.')
 
     def report(self):
-        tkMessageBox.showinfo(
-            'Report',
-            'Detailed report here, that includes all retrieved and\n'
-            'processed records, option to make final selection and\n'
-            'mark bibs to update holdings')
+        ResultsView(self)
 
     def display_help(self):
         tkMessageBox.showinfo(

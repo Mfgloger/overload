@@ -572,6 +572,7 @@ class BibMeta:
         self.t901 = []
         self.t947 = []
         self.sierraId = sierraId
+        self.title = None
         self.bCallNumber = None
         self.rCallNumber = []
 
@@ -647,6 +648,8 @@ class BibMeta:
                 if field.indicators[0] == '8':
                     self.rCallNumber.append(
                         field.value())
+
+        self.title = bib.title()
 
     def __repr__(self):
         return "<BibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, 024:{}, " \
