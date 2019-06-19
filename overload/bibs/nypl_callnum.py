@@ -1,5 +1,10 @@
+from datetime import date
+import json
+
 # module general call number rules
 from pymarc import Field
+
+
 from parsers import (parse_last_name, parse_first_letter,
                      parse_language_prefix,
                      is_picture_book, is_juvenile,
@@ -67,7 +72,7 @@ def create_nypl_fiction_callnum(
         # format element
         if order_data.callLabel:
             if order_data.callLabel == 'lgp':
-                subfields.extend('f', 'LG-PRINT')
+                subfields.extend(['f', 'LG-PRINT'])
             elif order_data.callLabel == 'hol':
                 subfields.extend(['f', 'HOLIDAY'])
             elif order_data.callLabel == 'yrd':
@@ -99,7 +104,7 @@ def create_nypl_fiction_callnum(
         elif order_data.callType == 'rom':
             subfields.extend(['a', 'ROMANCE'])
         elif order_data.callType == 'sfn':
-            subfields.extend('a', 'SCI-FI')
+            subfields.extend(['a', 'SCI-FI'])
         elif order_data.callType == 'wes':
             subfields.extend(['a', 'WESTERN'])
         elif order_data.callType == 'urb':
@@ -128,3 +133,50 @@ def create_nypl_fiction_callnum(
         field = Field(tag='091', indicators=[' ', ' '], subfields=subfields)
 
     return field
+
+
+def recap_call(recap_no):
+    if not recap_no:
+        raise ValueError('Invalid Recap number provided')
+    year_ = str(date.today().year)[2:]
+    callNo = 'ReCAP {}-{}'.format(year_, recap_no)
+    return callNo
+
+
+def create_nypl_recap_callnum(recap_no=None):
+    callNum = recap_call(recap_no)
+
+    field = Field(
+        tag='852',
+        indicators=['8', ' '],
+        subfields=['h', callNum])
+
+    return field
+
+
+def create_nypl_recap_item(order_data, recap_no=None):
+    callNum = recap_call(recap_no)
+
+    settings_data = open('./rules/nyp_recap_codes.json', 'r')
+    settings_dict = json.load(settings_data)
+    recap_codes = settings_dict['ReCAP']
+
+    # determine correct codes based on order data
+    loc = order_data.locs[:3].upper()
+    codes = recap_codes[loc]
+
+    item_field = Field(
+        tag='949',
+        indicators=[' ', '1'],
+        subfields=[
+            'z', '8528',
+            'a', callNum,
+            'l', codes['loc_code'].lower(),
+            's', codes['status'],
+            't', codes['item_type'],
+            'h', codes['agency'],
+            'o', codes['opac_msg'],
+            'v', 'CATRL/W2Sbot'
+        ])
+
+    return item_field

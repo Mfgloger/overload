@@ -1,6 +1,7 @@
 # module controlling upgrade/catalog from Worldcat process
 import csv
 import logging
+import os
 
 from bibs.bibs import (BibOrderMeta, create_initials_field,
                        write_marc21, create_controlfield,
@@ -8,7 +9,9 @@ from bibs.bibs import (BibOrderMeta, create_initials_field,
 from bibs.parsers import (parse_isbn, remove_oclcNo_prefix)
 from bibs.crosswalks import string2xml, marcxml2array
 from bibs.bpl_callnum import create_bpl_fiction_callnum
-from bibs.nypl_callnum import create_nypl_fiction_callnum
+from bibs.nypl_callnum import (create_nypl_fiction_callnum,
+                               create_nypl_recap_callnum,
+                               create_nypl_recap_item)
 from bibs.sierra_dicts import NW2SEXPORT_COLS, BW2SEXPORT_COLS
 from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
                            get_tag_008, get_record_leader, get_tag_300a)
@@ -25,6 +28,8 @@ from db_worker import (insert_or_ignore, delete_all_table_data,
 from errors import OverloadError
 from logging_setup import LogglyAdapter
 from source_parsers import sierra_export_data
+from utils import save2csv
+from setup_dirs import W2S_MULTI_ORD
 
 
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
@@ -45,6 +50,11 @@ def remove_previous_process_data():
         # deletes WCSourceBatch data and all related tables
         delete_all_table_data(db_session, WCSourceBatch)
         module_logger.debug('Data from previous run has been deleted.')
+
+    try:
+        os.remove(W2S_MULTI_ORD)
+    except WindowsError:
+        pass
 
 
 def get_credentials(api):
@@ -68,8 +78,12 @@ def request_record(session, oclcNo):
             'Metadata API request skipped: no data to query')
 
 
-def create_callNum(marcxml, system, library, order_data=None):
-    module_logger.debug('Creating call number.')
+def create_local_fields(
+        marcxml, system, library,
+        order_data=None, recap_no=None):
+    module_logger.debug('Creating local fields.')
+
+    local_fields = []
     leader_string = get_record_leader(marcxml)
     cuttering_opts = get_cuttering_fields(marcxml)
     tag_008 = get_tag_008(marcxml)
@@ -78,16 +92,27 @@ def create_callNum(marcxml, system, library, order_data=None):
     if system == 'NYPL' and library == 'branches':
         callNum = create_nypl_fiction_callnum(
             leader_string, tag_008, tag_300a, cuttering_opts, order_data)
-        return callNum
+        local_fields.append(callNum)
+    elif system == 'NYPL' and library == 'research':
+        callNum = create_nypl_recap_callnum(recap_no)
+        local_fields.append(callNum)
+        itemField = create_nypl_recap_item(order_data, recap_no)
+        module_logger.debug('Created itemField: {}'.format(str(itemField)))
+        local_fields.append(itemField)
     elif system == 'BPL':
         callNum = create_bpl_fiction_callnum(
             leader_string, tag_008, tag_300a, cuttering_opts, order_data)
-        return callNum
+        local_fields.append(callNum)
     else:
         module_logger.warning(
             'Call number creation for {}-{} not implemented yet'.format(
                 system, library))
-        return None
+
+    initials = create_initials_field(
+        system, library, 'W2Sbot')
+    local_fields.append(initials)
+
+    return local_fields
 
 
 def nypl_oclcNo_field(marcxml):
@@ -97,12 +122,16 @@ def nypl_oclcNo_field(marcxml):
     return tag_001
 
 
+def selected2marc():
+    pass
+
+
 def launch_process(source_fh, data_source, dst_fh, system, library,
                    progbar1, progbar2,
                    process_label, hits, nohits, meet_crit_counter,
                    fail_user_crit_counter, fail_glob_crit_counter,
-                   action, encode_level, rec_type, cat_rules, cat_source,
-                   id_type='ISBN', api=None):
+                   action, encode_level, mat_type, cat_rules, cat_source,
+                   recap_range, id_type='ISBN', api=None):
     """
     work notes:
     1. iterate through the source files and extract bib/order metadata
@@ -148,6 +177,10 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
         progbar1['maximum'] = c * 4
         progbar2['maximum'] = c
 
+    # keep track of recap call numbers
+    if recap_range:
+        recap_no = recap_range[0]
+
     with session_scope() as db_session:
         # create batch record
         batch_rec = insert_or_ignore(
@@ -174,10 +207,24 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                         update_progbar(progbar2)
         elif data_source == 'Sierra export':
             data = sierra_export_data(source_fh, system, library)
-            for meta in data:
-                insert_or_ignore(
-                    db_session, WCSourceMeta,
-                    wcsbid=batch_id, meta=meta)
+            for meta, single_order in data:
+                if system == 'NYPL' and library == 'research':
+                    if not single_order:
+                        row = [
+                            'b{}a'.format(meta.sierraId),
+                            meta.title]
+                        save2csv(W2S_MULTI_ORD, row)
+                        progbar1['maximum'] = progbar1['maximum'] - 3
+                    else:
+                        insert_or_ignore(
+                            db_session, WCSourceMeta,
+                            wcsbid=batch_id, meta=meta)
+                else:
+                    insert_or_ignore(
+                        db_session, WCSourceMeta,
+                        wcsbid=batch_id, meta=meta)
+                update_progbar(progbar1)
+                update_progbar(progbar2)
 
     processed_counter = 0
     found_counter = 0
@@ -273,7 +320,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
         db_session.commit()
 
         # check if meet criteria & write (will be replaced with user selection)
-        process_label.set('compiling:')
+        process_label.set('analyzing:')
         progbar2['value'] = 0
         rows = retrieve_records(
             db_session, WCHit, hit=True)
@@ -284,7 +331,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                 if meets_user_criteria(
                         xml_record,
                         encode_level,
-                        rec_type,
+                        mat_type,
                         cat_rules,
                         cat_source):
                     if action == 'upgrade':
@@ -323,7 +370,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                         write_marc21(dst_fh, marc_record)
 
                     elif action == 'catalog':
-                        if meets_catalog_criteria(xml_record):
+                        if meets_catalog_criteria(xml_record, library):
                             # add call number & write to file
                             if data_source == 'Sierra export':
                                 order_data = retrieve_record(
@@ -331,28 +378,42 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                                     WCSourceMeta,
                                     wcsmid=row.wcsmid).meta
 
-                                callNum = create_callNum(
-                                    xml_record, system, library, order_data)
+                                local_fields = create_local_fields(
+                                    xml_record, system, library, order_data,
+                                    recap_no)
+                                overlay_tag = create_target_id_field(
+                                    system,
+                                    order_data.sierraId)
+                                local_fields.append(overlay_tag)
                             else:
-                                callNum = create_callNum(
+                                # data source a list of IDs
+                                local_fields = create_local_fields(
                                     xml_record, system, library)
 
-                            if callNum:
+                            if local_fields:
                                 meet_crit_counter.set(
                                     meet_crit_counter.get() + 1)
-                                initials = create_initials_field(
-                                    system, library, 'W2Sbot')
+
+                                # move this block to separate method that
+                                # will be called later by user afer the
+                                # selection of records
+
                                 marc_record = marcxml2array(xml_record)[0]
-                                marc_record.add_ordered_field(callNum)
-                                marc_record.add_ordered_field(initials)
+                                marc_record.remove_fields('949')
+                                for field in local_fields:
+                                    marc_record.add_ordered_field(field)
                                 if system == 'NYPL':
-                                    marc_record.remove_fields('001', '949')
+                                    marc_record.remove_fields('001')
                                     tag_001 = nypl_oclcNo_field(xml_record)
                                     marc_record.add_ordered_field(tag_001)
                                     tag_949 = create_command_line_field(
                                         '*b3=h;')
                                     marc_record.add_ordered_field(tag_949)
-                                write_marc21(dst_fh, marc_record)
+                                    recap_no += 1
+
+                                update_record(
+                                    db_session, WCHit, row.wchid,
+                                    prepped_marc=marc_record)
                         else:
                             fail_glob_crit_counter.set(
                                 fail_glob_crit_counter.get() + 1)
@@ -365,6 +426,13 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
 
             update_progbar(progbar1)
             update_progbar(progbar2)
+
+            # make sure W2S stays within assigned Recap range
+            if system == 'NYPL' and library == 'research':
+                if recap_no > recap_range[1]:
+                    raise OverloadError(
+                        'Used all available ReCAP call numbers '
+                        'assigned for W2S.')
 
     # show completed
     progbar1['value'] = progbar1['maximum']

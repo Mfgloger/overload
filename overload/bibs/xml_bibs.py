@@ -35,6 +35,15 @@ def get_datafield_040(marcxml):
             return field
 
 
+def get_tags_041a(marcxml):
+    langs = []
+    for field in marcxml.findall('marc:datafield', NS):
+        if field.attrib['tag'] == '041':
+            for subfield in field.findall('marc:subfield', NS):
+                if subfield.attrib['code'] == 'a':
+                    langs.append(subfield.text.strip())
+
+
 def get_oclcNo(marcxml):
     for field in marcxml.findall('marc:controlfield', NS):
         if field.attrib['tag'] == '001':
@@ -47,6 +56,26 @@ def get_tag_300a(marcxml):
             for subfield in field.findall('marc:subfield', NS):
                 if subfield.attrib['code'] == 'a':
                     return subfield.text.strip()
+
+
+def get_tags_347b(marcxml):
+    tags = []
+    for field in marcxml.finall('marc:datafield', NS):
+        if field.attrib['tag'] == '347':
+            for subfield in field.findall('marc:subfield', NS):
+                if subfield.attrib['code'] == 'b':
+                    tags.append(subfield.text.strip())
+    return tags
+
+
+def get_tags_538a(marcxml):
+    tags = []
+    for field in marcxml.findall('marc:datafield', NS):
+        if field.attrib['tag'] == '538':
+            for subfield in field.findall('marc:subfield', NS):
+                if subfield.attrib['code'] == 'a':
+                    tags.append(subfield.text.strip())
+    return tags
 
 
 def get_cuttering_fields(marcxml):

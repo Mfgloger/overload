@@ -202,6 +202,7 @@ class WCHit(Base):
     match = Column(String, default=None)
     search_marcxml = Column(PickleType)
     match_marcxml = Column(PickleType)
+    prepped_marc = Column(PickleType)
 
     def __repr__(self):
         return "<WCHit(wchid=%s, wcsmid=%s, hit=%s, setHoldings=%s," \

@@ -5,10 +5,13 @@ import ttk
 import tkFileDialog
 import tkMessageBox
 
+
+from errors import OverloadError
 from gui_utils import ToolTip, BusyManager
 from logging_setup import format_traceback, LogglyAdapter
 from setup_dirs import USER_DATA, MY_DOCS
 from manager import launch_process
+from gui_report import W2SReport
 
 
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
@@ -35,7 +38,7 @@ class Worldcat2Sierra(tk.Frame):
         self.action = tk.StringVar()
         self.api = tk.StringVar()
         self.encode_level = tk.StringVar()
-        self.rec_type = tk.StringVar()
+        self.mat_type = tk.StringVar()
         self.cat_rules = tk.StringVar()
         self.cat_source = tk.StringVar()
         self.source_fh = tk.StringVar()
@@ -49,6 +52,9 @@ class Worldcat2Sierra(tk.Frame):
         self.meet_crit_counter = tk.IntVar()
         self.fail_user_crit_counter = tk.IntVar()
         self.fail_glob_crit_counter = tk.IntVar()
+        self.recap_start = tk.StringVar()
+        self.recap_end = tk.StringVar()
+        self.recap_range = None
 
         # logos
         self.nyplLogo = tk.PhotoImage(file='./icons/nyplLogo.gif')
@@ -157,16 +163,16 @@ class Worldcat2Sierra(tk.Frame):
         self.encode_levelCbx.grid(
             row=1, column=4, sticky='nsw', padx=5, pady=5)
 
-        self.rec_typeLbl = ttk.Label(
+        self.mat_typeLbl = ttk.Label(
             self.paramsFrm,
             text='record type:')
-        self.rec_typeLbl.grid(
+        self.mat_typeLbl.grid(
             row=2, column=3, sticky='snew')
-        self.rec_typeCbx = ttk.Combobox(
+        self.mat_typeCbx = ttk.Combobox(
             self.paramsFrm,
-            textvariable=self.rec_type,
+            textvariable=self.mat_type,
             width=25)
-        self.rec_typeCbx.grid(
+        self.mat_typeCbx.grid(
             row=2, column=4, sticky='nsw', padx=5, pady=5)
 
         self.cat_rulesLbl = ttk.Label(
@@ -466,12 +472,8 @@ class Worldcat2Sierra(tk.Frame):
             issues.append('- encoding level not selected')
 
         # temp issues
-        if self.library.get() == 'research':
-            issues.append('- Research functionality not developed')
-        if self.action.get() == 'update':
-            issues.append('- updating functionality not developed')
-        if self.rec_type.get() != 'any':
-            issues.append('- record type functionality not developed')
+        # if self.action.get() == 'update':
+        #     issues.append('- updating functionality not developed')
         if self.cat_rules.get() != 'any':
             issues.append('- cat rules functionality not developed')
         if self.cat_source.get() != 'any':
@@ -487,25 +489,88 @@ class Worldcat2Sierra(tk.Frame):
             if self.source_fh.get() and self.dst_fh.get():
                 # both paths provided
                 # wrap later in an exception catching & displaying
-                launch_process(
-                    self.source_fh.get(), self.data_source.get(),
-                    self.dst_fh.get(), self.system.get(),
-                    self.library.get(), self.progbar1,
-                    self.progbar2, self.proc_label,
-                    self.found, self.nohits, self.meet_crit_counter,
-                    self.fail_user_crit_counter, self.fail_glob_crit_counter,
-                    self.action.get(), self.encode_level.get(),
-                    self.rec_type.get(), self.cat_rules.get(),
-                    self.cat_source.get(),
-                    id_type=self.id_type.get(), api=self.api.get())
-                tkMessageBox.showinfo('Processing', 'Processing complete.')
+
+                if self.system.get() == 'NYPL' and \
+                        self.library.get() == 'research':
+                    # ask for ReCap call number range
+                    self.recap_range_widget()
+                    if self.recap_range:
+                        self.launch_processing()
+                else:
+                    self.launch_processing()
+
+    def launch_processing(self):
+        try:
+            launch_process(
+                self.source_fh.get(), self.data_source.get(),
+                self.dst_fh.get(), self.system.get(),
+                self.library.get(), self.progbar1,
+                self.progbar2, self.proc_label,
+                self.found, self.nohits, self.meet_crit_counter,
+                self.fail_user_crit_counter, self.fail_glob_crit_counter,
+                self.action.get(), self.encode_level.get(),
+                self.mat_type.get(), self.cat_rules.get(),
+                self.cat_source.get(), self.recap_range,
+                id_type=self.id_type.get(), api=self.api.get())
+            tkMessageBox.showinfo('Processing', 'Processing complete.')
+        except OverloadError as e:
+            tkMessageBox.showerror(e)
+
+    def recap_range_widget(self):
+        recap_start = tk.StringVar()
+        recap_end = tk.StringVar()
+        self.topRecap = tk.Toplevel(self, background='white')
+        self.topRecap.iconbitmap('./icons/archive.ico')
+        self.topRecap.title('ReCAP Call numbers')
+        ttk.Label(
+            self.topRecap,
+            text='Please provide range of available ReCAP call numbers.').grid(
+            row=0, column=0, columnspan=5, sticky='snew', padx=20, pady=20)
+        ttk.Label(
+            self.topRecap,
+            text='start:').grid(
+            row=1, column=1, sticky='sne', padx=20, pady=2)
+        ttk.Entry(
+            self.topRecap,
+            textvariable=recap_start).grid(
+            row=1, column=2, sticky='snew', pady=2)
+        ttk.Label(self.topRecap, text='end:').grid(
+            row=2, column=1, sticky='sne', padx=20, pady=2)
+        ttk.Entry(
+            self.topRecap,
+            textvariable=recap_end).grid(
+            row=2, column=2, sticky='snew', pady=2)
+
+        okBtn = ttk.Button(
+            self.topRecap,
+            text='OK',
+            width=10,
+            command=lambda: self.add_recap_range(
+                recap_start.get(), recap_end.get()))
+        okBtn.grid(
+            row=3, column=0, columnspan=2, sticky='snw', padx=30, pady=20)
+
+        cancelBtn = ttk.Button(
+            self.topRecap,
+            text='cancel',
+            width=10,
+            command=self.topRecap.destroy)
+        cancelBtn.grid(
+            row=3, column=2, columnspan=2, sticky='sne', padx=30, pady=20)
+
+        self.topRecap.wait_window()
+
+    def add_recap_range(self, recap_start, recap_end):
+        try:
+            start = int(recap_start.strip())
+            end = int(recap_end.strip())
+            self.recap_range = (start, end)
+            self.topRecap.destroy()
+        except ValueError:
+            tkMessageBox.showerror('Input error', 'Only digits are permitted')
 
     def report(self):
-        tkMessageBox.showinfo(
-            'Report',
-            'Detailed report here, that includes all retrieved and\n'
-            'processed records, option to make final selection and\n'
-            'mark bibs to update holdings')
+        W2SReport(self)
 
     def display_help(self):
         tkMessageBox.showinfo(
@@ -519,6 +584,7 @@ class Worldcat2Sierra(tk.Frame):
         self.meet_crit_counter.set(0)
         self.fail_user_crit_counter.set(0)
         self.fail_glob_crit_counter.set(0)
+        self.recap_range = None
 
     def set_logo(self):
         # change logo
@@ -554,9 +620,12 @@ class Worldcat2Sierra(tk.Frame):
             if self.system.get() == 'NYPL':
                 self.api.set('')
                 self.apiCbx['values'] = apis['NYPL'].keys()
+                self.libraryCbx['state'] = '!disabled'
             elif self.system.get() == 'BPL':
                 self.api.set('')
                 self.apiCbx['values'] = apis['BPL'].keys()
+                self.libraryCbx.set('branches')
+                self.libraryCbx['state'] = 'disabled'
             self.apiCbx['state'] = 'readonly'
         except KeyError:
             m = 'Please complete Worldcat APIs setup first\n' \
@@ -588,29 +657,19 @@ class Worldcat2Sierra(tk.Frame):
             )
             self.encode_levelCbx['state'] = 'readonly'
             self.encode_level.set('')
-            self.rec_typeCbx['values'] = (
+            self.mat_typeCbx['values'] = (
                 'any',
-                'a - Language material',
-                'c - Notated music',
-                'd - Manus. notated music',
-                'e - Cartographic material',
-                'f - Manus. cartographic mat.',
-                'g - Projected medium',
-                'i - Nonmusical sound rec.',
-                'j - Musical sound recording',
-                'k - 2D nonprojectable graphic',
-                'm - Computer file',
-                'o - Kit',
-                'p - Mixed materials',
-                'r - 3D artifact',
-                't - Manus. lang. material',
+                'print',
+                'large print',
+                'dvd',
+                'bluray'
             )
-            self.rec_typeCbx['state'] = 'readonly'
+            self.mat_typeCbx['state'] = 'readonly'
             self.cat_rulesCbx['values'] = ('any', 'RDA-only')
             self.cat_rules.set('any')
             self.cat_rulesCbx['state'] = 'readonly'
-            self.rec_type.set('any')
-            self.rec_typeCbx['state'] = 'readonly'
+            self.mat_type.set('any')
+            self.mat_typeCbx['state'] = 'readonly'
             self.cat_sourceCbx['values'] = ('any', 'DLC')
             self.cat_source.set('any')
             self.dataSrcCbx['values'] = ('Sierra export', 'IDs list')

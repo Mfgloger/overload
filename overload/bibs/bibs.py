@@ -33,6 +33,13 @@ def read_marc_in_json(data):
     return reader
 
 
+def create_field(tag, indicators=[' ', ' '], subfields=['a']):
+    return Field(
+        tag=tag,
+        indicators=indicators,
+        subfields=subfields)
+
+
 def create_target_id_field(system, bNumber):
     if len(bNumber) != 8:
         raise ValueError(
@@ -810,8 +817,9 @@ class BibOrderMeta():
     def __init__(
             self, system=None, dstLibrary=None, sierraId=None,
             oid=None, t010=None, t001=None, t005=None,
-            t020=[], t024=[], locs=None, venNote=None,
-            code2=None, code4=None, oFormat=None, vendor=None):
+            t020=[], t024=[], title=None, locs=None, venNote=None, note=None,
+            intNote=None, code2=None, code4=None, oFormat=None,
+            vendor=None):
 
         self.system = system
         self.dstLibrary = dstLibrary
@@ -822,7 +830,10 @@ class BibOrderMeta():
         self.t010 = t010
         self.t020 = t020
         self.t024 = t024
+        self.title = title
         self.venNote = venNote
+        self.note = note
+        self.intNote = intNote
         self.code2 = code2
         self.code4 = code4
         self.locs = locs
@@ -1002,10 +1013,10 @@ class BibOrderMeta():
     def __repr__(self):
         return "<BibOrderMeta(system='%s', dstLibrary='%s', sierraId='%s', " \
             " oid='%s', t001='%s', t005='%s', t010='%s', t020='%s', " \
-            "t024='%s', locs='%s', venNote='%s', " \
-            "code2='%s', code4='%s', oFormat='%s', vendor='%s', " \
-            "callLabel='%s', callType='%s', audnType='%s', fic_loc='%s', " \
-            "wlPrefix='%s')>" % (
+            "t024='%s', title='%s', locs='%s', venNote='%s', note='%s', " \
+            "intNote='%s', code2='%s', code4='%s', oFormat='%s', " \
+            "vendor='%s', callLabel='%s', callType='%s', audnType='%s', " \
+            "fic_loc='%s', wlPrefix='%s')>" % (
                 self.system,
                 self.dstLibrary,
                 self.sierraId,
@@ -1015,8 +1026,11 @@ class BibOrderMeta():
                 self.t010,
                 self.t020,
                 self.t024,
+                self.title,
                 self.locs,
                 self.venNote,
+                self.note,
+                self.intNote,
                 self.code2,
                 self.code4,
                 self.oFormat,

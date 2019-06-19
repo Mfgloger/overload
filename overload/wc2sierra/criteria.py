@@ -1,6 +1,7 @@
 from bibs.xml_bibs import (get_record_leader, get_datafield_040,
                            get_cat_lang, get_tag_005, get_tag_008,
-                           get_tag_300a)
+                           get_tags_041a,
+                           get_tag_300a, get_tags_347b, get_tags_538a)
 from bibs.parsers import (extract_record_lvl, is_picture_book, is_fiction,
                           get_audience_code)
 
@@ -51,7 +52,96 @@ def meets_rec_lvl(marcxml, rec_lvl_range):
         return False
 
 
-def meets_user_criteria(marcxml, rec_lvl, rec_type='any',
+def meets_mat_type(marcxml, mat_type='any'):
+    """
+    args:
+        marcxml: xml obj, MARC record encodeded in XML
+        mat_type: str, options: any, print, large print, dvd, bluray
+    returns:
+        Boolean: marcxml corresponds to indicated mat_type or not
+    """
+
+    meets = True
+    if mat_type == 'any':
+        return meets
+    else:
+        leader_string = get_record_leader(marcxml)
+        t008 = get_tag_008(marcxml)
+        if mat_type == 'print':
+            if leader_string[6] != 'a':
+                meets = False
+            else:
+                if t008[23] != ' ':
+                    meets = False
+        elif mat_type == 'large print':
+            if leader_string[6] != 'a':
+                meets = False
+            else:
+                if t008[23] != 'd':
+                    meets = False
+        elif mat_type == 'dvd':
+            t347s = get_tags_347b(marcxml)
+            t538s = get_tags_538a(marcxml)
+            if leader_string[6] != 'g':
+                meets = False
+            else:
+                found = False
+                for s in t347s:
+                    if 'DVD' in s:
+                        found = True
+                for s in t538s:
+                    if 'DVD' in s:
+                        found = True
+                if not found:
+                    meets = False
+        elif mat_type == 'bluray':
+            t347s = get_tags_347b(marcxml)
+            t538s = get_tags_538a(marcxml)
+            if leader_string[6] != 'g':
+                meets = False
+            else:
+                found = False
+                for s in t347s:
+                    if 'Blu-ray' in s:
+                        found = True
+                for s in t538s:
+                    if 'Blu-ray' in s:
+                        found = True
+                if not found:
+                    meets = False
+        else:
+            raise AttributeError('Invalid mat_type attribute has been passed')
+
+    return meets
+
+
+def passes_language_test(t008, t041s):
+    """
+    Checks if data in 008 and 041$a fulfills Recap language test
+    args:
+        t008: str, value of 008 MARC tag
+        t041s: list, list of language codes found in 041 $a
+    returns:
+        Boolean: True if applicable for Recap, False if not
+    """
+    if t041s is None:
+        t041s = []
+
+    passes = True
+    langs = set()
+    langs.add(t008[35:38])
+    for code in t041s:
+        langs.add(code)
+
+    if 'eng' in langs:
+        # multilanguge materials and English are not to be
+        # sent to Recap
+        passes = False
+
+    return passes
+
+
+def meets_user_criteria(marcxml, rec_lvl, mat_type='any',
                         cat_rules='any', cat_source='any'):
     """
     verifies if record meets all criteria set by a user
@@ -59,17 +149,19 @@ def meets_user_criteria(marcxml, rec_lvl, rec_type='any',
         marcxml: xml
         rec_lvl: str,
     """
-
-    rec_lvl_range = create_rec_lvl_range(rec_lvl)
-    if meets_rec_lvl(marcxml, rec_lvl_range):
-        return True
-    else:
-        return False
-
     # add the rest of criteria here
-    # rec type
     # cat rules
     # cat source
+
+    meets = True
+    rec_lvl_range = create_rec_lvl_range(rec_lvl)
+    if not meets_rec_lvl(marcxml, rec_lvl_range):
+        meets = False
+
+    if not meets_mat_type(marcxml, mat_type):
+        meets = False
+
+    return meets
 
 
 def meets_upgrade_criteria(marcxml, local_timestamp=None):
@@ -96,7 +188,7 @@ def meets_upgrade_criteria(marcxml, local_timestamp=None):
         return False
 
 
-def meets_catalog_criteria(marcxml):
+def meets_catalog_criteria(marcxml, library):
     """
     sets criteria for Worldcat records to be fully cataloged;
     at the moment records we will process only print fiction
@@ -108,14 +200,22 @@ def meets_catalog_criteria(marcxml):
         Boolean
     """
 
-    # print materials and fiction only
+    # BL print materials and fiction, and RL Recap only
     leader_string = get_record_leader(marcxml)
     tag_008 = get_tag_008(marcxml)
     audn_code = get_audience_code(leader_string, tag_008)
+    t041s = get_tags_041a(marcxml)
     tag_300a = get_tag_300a(marcxml)
 
-    if is_fiction(leader_string, tag_008) or \
-            is_picture_book(audn_code, tag_300a):
-        return True
+    if library == 'branches':
+        if is_fiction(leader_string, tag_008) or \
+                is_picture_book(audn_code, tag_300a):
+            return True
+        else:
+            return False
+    elif library == 'research':
+        if is_english_cataloging(marcxml) and \
+                passes_language_test(tag_008, t041s):
+            return True
     else:
-        return False
+        raise AttributeError('Incorrect ')
