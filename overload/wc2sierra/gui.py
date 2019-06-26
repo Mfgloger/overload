@@ -491,7 +491,8 @@ class Worldcat2Sierra(tk.Frame):
                 # wrap later in an exception catching & displaying
 
                 if self.system.get() == 'NYPL' and \
-                        self.library.get() == 'research':
+                        self.library.get() == 'research' and \
+                        self.action.get() == 'catalog':
                     # ask for ReCap call number range
                     self.recap_range_widget()
                     if self.recap_range:

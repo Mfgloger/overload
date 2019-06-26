@@ -1,0 +1,215 @@
+<!--
+very helpful: http://worldcat.org/webservices/catalog/evaluator.html
+
+example:http://www.worldcat.org/webservices/catalog/search/sru?query=srw.bn+all+%229783658188191%22+and+srw.ll+all+%22eng%22&sortKeys=Score&maximumRecords=5&servicelevel=full&wskey={built-in-api-key}
+
+Request:
+GET /webservices/catalog/search/sru?wskey={built-in-api-key} HTTP/1.1
+Host: www.worldcat.org
+Response:
+HTTP/1.0 200 OK
+Date: Wed, 26 Jun 2019 00:40:11 GMT
+Server: Apache
+Content-Length: 5281
+Content-Type: text/xml;charset=utf-8
+X-Cache: MISS from squidap02pxdu.prod.oclc.org
+X-Cache-Lookup: MISS from squidap02pxdu.prod.oclc.org:3128
+Via: 1.0 squidap02pxdu.prod.oclc.org (squid/3.1.23)
+Connection: keep-alive
+-->
+
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="/webservices/catalog/xsl/explainResponse.xsl"?><explainResponse xmlns="http://www.loc.gov/zing/srw/">  <version>1.1</version>  <record>        <recordPacking>XML</recordPacking>      <recordSchema>http://explain.z3950.org/dtd/2.0/ </recordSchema>     <recordData>            <explain xmlns="http://explain.z3950.org/dtd/2.0/" id="org.oclc.xserve.sru" authoritative="true">                         <serverInfo protocol="SRU" version="1.1">              <host>DBHOST</host>                 <port>DBPORT</port>                 <database>/DBNAME/</database>            </serverInfo>                         <databaseInfo>                  <title lang="en" primary="true">fs-xwc</title>                  <description lang="en" primary="true">WorldCat</description>                </databaseInfo>                             <indexInfo>             <index>
+            <title lang="en">Access Method</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">am</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Author</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">au</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Corporate/Conference Name</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">cn</name>
+            </map>
+          </index>  <index>
+            <title lang="en">Dewey Classification Number</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">dd</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">DLC Limit (searches "dlc" only)</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">pc</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Document Type (Primary)</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">dt</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Government Document Number</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">gn</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">ISBN</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">bn</name>
+            </map>
+          </index>  <index>
+            <title lang="en">ISSN</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">in</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Keyword</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">kw</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Language Code (Primary)</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">la</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Language</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">ln</name>
+            </map>
+          </index>  <index>
+            <title lang="en">LC Classification Number</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">lc</name>
+            </map>
+          </index>  <index>
+            <title lang="en">LCCN</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">dn</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Library Holdings</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">li</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Library Holdings Group</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">cg</name>
+            </map>
+          </index>  <index>
+            <title lang="en">Material Type</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">mt</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Music/Publisher Number</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">mn</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Notes</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">nt</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">OCLC Number</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">no</name>
+            </map>
+          </index>  <index>
+            <title lang="en">Open Digital Limit</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">on</name>
+            </map>
+          </index>  <index>
+            <title lang="en">Personal name</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">pn</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Place of publication</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">pl</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Publisher</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">pb</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Series</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">se</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Subject</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">su</name>
+            </map>
+          </index>
+          <index>
+            <title lang="en">Standard Number</title>
+            <level>Full</level>
+            <map>
+              <name set="srw">sn</name>
+            </map>
+          </index>  <index>
+            <title lang="en">Title</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">ti</name>
+            </map>
+          </index>  <index>
+            <title lang="en">Year</title>
+            <level>Default</level>
+            <map>
+              <name set="srw">yr</name>
+            </map>
+          </index>                                                                      </indexInfo>                            <schemaInfo>                    <schema identifier="">                      <title>None</title>                 </schema>                                           <schema identifier="info:srw/schema/1/marcxml" location="http://www.oclc.org/standards/CDF/schema/CDF.xsd" sort="false" retrieve="true" name="xml">                     <title>MARC XML</title>                 </schema>                   <schema identifier="info:srw/schema/1/dc" location="http://www.oclc.org/standards/CDF/schema/CDF.xsd" sort="false" retrieve="true" name="xml">                      <title>Dublin Core</title>                  </schema>                                                       </schemaInfo>                                     <configInfo>               <default type="numberOfRecords">10</default>                <default type="contextSet">ccg</default>                <default type="index">keyword</default>                 <default type="relation">all</default>              <default type="sortSchema">ccg</default>                <default type="retrieveSchema">ccg</default>                <setting type="maximumRecords">50</setting>                 <supports type="proximity"/>                <supports type="sort"/>                 <supports type="relationModifier">relevant</supports>            </configInfo>                     </explain>      </recordData>   </record>   <echoedExplainRequest>  <wskey>{built-in-api-key}</wskey>   </echoedExplainRequest>
+</explainResponse>

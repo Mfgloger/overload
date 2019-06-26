@@ -429,10 +429,11 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
 
             # make sure W2S stays within assigned Recap range
             if system == 'NYPL' and library == 'research':
-                if recap_no > recap_range[1]:
-                    raise OverloadError(
-                        'Used all available ReCAP call numbers '
-                        'assigned for W2S.')
+                if action == 'catalog':
+                    if recap_no > recap_range[1]:
+                        raise OverloadError(
+                            'Used all available ReCAP call numbers '
+                            'assigned for W2S.')
 
     # show completed
     progbar1['value'] = progbar1['maximum']
