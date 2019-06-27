@@ -240,6 +240,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
             db_session, WCSourceMeta, wcsbid=batch_id)
         with SearchSession(creds) as session:
             for m in metas:
+                module_logger.debug(m.meta)
                 hit = False
                 if m.meta.t001:
                     res = session.lookup_by_oclcNo(m.meta.t001)
@@ -268,7 +269,8 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                     # and selecting the best bib
                     # for now just first ISBN is considered
                     for i in m.meta.t020:
-                        res = session.lookup_by_isbn(i)
+                        res = session.isbn_search(i)
+                        module_logger.debug('ISBN request: {}'.format(res.url))
                         if is_positive_response(res) and \
                                 not no_match(res):
                             found_counter += 1

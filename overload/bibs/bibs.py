@@ -884,6 +884,8 @@ class BibOrderMeta():
         except AttributeError:
             pass
 
+        self.t020 = [parse_isbn(x) for x in self.t020]
+
     def _has_world_language_prefix(self):
         if self.system == 'NYPL':
             try:

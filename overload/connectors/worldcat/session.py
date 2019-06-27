@@ -185,6 +185,27 @@ class SearchSession(WorldcatSession):
             # log
             raise
 
+    def isbn_sru_search(self, isbn):
+        payload = {
+            'wskey': self.wskey,
+            'sortKeys': 'Score',
+            'maximumRecords': 1,
+            # 'servicelevel': 'full'
+        }
+
+        url = self.base_url + 'search/sru?query=srw.bn+all+%22{}%22'.format(isbn)
+        try:
+            response = self.get(
+                url, params=payload, timeout=self.timeout)
+            return response
+
+        except requests.exceptions.Timeout:
+            raise
+        except requests.exceptions.ConnectionError:
+            raise
+
+    # http://www.worldcat.org/webservices/catalog/search/sru?query=srw.bn+all+%229781681984681%22&sortKeys=Score&maximumRecords=1&servicelevel=full&wskey={built-in-api-key}
+
     def lookup_by_oclcNo(self, oclcNo):
         """
         Use to get a record with particular OCLC number
