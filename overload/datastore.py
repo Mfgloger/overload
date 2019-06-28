@@ -180,7 +180,11 @@ class WCSourceMeta(Base):
         Integer, ForeignKey('wc_source_batch.wcsbid'), nullable=False)
     meta = Column(PickleType)
 
-    wchit = relationship('WCHit', cascade='all, delete-orphan')
+    wchits = relationship(
+        'WCHit',
+        cascade='all, delete-orphan',
+        uselist=False,
+        lazy='joined')
 
     def __repr__(self):
         return "<WCSourceMeta(wcsmid=%s, wcsbid=%s)>" % (
