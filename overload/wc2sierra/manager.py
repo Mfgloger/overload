@@ -269,7 +269,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                     # and selecting the best bib
                     # for now just first ISBN is considered
                     for i in m.meta.t020:
-                        res = session.isbn_search(i)
+                        res = session.lookup_by_isbn(i)
                         module_logger.debug('ISBN request: {}'.format(res.url))
                         if is_positive_response(res) and \
                                 not no_match(res):
@@ -306,9 +306,9 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
 
         with MetadataSession(creds) as session:
             metas = retrieve_related(
-                db_session, WCSourceMeta, 'wchit', wcsbid=batch_id)
+                db_session, WCSourceMeta, 'wchits', wcsbid=batch_id)
             for m in metas:
-                for x in m.wchit:
+                for x in m.wchits:
                     if x.hit:
                         oclcNo = get_oclcNo(x.search_marcxml)
                         xml_record = request_record(session, oclcNo)
@@ -440,3 +440,47 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
     # show completed
     progbar1['value'] = progbar1['maximum']
     progbar2['value'] = progbar2['maximum']
+
+
+def retrieve_downloaded_bibs():
+    bibs = []
+    with session_scope() as db_session:
+        recs = retrieve_related(db_session, WCSourceMeta, 'wchits', wcsbid=1)
+        # recs = retrieve_records(db_session, WCSourceMeta, wcsbid=1)
+        for r in recs:
+            sierra_data = dict(
+                title=r.meta.title,
+                sierraId=r.meta.sierraId,
+                oid=r.meta.oid,
+                locs=r.meta.locs,
+                venNote=r.meta.venNote,
+                note=r.meta.note,
+                intNote=r.meta.intNote)
+            marc = r.wchits.prepped_marc
+            if marc:
+                try:
+                    lccn = marc['050'].value()
+                except AttributeError:
+                    lccn = None
+
+                try:
+                    dewey = marc['082'].value()
+                except AttributeError:
+                    dewey = None
+
+                worldcat_data = dict(
+                    lccn=lccn,
+                    dewey=dewey,
+                    title=marc.title(),
+                    author=marc.author(),
+                    subjects=[s.value() for s in marc.subjects()],
+                    physical_desc=[
+                        s.value() for s in marc.physicaldescription()],
+                    publisher=marc.publisher(),
+                    pub_year=marc.pubyear())
+            else:
+                worldcat_data = None
+            bibs.append((r.wchits.wchid, sierra_data, worldcat_data))
+        db_session.expunge_all()
+
+    return bibs

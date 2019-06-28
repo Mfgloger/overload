@@ -6,8 +6,7 @@ from datetime import datetime
 
 
 from errors import OverloadError
-from parsers import (parse_isbn, parse_issn, parse_upc, parse_sierra_id,
-                     remove_oclcNo_prefix)
+from parsers import (parse_isbn, parse_issn, parse_upc, parse_sierra_id)
 from sierra_dicts import NBIB_DEFAULT_LOCATIONS
 
 
