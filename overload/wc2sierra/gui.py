@@ -513,7 +513,10 @@ class Worldcat2Sierra(tk.Frame):
                 self.mat_type.get(), self.cat_rules.get(),
                 self.cat_source.get(), self.recap_range,
                 id_type=self.id_type.get(), api=self.api.get())
-            tkMessageBox.showinfo('Processing', 'Processing complete.')
+
+            # display report
+            self.report()
+
         except OverloadError as e:
             tkMessageBox.showerror(e)
 
@@ -571,7 +574,7 @@ class Worldcat2Sierra(tk.Frame):
             tkMessageBox.showerror('Input error', 'Only digits are permitted')
 
     def report(self):
-        W2SReport(self)
+        W2SReport(self, self.dst_fh.get())
 
     def display_help(self):
         tkMessageBox.showinfo(
