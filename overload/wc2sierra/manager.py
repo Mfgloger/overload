@@ -23,8 +23,9 @@ from criteria import (meets_upgrade_criteria, meets_catalog_criteria,
                       meets_user_criteria)
 from datastore import (session_scope, WCSourceBatch, WCSourceMeta, WCHit)
 from db_worker import (insert_or_ignore, delete_all_table_data,
-                       retrieve_record,
-                       retrieve_records, retrieve_related, update_record)
+                       retrieve_record, retrieve_one_related,
+                       retrieve_records, retrieve_related, update_hit_record,
+                       update_meta_record)
 from errors import OverloadError
 from logging_setup import LogglyAdapter
 from source_parsers import sierra_export_data
@@ -308,15 +309,14 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
             metas = retrieve_related(
                 db_session, WCSourceMeta, 'wchits', wcsbid=batch_id)
             for m in metas:
-                for x in m.wchits:
-                    if x.hit:
-                        oclcNo = get_oclcNo(x.search_marcxml)
-                        xml_record = request_record(session, oclcNo)
-                        if xml_record is not None:
-                            update_record(
-                                db_session, WCHit, x.wchid,
-                                match=oclcNo,
-                                match_marcxml=xml_record)
+                if m.wchits.hit:
+                    oclcNo = get_oclcNo(m.wchits.search_marcxml)
+                    xml_record = request_record(session, oclcNo)
+                    if xml_record is not None:
+                        update_hit_record(
+                            db_session, WCHit, m.wchits.wchid,
+                            match=oclcNo,
+                            match_marcxml=xml_record)
                 update_progbar(progbar1)
                 update_progbar(progbar2)
         db_session.commit()
@@ -413,7 +413,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                                     marc_record.add_ordered_field(tag_949)
                                     recap_no += 1
 
-                                update_record(
+                                update_hit_record(
                                     db_session, WCHit, row.wchid,
                                     prepped_marc=marc_record)
                         else:
@@ -442,11 +442,19 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
     progbar2['value'] = progbar2['maximum']
 
 
-def retrieve_downloaded_bibs():
-    bibs = []
+def get_meta_by_id(session, meta_ids):
+    meta = []
+    for mid in meta_ids:
+        instance = retrieve_one_related(
+            session, WCSourceMeta, 'wchits', wcsmid=mid)
+        meta.append(instance)
+    return meta
+
+
+def retrieve_bibs_batch(meta_ids):
+    data = []
     with session_scope() as db_session:
-        recs = retrieve_related(db_session, WCSourceMeta, 'wchits', wcsbid=1)
-        # recs = retrieve_records(db_session, WCSourceMeta, wcsbid=1)
+        recs = get_meta_by_id(db_session, meta_ids)
         for r in recs:
             sierra_data = dict(
                 title=r.meta.title,
@@ -455,32 +463,46 @@ def retrieve_downloaded_bibs():
                 locs=r.meta.locs,
                 venNote=r.meta.venNote,
                 note=r.meta.note,
-                intNote=r.meta.intNote)
-            marc = r.wchits.prepped_marc
-            if marc:
-                try:
-                    lccn = marc['050'].value()
-                except AttributeError:
-                    lccn = None
-
-                try:
-                    dewey = marc['082'].value()
-                except AttributeError:
-                    dewey = None
-
-                worldcat_data = dict(
-                    lccn=lccn,
-                    dewey=dewey,
-                    title=marc.title(),
-                    author=marc.author(),
-                    subjects=[s.value() for s in marc.subjects()],
-                    physical_desc=[
-                        s.value() for s in marc.physicaldescription()],
-                    publisher=marc.publisher(),
-                    pub_year=marc.pubyear())
+                intNote=r.meta.intNote,
+                choice=r.selected)
+            if r.wchits.prepped_marc:
+                worldcat_data = str(r.wchits.prepped_marc)
             else:
                 worldcat_data = None
-            bibs.append((r.wchits.wchid, sierra_data, worldcat_data))
+            data.append((r.wchits.wchid, sierra_data, worldcat_data))
         db_session.expunge_all()
 
-    return bibs
+    return data
+
+
+def count_total():
+    meta_ids = []
+    with session_scope() as db_session:
+        recs = retrieve_records(db_session, WCSourceMeta)
+        total = 0
+        for rec in recs:
+            total += 1
+            meta_ids.append(rec.wcsmid)
+    return total, meta_ids
+
+
+def persist_choice(meta_ids, selected):
+    with session_scope() as db_session:
+        for mid in meta_ids:
+            update_meta_record(
+                db_session, WCSourceMeta, mid,
+                selected=selected)
+
+
+def create_marc_file(dst_fh, set_holdings):
+    with session_scope() as db_session:
+        recs = retrieve_related(
+            db_session, WCSourceMeta, 'wchits', selected=True)
+        for r in recs:
+            marc = r.wchits.prepped_marc
+            if marc:
+                write_marc21(dst_fh, marc)
+
+                if set_holdings:
+                    oclcNo = r.wchits.match
+                    # set holdings here

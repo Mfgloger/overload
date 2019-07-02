@@ -574,7 +574,12 @@ class Worldcat2Sierra(tk.Frame):
             tkMessageBox.showerror('Input error', 'Only digits are permitted')
 
     def report(self):
-        W2SReport(self, self.dst_fh.get())
+        if self.dst_fh.get():
+            W2SReport(self, self.dst_fh.get())
+        else:
+            self.find_destination()
+            if self.dst_fh.get():
+                W2SReport(self, self.dst_fh.get())
 
     def display_help(self):
         tkMessageBox.showinfo(

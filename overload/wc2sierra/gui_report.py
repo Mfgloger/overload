@@ -9,7 +9,8 @@ import tkMessageBox
 from errors import OverloadError
 from gui_utils import ToolTip, BusyManager
 from logging_setup import format_traceback, LogglyAdapter
-from manager import retrieve_downloaded_bibs
+from manager import (retrieve_bibs_batch, count_total, persist_choice,
+                     create_marc_file)
 from setup_dirs import USER_DATA, MY_DOCS
 
 
@@ -37,11 +38,13 @@ class W2SReport(tk.Frame):
         self.sel_var = tk.IntVar()
         self.sel_var.trace('w', self.selection_observer)
         self.hold_var = tk.IntVar()
-        self.disp_batch = tk.StringVar()
-        self.disp_sel = tk.StringVar()
 
-        self.disp_batch.set('20 out of 20 displayed')
-        self.disp_sel.set('5 our of 20 selected')
+        self.disp_batch = tk.StringVar()
+        self.batch = 20
+        self.disp_start = 0
+        self.disp_end = self.batch
+        self.total_count = 0
+        self.selected_count = 0
 
         # navigation frame
         self.navFrm = ttk.Frame(self.top)
@@ -86,12 +89,6 @@ class W2SReport(tk.Frame):
         self.holdCbn.grid(
             row=0, column=3, sticky='snw')
 
-        self.sel_dispLbl = ttk.Label(
-            self.navFrm,
-            textvariable=self.disp_sel)
-        self.sel_dispLbl.grid(
-            row=1, column=2, columnspan=2, sticky='snw')
-
         self.confirmBtn = ttk.Button(
             self.navFrm,
             text='confirm',
@@ -113,10 +110,10 @@ class W2SReport(tk.Frame):
         self.dispFrm.grid(
             row=1, column=0, columnspan=4, sticky='snew', padx=5, pady=10)
 
-        self.xscrollbar = tk.Scrollbar(self.dispFrm, orient=tk.HORIZONTAL)
+        self.xscrollbar = ttk.Scrollbar(self.dispFrm, orient=tk.HORIZONTAL)
         self.xscrollbar.grid(
             row=0, column=1, columnspan=10, sticky='nwe')
-        self.yscrollbar = tk.Scrollbar(self.dispFrm, orient=tk.VERTICAL)
+        self.yscrollbar = ttk.Scrollbar(self.dispFrm, orient=tk.VERTICAL)
         self.yscrollbar.grid(
             row=1, column=0, rowspan=20, sticky='nse')
         self.preview_base = tk.Canvas(
@@ -131,56 +128,114 @@ class W2SReport(tk.Frame):
         self.preview()
 
         # populate preview_frame with Sierra & Worldcat data
-        self.populate_preview()
+        self.display_totals()
+        self.populate_preview(self.meta_ids[:self.disp_end])
+        # update count display
+        self.disp_batch.set('{} out of {} displayed'.format(
+            len(self.meta_ids[:self.disp_end]), self.count_total))
+
+    def save_choices(self):
+        for k, v in self.tracker.items():
+            if v['check'].get():
+                persist_choice([v['wcsmid']], True)
+            else:
+                persist_choice([v['wcsmid']], False)
 
     def previous_batch(self):
-        pass
+        self.save_choices()
+        if self.disp_start > 0:
+            self.preview_frame.destroy()
+            self.preview()
+            self.disp_end = self.disp_start
+            self.start = self.disp_end - self.batch
+            self.populate_preview(
+                self.meta_ids[self.disp_start:self.disp_end])
 
     def next_batch(self):
-        pass
+        self.save_choices()
+        if self.disp_end <= len(self.meta_ids):
+            self.preview_frame.destroy()
+            self.preview()
+            self.disp_start = self.disp_end
+            self.disp_end = self.disp_end + self.batch
+            self.populate_preview(
+                self.meta_ids[self.disp_start: self.disp_end])
 
     def confirm(self):
-        pass
+        self.save_choices()
 
-    def populate_preview(self):
-        data = retrieve_downloaded_bibs()
+        create_marc_file(self.dst_fh, self.hold_var.get())
+
+        if self.hold_var.get():
+            msg = 'Records have been saved to a file.\n' \
+                  'OCLC Holdings have been set.'
+        else:
+            msg = 'Records have been saved to a file.\n' \
+                  'No OCLC holdings have been set.'
+        tkMessageBox.showinfo(
+            'Info', msg,
+            parent=self.top)
+
+    def display_totals(self):
+        self.count_total, self.meta_ids = count_total()
+
+    def populate_preview(self, meta_ids):
+        data = retrieve_bibs_batch(meta_ids)
         row = 0
         self.tracker = {}
         for d in data:
-            self.create_resource(d, row)
+            wid, wdict = self.create_resource(d, row)
+            self.tracker[wid] = wdict
             row += 1
 
     def create_resource(self, data, row):
         unitFrm = tk.Frame(self.preview_frame)
-        unitFrm.grid(row=row, column=0, sticky='snew')
+        unitFrm.grid(row=row, column=0, columnspan=10, sticky='snew')
+        unitFrm.configure(background='white')
+        unitFrm.columnconfigure(0, minsize=40)
+
+        var = tk.IntVar()
+        var.set(data[1]['choice'])
 
         selCbn = ttk.Checkbutton(
-            unitFrm)
+            unitFrm,
+            var=var)
         selCbn.grid(
-            row=0, column=0, sticky='snw')
+            row=0, column=0, sticky='snew', padx=5)
 
         sierraTxt = tk.Text(
             unitFrm,
             height=5,
-            width=1000,
-            wrap='word')
+            width=118,
+            wrap='word',
+            borderwidth=0)
         sierraTxt.grid(
-            row=0, column=1, sticky='snew')
+            row=0, column=1, columnspan=10, sticky='snew', pady=5)
 
         self.pupulate_sierra_data(sierraTxt, data[1])
 
+        scrollbar = ttk.Scrollbar(unitFrm)
+        scrollbar.grid(
+            row=1, column=11, sticky='snw', pady=5)
         worldcatTxt = tk.Text(
             unitFrm,
-            wrap='word')
+            wrap='word',
+            width=118,
+            borderwidth=0,
+            yscrollcommand=scrollbar.set)
         worldcatTxt.grid(
-            row=1, column=1, sticky='snew')
+            row=1, column=1, columnspan=10, sticky='snew', pady=5)
+        scrollbar.config(command=worldcatTxt.yview)
 
         self.pupulate_worldcat_data(worldcatTxt, data[2])
 
-        return dict(check=selCbn, wchid=data[0])
+        ttk.Separator(unitFrm, orient=tk.HORIZONTAL).grid(
+            row=2, column=0, columnspan=10, sticky='sew', padx=10, pady=10)
+
+        return (selCbn.winfo_name(), dict(check=var, wcsmid=data[0]))
 
     def pupulate_sierra_data(self, widget, data):
-        l1 = '{}\n'.format(data['title'])
+        l1 = '  {}\n'.format(data['title'])
         l2 = '\tbib #: {}, ord #: {}\n'.format(
             data['sierraId'], data['oid'])
         l3 = '\tlocations: {}\n'.format(data['locs'])
@@ -202,43 +257,25 @@ class W2SReport(tk.Frame):
 
     def pupulate_worldcat_data(self, widget, data):
         if data:
-            print(type(data))
-            print(data)
-            l1 = u'{} / {}\n'.format(
-                data['title'],
-                data['author'])
-            l2 = u'\tclassification: {} | {}\n'.format(
-                data['lccn'], data['dewey'])
-            l3 = u'\t{} , {}\n'.format(
-                data['publisher'], data['pub_year'])
-            l4 = u'\t{}\n'.format(
-                ' | '.join(data['physical_desc']))
-            l5 = u'\t{}'.format(
-                ' | '.join(data['subjects']))
-
-            widget.insert(1.0, l1)
-            widget.insert(2.0, l2)
-            widget.insert(3.0, l3)
-            widget.insert(4.0, l4)
-            widget.insert(5.0, l5)
-
-            widget.tag_add('header', '1.0', '1.end')
-            widget.tag_config('header', font=("tahoma", "11", "bold"))
-            widget.tag_add('location', '3.11', '3.end')
-            widget.tag_config('location', font=(
-                "tahoma", "11", "bold"), foreground='tomato2')
-
+            widget.insert(1.0, data)
         else:
             l1 = 'NO GOOD MATCHES FOUND IN WORLDCAT'
             widget.insert(1.0, l1)
+            widget.configure(height=2)
 
         widget['state'] = 'disable'
 
     def selection_observer(self, *args):
         if self.sel_var.get() == 1:
             self.sel_lbl.set('unselect all')
+            for key, value in self.tracker.items():
+                value['check'].set(1)
+            persist_choice(self.meta_ids, True)
         elif self.sel_var.get() == 0:
             self.sel_lbl.set('select all')
+            for key, value in self.tracker.items():
+                value['check'].set(0)
+            presist_choice(self.meta_ids, False)
 
     def preview(self):
         self.preview_frame = tk.Frame(
