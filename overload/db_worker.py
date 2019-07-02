@@ -1,6 +1,6 @@
 # datastore functions
 
-from sqlalchemy.orm import load_only, subqueryload
+from sqlalchemy.orm import subqueryload
 
 
 from datastore import NYPLOrderTemplate
@@ -45,6 +45,14 @@ def retrieve_related(session, model, related, **kwargs):
     return instances
 
 
+def retrieve_one_related(session, model, related, **kwargs):
+    # retrieves a record and related data from other
+    # tables based on created relationship
+    instances = session.query(model).options(
+        subqueryload(related)).filter_by(**kwargs).one()
+    return instances
+
+
 def retrieve_record(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).one()
     return instance
@@ -66,7 +74,23 @@ def create_db_object(model, **kwargs):
     return instance
 
 
-def update_record(session, model, id, **kwargs):
+def update_hit_record(session, model, id, **kwargs):
     instance = session.query(model).filter_by(wchid=id).one()
     for key, value in kwargs.iteritems():
         setattr(instance, key, value)
+
+
+def update_meta_record(session, model, id, **kwargs):
+    instance = session.query(model).filter_by(wcsmid=id).one()
+    for key, value in kwargs.iteritems():
+        setattr(instance, key, value)
+
+
+def count_records(session, model, **kwargs):
+    row_count = session.query(model).filter_by(**kwargs).count()
+    return row_count
+
+
+def retrieve_first_n(session, model, n, **kwargs):
+    instances = session.query(model).filter_by(**kwargs).limit(n).all()
+    return instances

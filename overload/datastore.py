@@ -178,6 +178,7 @@ class WCSourceMeta(Base):
     wcsmid = Column(Integer, primary_key=True)
     wcsbid = Column(
         Integer, ForeignKey('wc_source_batch.wcsbid'), nullable=False)
+    selected = Column(Boolean, default=False)
     meta = Column(PickleType)
 
     wchits = relationship(
@@ -202,7 +203,6 @@ class WCHit(Base):
     wcsmid = Column(
         Integer, ForeignKey('wc_source_meta.wcsmid'), nullable=False)
     hit = Column(Boolean, nullable=False)
-    setHoldings = Column(Boolean, default=False)
     match = Column(String, default=None)
     search_marcxml = Column(PickleType)
     match_marcxml = Column(PickleType)
