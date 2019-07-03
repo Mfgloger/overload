@@ -49,9 +49,39 @@ class W2SReport(tk.Frame):
         # navigation frame
         self.navFrm = ttk.Frame(self.top)
         self.navFrm.grid(
-            row=0, column=0, padx=20, pady=20)
-        self.navFrm.columnconfigure(2, minsize=200)
-        self.navFrm.columnconfigure(4, minsize=40)
+            row=0, column=0, padx=20, pady=10)
+        self.navFrm.columnconfigure(3, minsize=250)
+        # self.navFrm.columnconfigure(4, minsize=40)
+
+        self.selCbn = ttk.Checkbutton(
+            self.navFrm,
+            textvariable=self.sel_lbl,
+            variable=self.sel_var)
+        self.selCbn.grid(
+            row=0, column=0, columnspan=2, sticky='snew', pady=5)
+
+        self.holdCbn = ttk.Checkbutton(
+            self.navFrm,
+            text='set OCLC holdings',
+            variable=self.hold_var)
+        self.holdCbn.grid(
+            row=0, column=2, sticky='snw', pady=5)
+
+        self.confirmBtn = ttk.Button(
+            self.navFrm,
+            text='confirm',
+            width=10,
+            command=self.confirm)
+        self.confirmBtn.grid(
+            row=0, column=4, sticky='nsw', padx=20, pady=5)
+
+        self.cancelBtn = ttk.Button(
+            self.navFrm,
+            text='cancel',
+            width=10,
+            command=self.top.destroy)
+        self.cancelBtn.grid(
+            row=0, column=5, sticky='nsw', padx=20, pady=5)
 
         self.leftBtn = ttk.Button(
             self.navFrm,
@@ -59,7 +89,7 @@ class W2SReport(tk.Frame):
             width=5,
             command=self.previous_batch)
         self.leftBtn.grid(
-            row=0, column=0, sticky='nsw', padx=5, pady=20)
+            row=1, column=0, sticky='nsw', padx=5)
 
         self.rightBtn = ttk.Button(
             self.navFrm,
@@ -67,46 +97,17 @@ class W2SReport(tk.Frame):
             width=5,
             command=self.next_batch)
         self.rightBtn.grid(
-            row=0, column=1, sticky='nse', padx=5, pady=20)
+            row=1, column=1, sticky='nse', padx=5)
 
         self.batch_dispLbl = ttk.Label(
             self.navFrm,
             textvariable=self.disp_batch)
         self.batch_dispLbl.grid(
-            row=1, column=0, columnspan=2, sticky='snw', padx=5)
-
-        self.selCbn = ttk.Checkbutton(
-            self.navFrm,
-            textvariable=self.sel_lbl,
-            variable=self.sel_var)
-        self.selCbn.grid(
-            row=0, column=2, sticky='snew')
-
-        self.holdCbn = ttk.Checkbutton(
-            self.navFrm,
-            text='set OCLC holdings',
-            variable=self.hold_var)
-        self.holdCbn.grid(
-            row=0, column=3, sticky='snw')
-
-        self.confirmBtn = ttk.Button(
-            self.navFrm,
-            text='confirm',
-            width=15,
-            command=self.confirm)
-        self.confirmBtn.grid(
-            row=0, column=5, sticky='nsw', padx=20, pady=20)
-
-        self.cancelBtn = ttk.Button(
-            self.navFrm,
-            text='cancel',
-            width=15,
-            command=self.top.destroy)
-        self.cancelBtn.grid(
-            row=0, column=6, sticky='nsw', padx=20, pady=20)
+            row=1, column=2, columnspan=2, sticky='snw', padx=5)
 
         # worlcat records display frame
-        self.dispFrm = ttk.LabelFrame(self.top, text='Worldcat records')
+        self.dispFrm = ttk.LabelFrame(
+            self.top, text='Sierra & Worldcat records')
         self.dispFrm.grid(
             row=1, column=0, columnspan=4, sticky='snew', padx=5, pady=10)
 
@@ -236,10 +237,10 @@ class W2SReport(tk.Frame):
 
     def pupulate_sierra_data(self, widget, data):
         l1 = '  {}\n'.format(data['title'])
-        l2 = '\tbib #: {}, ord #: {}\n'.format(
+        l2 = '  bib #: {}, ord #: {}\n'.format(
             data['sierraId'], data['oid'])
-        l3 = '\tlocations: {}\n'.format(data['locs'])
-        l4 = '\tnotes: {} | {} | {}\n'.format(
+        l3 = '  location: {}\n'.format(data['locs'])
+        l4 = '  notes: {} | {} | {}\n'.format(
             data['venNote'],
             data['note'],
             data['intNote'])
@@ -275,7 +276,7 @@ class W2SReport(tk.Frame):
             self.sel_lbl.set('select all')
             for key, value in self.tracker.items():
                 value['check'].set(0)
-            presist_choice(self.meta_ids, False)
+            persist_choice(self.meta_ids, False)
 
     def preview(self):
         self.preview_frame = tk.Frame(
