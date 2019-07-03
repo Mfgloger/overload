@@ -185,15 +185,57 @@ class SearchSession(WorldcatSession):
             # log
             raise
 
-    def isbn_sru_search(self, isbn):
+    def cql_query(self, keyword, keyword_type='ISBN',
+                  mat_type=None, cat_source=None):
+
         payload = {
             'wskey': self.wskey,
-            'sortKeys': 'Score',
-            'maximumRecords': 1,
-            # 'servicelevel': 'full'
+            'sortKeys': 'LibraryCount,,0,Score,,0',
+            'maximumRecords': 5,
+            'servicelevel': 'full',
+            'frbrGrouping': 'off',
         }
 
-        url = self.base_url + 'search/sru?query=srw.bn+all+%22{}%22'.format(isbn)
+        queries = []
+
+        # keywords
+        if keyword_type == 'ISBN':
+            query = 'srw.bn="{}"'.format(keyword)
+            queries.append(query)
+        elif keyword_type == 'UPC':
+            query = 'srw.sn="{}"'.format(keyword)
+            queries.append(query)
+        elif keyword_type == 'ISSN':
+            query = 'srw.in="{}"'.format(keyword)
+            queries.append(query)
+        elif keyword_type == 'OCLC #':
+            query = 'srw.no={}'.format(keyword)
+            queries.append(query)
+        elif keyword_type == 'LCCN':
+            query = 'srw.dn={}'.format(keyword)
+            queries.append(query)
+
+        # mat type
+        if mat_type == 'print':
+            query = 'srw.mt=bks'
+            queries.append(query)
+        elif mat_type == 'large print':
+            query = 'srw.mt=lpt'
+            queries.append(query)
+        elif mat_type == 'dvd':
+            query = 'srw.mt=dvv'
+            queries.append(query)
+        elif mat_type == 'bluray':
+            query = 'srw.mt=bta'
+            queries.append(query)
+
+        # cat source
+        if cat_source == 'DLC':
+            query = 'srw.pc=dlc'
+
+        url = self.base_url + 'search/sru?query={}'.format(
+            '+and+'.join(queries))
+
         try:
             response = self.get(
                 url, params=payload, timeout=self.timeout)
@@ -203,8 +245,6 @@ class SearchSession(WorldcatSession):
             raise
         except requests.exceptions.ConnectionError:
             raise
-
-    # http://www.worldcat.org/webservices/catalog/search/sru?query=srw.bn+all+%229781681984681%22&sortKeys=Score&maximumRecords=1&servicelevel=full&wskey={built-in-api-key}
 
     def lookup_by_oclcNo(self, oclcNo):
         """
