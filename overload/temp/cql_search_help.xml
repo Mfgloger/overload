@@ -3,6 +3,9 @@ very helpful: http://worldcat.org/webservices/catalog/evaluator.html
 
 example:http://www.worldcat.org/webservices/catalog/search/sru?query=srw.bn+all+%229783658188191%22+and+srw.ll+all+%22eng%22&sortKeys=Score&maximumRecords=5&servicelevel=full&wskey={built-in-api-key}
 
+print query:
+http://www.worldcat.org/webservices/catalog/search/worldcat/sru?query=srw.bn+all+"9783858697516"&srw.mt=bks&servicelevel=full&maximumRecords=5&frbrGrouping=off&sortKeys=LibraryCount,,0,Score,,0&wskey={built-in-api-key}
+
 Request:
 GET /webservices/catalog/search/sru?wskey={built-in-api-key} HTTP/1.1
 Host: www.worldcat.org
