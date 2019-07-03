@@ -46,6 +46,23 @@ def store_meta(model, record):
     pass
 
 
+def interpret_search_response(response, db_session, wcsmid):
+    if is_positive_response(response) and \
+            not no_match(response):
+        hit = True
+        doc = string2xml(response.content)
+        insert_or_ignore(
+            db_session, WCHit, wcsmid=wcsmid,
+            hit=hit, search_marcxml=doc)
+    else:
+        hit = False
+        insert_or_ignore(
+            db_session, WCHit, wcsmid=wcsmid,
+            hit=hit, search_marcxml=None)
+
+    return hit
+
+
 def remove_previous_process_data():
     with session_scope() as db_session:
         # deletes WCSourceBatch data and all related tables
@@ -206,6 +223,9 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                             wcsbid=batch_id, meta=meta)
                         update_progbar(progbar1)
                         update_progbar(progbar2)
+                elif id_type == 'UPC':
+                    # to be implemented
+                    pass
         elif data_source == 'Sierra export':
             data = sierra_export_data(source_fh, system, library)
             for meta, single_order in data:
@@ -244,202 +264,224 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                 module_logger.debug(m.meta)
                 hit = False
                 if m.meta.t001:
-                    res = session.lookup_by_oclcNo(m.meta.t001)
+                    res = session.cql_query(
+                        m.meta.t001, 'OCLC #', mat_type, cat_source)
+                    module_logger.debug('OCLC # request: {}'.format(res.url))
 
-                    if is_positive_response(res) and \
-                            not no_match(res):
+                    hit = interpret_search_response(res, db_session, m.wcsmid)
+
+                    if hit:
                         found_counter += 1
-                        hit = True
-                        doc = string2xml(res.content)
-                        res = insert_or_ignore(
-                            db_session, WCHit, wcsmid=m.wcsmid,
-                            hit=hit, search_marcxml=doc)
                     else:
                         not_found_counter += 1
-                        res = insert_or_ignore(
-                            db_session, WCHit, wcsmid=m.wcsmid,
-                            hit=hit, search_marcxml=None)
 
                     hits.set(found_counter)
                     nohits.set(not_found_counter)
-                if m.meta.t010 and not hit:
-                    # query by LC number
-                    pass
-                if m.meta.t020 and not hit:
-                    # later change to iterate through all ISBNs
-                    # and selecting the best bib
-                    # for now just first ISBN is considered
-                    for i in m.meta.t020:
-                        res = session.lookup_by_isbn(i)
-                        module_logger.debug('ISBN request: {}'.format(res.url))
-                        if is_positive_response(res) and \
-                                not no_match(res):
-                            found_counter += 1
-                            hit = True
-                            # convert from string to xml (or remain as string?)
-                            doc = string2xml(res.content)
-                            # persist
-                            res = insert_or_ignore(
-                                db_session, WCHit, wcsmid=m.wcsmid,
-                                hit=hit, search_marcxml=doc)
-                        else:
-                            not_found_counter += 1
-                            res = insert_or_ignore(
-                                db_session, WCHit, wcsmid=m.wcsmid,
-                                hit=hit, search_marcxml=None)
 
-                        hits.set(found_counter)
-                        nohits.set(not_found_counter)
-                        break  # remove when iterating through all ISBNs
+                if m.meta.t010 and not hit:
+                    res = session.cql_query(
+                        m.meta.t010, 'LCCN', mat_type, cat_source)
+                    module_logger.debug('LCCN request: {}'.format(res.url))
+
+                    hit = interpret_search_response(res, db_session, m.wcsmid)
+
+                    if hit:
+                        found_counter += 1
+                    else:
+                        not_found_counter += 1
+
+                    hits.set(found_counter)
+                    nohits.set(not_found_counter)
+
+                if m.meta.t020 and not hit:
+                    # will iterate over all ISBNs if no hits
+                    found = False
+                    for isbn in m.meta.t020:
+                        res = session.cql_query(
+                            isbn, 'ISBN', mat_type, cat_source)
+                        module_logger.debug('ISBN request: {}'.format(res.url))
+
+                        hit = interpret_search_response(
+                            res, db_session, m.wcsmid)
+
+                        if hit:
+                            found = True
+                            found_counter += 1
+                            break  # stop searching
+
+                    if not found:
+                        not_found_counter += 1
+
+                    hits.set(found_counter)
+                    nohits.set(not_found_counter)
+
                 if m.meta.t024 and not hit:
-                    # query by UPC
-                    pass
+                    found = False
+                    for upc in m.meta.t024:
+                        res = session.cql_query(
+                            upc, 'UPC', mat_type, cat_source)
+                        module_logger.debug('ISBN request: {}'.format(res.url))
+
+                        hit = interpret_search_response(
+                            res, db_session, m.wcsmid)
+
+                        if hit:
+                            found = True
+                            found_counter += 1
+                            break  # stop searching
+
+                    if not found:
+                        not_found_counter += 1
+
+                    hits.set(found_counter)
+                    nohits.set(not_found_counter)
+
                 update_progbar(progbar1)
                 update_progbar(progbar2)
                 processed_counter += 1
 
         db_session.commit()
 
-        # verify found matches meet set criteria
-        process_label.set('downloading:')
-        # reset progbar2
-        progbar2['value'] = 0
+    #     # verify found matches meet set criteria
+    #     process_label.set('downloading:')
+    #     # reset progbar2
+    #     progbar2['value'] = 0
 
-        with MetadataSession(creds) as session:
-            metas = retrieve_related(
-                db_session, WCSourceMeta, 'wchits', wcsbid=batch_id)
-            for m in metas:
-                if m.wchits.hit:
-                    oclcNo = get_oclcNo(m.wchits.search_marcxml)
-                    xml_record = request_record(session, oclcNo)
-                    if xml_record is not None:
-                        update_hit_record(
-                            db_session, WCHit, m.wchits.wchid,
-                            match=oclcNo,
-                            match_marcxml=xml_record)
-                update_progbar(progbar1)
-                update_progbar(progbar2)
-        db_session.commit()
+    #     with MetadataSession(creds) as session:
+    #         metas = retrieve_related(
+    #             db_session, WCSourceMeta, 'wchits', wcsbid=batch_id)
+    #         for m in metas:
+    #             if m.wchits.hit:
+    #                 oclcNo = get_oclcNo(m.wchits.search_marcxml)
+    #                 xml_record = request_record(session, oclcNo)
+    #                 if xml_record is not None:
+    #                     update_hit_record(
+    #                         db_session, WCHit, m.wchits.wchid,
+    #                         match=oclcNo,
+    #                         match_marcxml=xml_record)
+    #             update_progbar(progbar1)
+    #             update_progbar(progbar2)
+    #     db_session.commit()
 
-        # check if meet criteria & write (will be replaced with user selection)
-        process_label.set('analyzing:')
-        progbar2['value'] = 0
-        rows = retrieve_records(
-            db_session, WCHit, hit=True)
-        for row in rows:
-            xml_record = row.match_marcxml
+    #     # check if meet criteria & write (will be replaced with user selection)
+    #     process_label.set('analyzing:')
+    #     progbar2['value'] = 0
+    #     rows = retrieve_records(
+    #         db_session, WCHit, hit=True)
+    #     for row in rows:
+    #         xml_record = row.match_marcxml
 
-            if meets_upgrade_criteria(xml_record):
-                if meets_user_criteria(
-                        xml_record,
-                        encode_level,
-                        mat_type,
-                        cat_rules,
-                        cat_source):
-                    if action == 'upgrade':
-                        meet_crit_counter.set(
-                            meet_crit_counter.get() + 1)
+    #         if meets_upgrade_criteria(xml_record):
+    #             if meets_user_criteria(
+    #                     xml_record,
+    #                     encode_level,
+    #                     mat_type,
+    #                     cat_rules,
+    #                     cat_source):
+    #                 if action == 'upgrade':
+    #                     meet_crit_counter.set(
+    #                         meet_crit_counter.get() + 1)
 
-                        marc_record = marcxml2array(xml_record)[0]
+    #                     marc_record = marcxml2array(xml_record)[0]
 
-                        # check if Sierra bib # provided and use
-                        # for overlay command line
-                        if data_source == 'Sierra export':
-                            order_data = retrieve_record(
-                                db_session,
-                                WCSourceMeta,
-                                wcsmid=row.wcsmid).meta
-                            if order_data.sierraId:
-                                overlay_tag = create_target_id_field(
-                                    system,
-                                    order_data.sierraId)
-                                marc_record.add_ordered_field(
-                                    overlay_tag)
+    #                     # check if Sierra bib # provided and use
+    #                     # for overlay command line
+    #                     if data_source == 'Sierra export':
+    #                         order_data = retrieve_record(
+    #                             db_session,
+    #                             WCSourceMeta,
+    #                             wcsmid=row.wcsmid).meta
+    #                         if order_data.sierraId:
+    #                             overlay_tag = create_target_id_field(
+    #                                 system,
+    #                                 order_data.sierraId)
+    #                             marc_record.add_ordered_field(
+    #                                 overlay_tag)
 
-                        if system == 'NYPL':
-                            marc_record.remove_fields('001', '949')
-                            tag_001 = nypl_oclcNo_field(xml_record)
-                            marc_record.add_ordered_field(tag_001)
-                            tag_949 = create_command_line_field(
-                                '*b3=h;')
-                            marc_record.add_ordered_field(tag_949)
+    #                     if system == 'NYPL':
+    #                         marc_record.remove_fields('001', '949')
+    #                         tag_001 = nypl_oclcNo_field(xml_record)
+    #                         marc_record.add_ordered_field(tag_001)
+    #                         tag_949 = create_command_line_field(
+    #                             '*b3=h;')
+    #                         marc_record.add_ordered_field(tag_949)
 
-                        initials = create_initials_field(
-                            system, library, 'W2Sbot')
-                        # add Sierra bib code 3
+    #                     initials = create_initials_field(
+    #                         system, library, 'W2Sbot')
+    #                     # add Sierra bib code 3
 
-                        marc_record.add_ordered_field(initials)
-                        write_marc21(dst_fh, marc_record)
+    #                     marc_record.add_ordered_field(initials)
+    #                     write_marc21(dst_fh, marc_record)
 
-                    elif action == 'catalog':
-                        if meets_catalog_criteria(xml_record, library):
-                            # add call number & write to file
-                            if data_source == 'Sierra export':
-                                order_data = retrieve_record(
-                                    db_session,
-                                    WCSourceMeta,
-                                    wcsmid=row.wcsmid).meta
+    #                 elif action == 'catalog':
+    #                     if meets_catalog_criteria(xml_record, library):
+    #                         # add call number & write to file
+    #                         if data_source == 'Sierra export':
+    #                             order_data = retrieve_record(
+    #                                 db_session,
+    #                                 WCSourceMeta,
+    #                                 wcsmid=row.wcsmid).meta
 
-                                local_fields = create_local_fields(
-                                    xml_record, system, library, order_data,
-                                    recap_no)
-                                overlay_tag = create_target_id_field(
-                                    system,
-                                    order_data.sierraId)
-                                local_fields.append(overlay_tag)
-                            else:
-                                # data source a list of IDs
-                                local_fields = create_local_fields(
-                                    xml_record, system, library)
+    #                             local_fields = create_local_fields(
+    #                                 xml_record, system, library, order_data,
+    #                                 recap_no)
+    #                             overlay_tag = create_target_id_field(
+    #                                 system,
+    #                                 order_data.sierraId)
+    #                             local_fields.append(overlay_tag)
+    #                         else:
+    #                             # data source a list of IDs
+    #                             local_fields = create_local_fields(
+    #                                 xml_record, system, library)
 
-                            if local_fields:
-                                meet_crit_counter.set(
-                                    meet_crit_counter.get() + 1)
+    #                         if local_fields:
+    #                             meet_crit_counter.set(
+    #                                 meet_crit_counter.get() + 1)
 
-                                # move this block to separate method that
-                                # will be called later by user afer the
-                                # selection of records
+    #                             # move this block to separate method that
+    #                             # will be called later by user afer the
+    #                             # selection of records
 
-                                marc_record = marcxml2array(xml_record)[0]
-                                marc_record.remove_fields('949')
-                                for field in local_fields:
-                                    marc_record.add_ordered_field(field)
-                                if system == 'NYPL':
-                                    marc_record.remove_fields('001')
-                                    tag_001 = nypl_oclcNo_field(xml_record)
-                                    marc_record.add_ordered_field(tag_001)
-                                    tag_949 = create_command_line_field(
-                                        '*b3=h;')
-                                    marc_record.add_ordered_field(tag_949)
-                                    recap_no += 1
+    #                             marc_record = marcxml2array(xml_record)[0]
+    #                             marc_record.remove_fields('949')
+    #                             for field in local_fields:
+    #                                 marc_record.add_ordered_field(field)
+    #                             if system == 'NYPL':
+    #                                 marc_record.remove_fields('001')
+    #                                 tag_001 = nypl_oclcNo_field(xml_record)
+    #                                 marc_record.add_ordered_field(tag_001)
+    #                                 tag_949 = create_command_line_field(
+    #                                     '*b3=h;')
+    #                                 marc_record.add_ordered_field(tag_949)
+    #                                 recap_no += 1
 
-                                update_hit_record(
-                                    db_session, WCHit, row.wchid,
-                                    prepped_marc=marc_record)
-                        else:
-                            fail_glob_crit_counter.set(
-                                fail_glob_crit_counter.get() + 1)
-                else:
-                    fail_user_crit_counter.set(
-                        fail_user_crit_counter.get() + 1)
-            else:
-                fail_glob_crit_counter.set(
-                    fail_glob_crit_counter.get() + 1)
+    #                             update_hit_record(
+    #                                 db_session, WCHit, row.wchid,
+    #                                 prepped_marc=marc_record)
+    #                     else:
+    #                         fail_glob_crit_counter.set(
+    #                             fail_glob_crit_counter.get() + 1)
+    #             else:
+    #                 fail_user_crit_counter.set(
+    #                     fail_user_crit_counter.get() + 1)
+    #         else:
+    #             fail_glob_crit_counter.set(
+    #                 fail_glob_crit_counter.get() + 1)
 
-            update_progbar(progbar1)
-            update_progbar(progbar2)
+    #         update_progbar(progbar1)
+    #         update_progbar(progbar2)
 
-            # make sure W2S stays within assigned Recap range
-            if system == 'NYPL' and library == 'research':
-                if action == 'catalog':
-                    if recap_no > recap_range[1]:
-                        raise OverloadError(
-                            'Used all available ReCAP call numbers '
-                            'assigned for W2S.')
+    #         # make sure W2S stays within assigned Recap range
+    #         if system == 'NYPL' and library == 'research':
+    #             if action == 'catalog':
+    #                 if recap_no > recap_range[1]:
+    #                     raise OverloadError(
+    #                         'Used all available ReCAP call numbers '
+    #                         'assigned for W2S.')
 
-    # show completed
-    progbar1['value'] = progbar1['maximum']
-    progbar2['value'] = progbar2['maximum']
+    # # show completed
+    # progbar1['value'] = progbar1['maximum']
+    # progbar2['value'] = progbar2['maximum']
 
 
 def get_meta_by_id(session, meta_ids):
