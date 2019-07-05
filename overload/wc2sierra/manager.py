@@ -14,7 +14,8 @@ from bibs.nypl_callnum import (create_nypl_fiction_callnum,
                                create_nypl_recap_item)
 from bibs.sierra_dicts import NW2SEXPORT_COLS, BW2SEXPORT_COLS
 from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
-                           get_tag_008, get_record_leader, get_tag_300a)
+                           get_tag_008, get_record_leader, get_tag_300a,
+                           results2record_list)
 from connectors.worldcat.session import (SearchSession, MetadataSession,
                                          is_positive_response, no_match,
                                          extract_record_from_response)
@@ -53,7 +54,7 @@ def interpret_search_response(response, db_session, wcsmid):
         doc = string2xml(response.content)
         insert_or_ignore(
             db_session, WCHit, wcsmid=wcsmid,
-            hit=hit, search_marcxml=doc)
+            hit=hit, query_results=doc)
     else:
         hit = False
         insert_or_ignore(
@@ -126,10 +127,6 @@ def create_local_fields(
             'Call number creation for {}-{} not implemented yet'.format(
                 system, library))
 
-    initials = create_initials_field(
-        system, library, 'W2Sbot')
-    local_fields.append(initials)
-
     return local_fields
 
 
@@ -192,7 +189,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
         c = 0
         for row in reader:
             c += 1
-        progbar1['maximum'] = c * 4
+        progbar1['maximum'] = c * 5
         progbar2['maximum'] = c
 
     # keep track of recap call numbers
@@ -226,6 +223,7 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                 elif id_type == 'UPC':
                     # to be implemented
                     pass
+
         elif data_source == 'Sierra export':
             data = sierra_export_data(source_fh, system, library)
             for meta, single_order in data:
@@ -247,16 +245,16 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                 update_progbar(progbar1)
                 update_progbar(progbar2)
 
-    processed_counter = 0
-    found_counter = 0
-    not_found_counter = 0
-    creds = get_credentials(api)
+        processed_counter = 0
+        found_counter = 0
+        not_found_counter = 0
+        creds = get_credentials(api)
+        db_session.commit()
 
-    # query Worldcat
-    process_label.set('querying:')
-    # reset progbar2
-    progbar2['value'] = 0
-    with session_scope() as db_session:
+        # query Worldcat
+        process_label.set('querying:')
+        # reset progbar2
+        progbar2['value'] = 0
         metas = retrieve_records(
             db_session, WCSourceMeta, wcsbid=batch_id)
         with SearchSession(creds) as session:
@@ -275,9 +273,6 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                     else:
                         not_found_counter += 1
 
-                    hits.set(found_counter)
-                    nohits.set(not_found_counter)
-
                 if m.meta.t010 and not hit:
                     res = session.cql_query(
                         m.meta.t010, 'LCCN', mat_type, cat_source)
@@ -289,9 +284,6 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                         found_counter += 1
                     else:
                         not_found_counter += 1
-
-                    hits.set(found_counter)
-                    nohits.set(not_found_counter)
 
                 if m.meta.t020 and not hit:
                     # will iterate over all ISBNs if no hits
@@ -312,9 +304,6 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                     if not found:
                         not_found_counter += 1
 
-                    hits.set(found_counter)
-                    nohits.set(not_found_counter)
-
                 if m.meta.t024 and not hit:
                     found = False
                     for upc in m.meta.t024:
@@ -333,8 +322,8 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
                     if not found:
                         not_found_counter += 1
 
-                    hits.set(found_counter)
-                    nohits.set(not_found_counter)
+                hits.set(found_counter)
+                nohits.set(not_found_counter)
 
                 update_progbar(progbar1)
                 update_progbar(progbar2)
@@ -342,142 +331,156 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
 
         db_session.commit()
 
-    #     # verify found matches meet set criteria
-    #     process_label.set('downloading:')
-    #     # reset progbar2
-    #     progbar2['value'] = 0
+        # check if meet criteria
+        process_label.set('analyzing:')
+        progbar2['value'] = 0
+        rows = retrieve_records(
+            db_session, WCHit, hit=True)
+        for row in rows:
+            results = row.query_results
+            recs = results2record_list(results)
+            for xml_record in recs:
+                fulfills = False
+                fail_types = []
+                if meets_upgrade_criteria(xml_record):
+                    if meets_user_criteria(
+                            xml_record,
+                            encode_level,
+                            mat_type,
+                            cat_rules,
+                            cat_source):
+                        fulfills = True
+                        if action == 'upgrade':
+                            meet_crit_counter.set(
+                                meet_crit_counter.get() + 1)
 
-    #     with MetadataSession(creds) as session:
-    #         metas = retrieve_related(
-    #             db_session, WCSourceMeta, 'wchits', wcsbid=batch_id)
-    #         for m in metas:
-    #             if m.wchits.hit:
-    #                 oclcNo = get_oclcNo(m.wchits.search_marcxml)
-    #                 xml_record = request_record(session, oclcNo)
-    #                 if xml_record is not None:
-    #                     update_hit_record(
-    #                         db_session, WCHit, m.wchits.wchid,
-    #                         match=oclcNo,
-    #                         match_marcxml=xml_record)
-    #             update_progbar(progbar1)
-    #             update_progbar(progbar2)
-    #     db_session.commit()
+                            oclcNo = get_oclcNo(xml_record)
+                            update_hit_record(
+                                db_session, WCHit, row.wchid,
+                                match_oclcNo=oclcNo)
 
-    #     # check if meet criteria & write (will be replaced with user selection)
-    #     process_label.set('analyzing:')
-    #     progbar2['value'] = 0
-    #     rows = retrieve_records(
-    #         db_session, WCHit, hit=True)
-    #     for row in rows:
-    #         xml_record = row.match_marcxml
+                            update_progbar(progbar1)
+                            update_progbar(progbar2)
+                            break
 
-    #         if meets_upgrade_criteria(xml_record):
-    #             if meets_user_criteria(
-    #                     xml_record,
-    #                     encode_level,
-    #                     mat_type,
-    #                     cat_rules,
-    #                     cat_source):
-    #                 if action == 'upgrade':
-    #                     meet_crit_counter.set(
-    #                         meet_crit_counter.get() + 1)
+                        elif action == 'catalog':
+                            if meets_catalog_criteria(xml_record, library):
+                                fulfills = True
+                                meet_crit_counter.set(
+                                    meet_crit_counter.get() + 1)
+                                oclcNo = get_oclcNo(xml_record)
+                                update_hit_record(
+                                    db_session, WCHit, row.wchid,
+                                    match_oclcNo=oclcNo)
 
-    #                     marc_record = marcxml2array(xml_record)[0]
+                                update_progbar(progbar1)
+                                update_progbar(progbar2)
+                                break
+                            else:
+                                fail_types.append('global')
+                    else:
+                        fail_types.append('user')
+                else:
+                    fail_types.append('global')
 
-    #                     # check if Sierra bib # provided and use
-    #                     # for overlay command line
-    #                     if data_source == 'Sierra export':
-    #                         order_data = retrieve_record(
-    #                             db_session,
-    #                             WCSourceMeta,
-    #                             wcsmid=row.wcsmid).meta
-    #                         if order_data.sierraId:
-    #                             overlay_tag = create_target_id_field(
-    #                                 system,
-    #                                 order_data.sierraId)
-    #                             marc_record.add_ordered_field(
-    #                                 overlay_tag)
+            if not fulfills:
+                if 'user' in fail_types:
+                    fail_user_crit_counter.set(
+                        fail_user_crit_counter.get() + 1)
+                else:
+                    fail_glob_crit_counter.set(
+                        fail_glob_crit_counter.get() + 1)
 
-    #                     if system == 'NYPL':
-    #                         marc_record.remove_fields('001', '949')
-    #                         tag_001 = nypl_oclcNo_field(xml_record)
-    #                         marc_record.add_ordered_field(tag_001)
-    #                         tag_949 = create_command_line_field(
-    #                             '*b3=h;')
-    #                         marc_record.add_ordered_field(tag_949)
+        # download and prep
+        process_label.set('downloading:')
+        # reset progbar2
+        progbar2['value'] = 0
 
-    #                     initials = create_initials_field(
-    #                         system, library, 'W2Sbot')
-    #                     # add Sierra bib code 3
+        with MetadataSession(creds) as session:
+            metas = retrieve_related(
+                db_session, WCSourceMeta, 'wchits', wcsbid=batch_id)
+            for m in metas:
+                if m.wchits.match_oclcNo:
+                    xml_record = request_record(session, m.wchits.match_oclcNo)
+                    if xml_record is not None:
+                        update_hit_record(
+                            db_session, WCHit, m.wchits.wchid,
+                            match_marcxml=xml_record)
+                update_progbar(progbar1)
+                update_progbar(progbar2)
 
-    #                     marc_record.add_ordered_field(initials)
-    #                     write_marc21(dst_fh, marc_record)
+        db_session.commit()
 
-    #                 elif action == 'catalog':
-    #                     if meets_catalog_criteria(xml_record, library):
-    #                         # add call number & write to file
-    #                         if data_source == 'Sierra export':
-    #                             order_data = retrieve_record(
-    #                                 db_session,
-    #                                 WCSourceMeta,
-    #                                 wcsmid=row.wcsmid).meta
+        # prepare MARC files
+        process_label.set('prepping:')
+        progbar2['value'] = 0
 
-    #                             local_fields = create_local_fields(
-    #                                 xml_record, system, library, order_data,
-    #                                 recap_no)
-    #                             overlay_tag = create_target_id_field(
-    #                                 system,
-    #                                 order_data.sierraId)
-    #                             local_fields.append(overlay_tag)
-    #                         else:
-    #                             # data source a list of IDs
-    #                             local_fields = create_local_fields(
-    #                                 xml_record, system, library)
+        # check if Sierra bib # provided and use
+        # for overlay command line
+        rows = retrieve_records(
+            db_session, WCSourceMeta, wcsbid=batch_id)
 
-    #                         if local_fields:
-    #                             meet_crit_counter.set(
-    #                                 meet_crit_counter.get() + 1)
+        for row in rows:
+            # initial workflow shared by updgrade fuctionality
+            xml_record = row.wchits.match_marcxml
+            marc_record = marcxml2array(xml_record)[0]
+            marc_record.remove_fields('901', '945', '949', '947')
+            initials = create_initials_field(
+                system, library, 'W2Sbot')
+            marc_record.add_ordered_field(initials)
 
-    #                             # move this block to separate method that
-    #                             # will be called later by user afer the
-    #                             # selection of records
+            if data_source == 'Sierra export':
+                order_data = row.meta
+                if order_data.sierraId:
+                    overlay_tag = create_target_id_field(
+                        system,
+                        order_data.sierraId)
+                    marc_record.add_ordered_field(
+                        overlay_tag)
 
-    #                             marc_record = marcxml2array(xml_record)[0]
-    #                             marc_record.remove_fields('949')
-    #                             for field in local_fields:
-    #                                 marc_record.add_ordered_field(field)
-    #                             if system == 'NYPL':
-    #                                 marc_record.remove_fields('001')
-    #                                 tag_001 = nypl_oclcNo_field(xml_record)
-    #                                 marc_record.add_ordered_field(tag_001)
-    #                                 tag_949 = create_command_line_field(
-    #                                     '*b3=h;')
-    #                                 marc_record.add_ordered_field(tag_949)
-    #                                 recap_no += 1
+                if system == 'NYPL':
+                    marc_record.remove_fields('001')
+                    tag_001 = nypl_oclcNo_field(xml_record)
+                    marc_record.add_ordered_field(tag_001)
+                    # add Sierra bib code 3
+                    tag_949 = create_command_line_field(
+                        '*b3=h;')
+                    marc_record.add_ordered_field(tag_949)
 
-    #                             update_hit_record(
-    #                                 db_session, WCHit, row.wchid,
-    #                                 prepped_marc=marc_record)
-    #                     else:
-    #                         fail_glob_crit_counter.set(
-    #                             fail_glob_crit_counter.get() + 1)
-    #             else:
-    #                 fail_user_crit_counter.set(
-    #                     fail_user_crit_counter.get() + 1)
-    #         else:
-    #             fail_glob_crit_counter.set(
-    #                 fail_glob_crit_counter.get() + 1)
+            if action == 'catalog':
+                # add call number & persist
+                if data_source == 'Sierra export':
+                    order_data = row.meta
 
-    #         update_progbar(progbar1)
-    #         update_progbar(progbar2)
+                    local_fields = create_local_fields(
+                        xml_record, system, library, order_data,
+                        recap_no)
 
-    #         # make sure W2S stays within assigned Recap range
-    #         if system == 'NYPL' and library == 'research':
-    #             if action == 'catalog':
-    #                 if recap_no > recap_range[1]:
-    #                     raise OverloadError(
-    #                         'Used all available ReCAP call numbers '
-    #                         'assigned for W2S.')
+                else:
+                    # data source a list of IDs
+                    local_fields = create_local_fields(
+                        xml_record, system, library)
+
+                if local_fields:
+                    for field in local_fields:
+                        marc_record.add_ordered_field(field)
+                    if system == 'NYPL':
+                        recap_no += 1
+
+            update_hit_record(
+                db_session, WCHit, row.wchits.wchid,
+                prepped_marc=marc_record)
+
+            update_progbar(progbar1)
+            update_progbar(progbar2)
+
+            # make sure W2S stays within assigned Recap range
+            if system == 'NYPL' and library == 'research':
+                if action == 'catalog':
+                    if recap_no > recap_range[1]:
+                        raise OverloadError(
+                            'Used all available ReCAP call numbers '
+                            'assigned for W2S.')
 
     # # show completed
     # progbar1['value'] = progbar1['maximum']

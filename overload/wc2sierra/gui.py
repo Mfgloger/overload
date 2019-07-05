@@ -241,6 +241,7 @@ class Worldcat2Sierra(tk.Frame):
             textvariable=self.source_fh)
         self.sourceEnt.grid(
             row=1, column=3, columnspan=8, sticky='snew', pady=5)
+        self.sourceEnt['state'] = 'readonly'
         searchICO = tk.PhotoImage(file='./icons/search.gif')
         self.sourceBtn = ttk.Button(
             self.actionFrm, image=searchICO,
@@ -261,6 +262,7 @@ class Worldcat2Sierra(tk.Frame):
             textvariable=self.dst_fh)
         self.dstEnt.grid(
             row=2, column=3, columnspan=8, sticky='snew', pady=5)
+        self.dstEnt['state'] = 'readonly'
         self.dstBtn = ttk.Button(
             self.actionFrm, image=searchICO,
             cursor='hand2',
@@ -629,7 +631,7 @@ class Worldcat2Sierra(tk.Frame):
             if self.system.get() == 'NYPL':
                 self.api.set('')
                 self.apiCbx['values'] = apis['NYPL'].keys()
-                self.libraryCbx['state'] = '!disabled'
+                self.libraryCbx['state'] = 'readonly'
             elif self.system.get() == 'BPL':
                 self.api.set('')
                 self.apiCbx['values'] = apis['BPL'].keys()
