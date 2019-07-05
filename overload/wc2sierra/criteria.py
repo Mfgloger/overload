@@ -22,7 +22,7 @@ def is_english_cataloging(marcxml):
 def create_rec_lvl_range(rec_lvl):
     """
     gui values:
-        'Level 1 - blank, I, 4 ',
+        'Level 1 - blank, I, 4',
         'Level 2 & up - M, K, 7, 1, 2',
         'Level 3 & up - 3, 8'
     """
