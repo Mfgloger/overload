@@ -203,19 +203,20 @@ class WCHit(Base):
     wcsmid = Column(
         Integer, ForeignKey('wc_source_meta.wcsmid'), nullable=False)
     hit = Column(Boolean, nullable=False)
-    match = Column(String, default=None)
-    search_marcxml = Column(PickleType)
+    query_results = Column(PickleType)
+    match_oclcNo = Column(String, default=None)
     match_marcxml = Column(PickleType)
     prepped_marc = Column(PickleType)
+    holding_set = Column(Boolean, default=False)
 
     def __repr__(self):
-        return "<WCHit(wchid=%s, wcsmid=%s, hit=%s, setHoldings=%s," \
-            "match=%s)>" % (
+        return "<WCHit(wchid=%s, wcsmid=%s, hit=%s, match_oclcNo=%s," \
+            "holding_set=%s)>" % (
                 self.wchid,
                 self.wcsmid,
                 self.hit,
-                self.setHoldings,
-                self.match)
+                self.match_oclcNo,
+                self.holding_set)
 
 
 class DataAccessLayer:
