@@ -4,7 +4,7 @@ import requests
 import wskey
 import user
 from bibs.crosswalks import string2xml
-from bibs.xml_bibs import NS
+from bibs.xml_bibs import ONS
 
 
 class InvalidObject(Exception):
@@ -291,5 +291,5 @@ def no_match(response):
 
 def extract_record_from_response(response):
     response_body = string2xml(response.content)
-    record = response_body.find('.//atom:content/rb:response/marc:record', NS)
+    record = response_body.find('.//atom:content/rb:response/marc:record', ONS)
     return record
