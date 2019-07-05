@@ -95,5 +95,3 @@ def marcxml2array(marcxml):
     """
     records = BytesIO(ET.tostring(marcxml, encoding='utf-8'))
     return parse_xml_to_array(records)
-
-
