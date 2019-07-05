@@ -141,7 +141,7 @@ def selected2marc():
     pass
 
 
-def launch_process(source_fh, data_source, dst_fh, system, library,
+def launch_process(source_fh, data_source, system, library,
                    progbar1, progbar2,
                    process_label, hits, nohits, meet_crit_counter,
                    fail_user_crit_counter, fail_glob_crit_counter,
@@ -158,11 +158,27 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
 
     args:
         source_fh: str, file path
-        progbar: tkinter widget
-        counter: tkinter StringVar
-        hits: tkinter IntVar
-        nohits: tkinter IntVar
+        data_source: str, 'Sierra export' or 'IDs list'
+        system: str, 'NYPL' or 'BPL'
+        library: str, 'research' or 'branches'
+        progbar1: tkinter widget, overall progressbar
+        progbar2: tkinter widget, task progressbar
+        process_label: tkinter StrinVar, current task label
+        hits: tkinter IntVar, hits counter
+        nohits: tkinter IntVar, failed search counter
+        meet_crit_counter: tkinter IntVar, success match & eval counter
+        fail_user_crit_counter: tkinter IntVar, failed user criteria counter
+        fail_glob_crit_counter: tkinter IntVar, failed global criteria counter
+        action: str, 'catalog' or 'upgrade'
+        encode_level: str, 'any', ...
+        mat_type: str, 'any', print', 'large print', 'dvd', 'bluray'
+        cat_rules: str,  'any', 'RDA-only'
+        cat_source: str, 'any', 'DLC'
+        recap_range: list, uppper and lower limits of Recap numbers
+        id_type: str, 'ISBN', 'UPC', 'ISSN', 'LCCN', 'OCLC #'
+        api: str, name of api to be used for queries
     """
+
     module_logger.debug('Launching W2S process.')
     remove_previous_process_data()
 
@@ -199,7 +215,18 @@ def launch_process(source_fh, data_source, dst_fh, system, library,
     with session_scope() as db_session:
         # create batch record
         batch_rec = insert_or_ignore(
-            db_session, WCSourceBatch, file=source_fh)
+            db_session, WCSourceBatch,
+            file=source_fh,
+            system=system,
+            library=library,
+            action=action,
+            api=api,
+            data_source=data_source,
+            encode_level=encode_level,
+            mat_type=mat_type,
+            cat_rules=cat_rules,
+            cat_source=cat_source,
+            id_type=id_type)
         db_session.flush()
         batch_id = batch_rec.wcsbid
 
@@ -531,6 +558,26 @@ def count_total():
     return total, meta_ids
 
 
+def get_batch_criteria():
+    with session_scope() as db_session:
+        rec = retrieve_record(db_session, WCSourceBatch)
+        db_session.expunge_all()
+        return (
+            'source: {}'.format(rec.file),
+            'system: {}, library: {}, action: {}, API: {}, data source: {}'.format(
+                rec.system,
+                rec.library,
+                rec.action,
+                rec.api,
+                rec.data_source),
+            'encode lvl: {}, mat type: {}, cat rules: {}, cat source: {}, id type: {}'.format(
+                rec.encode_level,
+                rec.mat_type,
+                rec.cat_rules,
+                rec.cat_source,
+                rec.id_type))
+
+
 def persist_choice(meta_ids, selected):
     with session_scope() as db_session:
         for mid in meta_ids:
@@ -539,7 +586,7 @@ def persist_choice(meta_ids, selected):
                 selected=selected)
 
 
-def create_marc_file(dst_fh, set_holdings):
+def create_marc_file(dst_fh):
     with session_scope() as db_session:
         recs = retrieve_related(
             db_session, WCSourceMeta, 'wchits', selected=True)
@@ -548,6 +595,37 @@ def create_marc_file(dst_fh, set_holdings):
             if marc:
                 write_marc21(dst_fh, marc)
 
-                if set_holdings:
-                    oclcNo = r.wchits.match
-                    # set holdings here
+    if '.mrc' in dst_fh:
+        dst_fh = dst_fh.replace('.mrc', '.csv')
+    else:
+        dst_fh = '{}.csv'.format(dst_fh)
+    header = ['position', 'result', 'title', 'ISBN']
+    save2csv(dst_fh, header)
+
+    with session_scope() as db_session:
+        recs = retrieve_related(
+            db_session, WCSourceMeta, 'wchits')
+        for r in recs:
+            if r.selected and r.wchits.prepped_marc:
+                result = 'success'
+            else:
+                result = 'failed'
+            row = [
+                r.wchits.wchid,
+                result,
+                r.meta.title,
+                r.meta.t020[0]]
+            save2csv(dst_fh, row)
+
+
+def set_oclc_holdings():
+    oclc_numbers = []
+    with session_scope() as db_session:
+        recs = retrieve_related(
+            db_session, WCSourceMeta, 'wchits', selected=True)
+        for r in recs:
+            if r.wchits.match_oclcNo:
+                oclc_numbers.append(r.wchits.match_oclcNo)
+
+    # update holdings here, max 50 numbers at a time
+    print(oclc_numbers)

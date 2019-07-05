@@ -10,7 +10,7 @@ from errors import OverloadError
 from gui_utils import ToolTip, BusyManager
 from logging_setup import format_traceback, LogglyAdapter
 from manager import (retrieve_bibs_batch, count_total, persist_choice,
-                     create_marc_file)
+                     create_marc_file, set_oclc_holdings, get_batch_criteria)
 from setup_dirs import USER_DATA, MY_DOCS
 
 
@@ -23,9 +23,8 @@ class W2SReport(tk.Frame):
     using Worldcat2Sierra module
     """
 
-    def __init__(self, parent, dst_fh):
+    def __init__(self, parent):
         self.parent = parent
-        self.dst_fh = dst_fh
         tk.Frame.__init__(self, self.parent, background='white')
         self.top = tk.Toplevel(self, background='white')
         self.cur_manager = BusyManager(self)
@@ -38,6 +37,7 @@ class W2SReport(tk.Frame):
         self.sel_var = tk.IntVar()
         self.sel_var.trace('w', self.selection_observer)
         self.hold_var = tk.IntVar()
+        self.dst_fh = tk.StringVar()
 
         self.disp_batch = tk.StringVar()
         self.batch = 20
@@ -50,38 +50,52 @@ class W2SReport(tk.Frame):
         self.navFrm = ttk.Frame(self.top)
         self.navFrm.grid(
             row=0, column=0, padx=20, pady=10)
-        self.navFrm.columnconfigure(3, minsize=250)
-        # self.navFrm.columnconfigure(4, minsize=40)
+        self.navFrm.columnconfigure(3, minsize=40)
+        self.navFrm.columnconfigure(5, minsize=500)
+
+        self.settingsTxt = tk.Text(
+            self.navFrm,
+            height=3,
+            # width=118,
+            wrap='word',
+            borderwidth=0)
+        self.settingsTxt.grid(
+            row=0, column=0, columnspan=8, sticky='snew', pady=5)
 
         self.selCbn = ttk.Checkbutton(
             self.navFrm,
             textvariable=self.sel_lbl,
             variable=self.sel_var)
         self.selCbn.grid(
-            row=0, column=0, columnspan=2, sticky='snew', pady=5)
+            row=2, column=0, columnspan=2, sticky='snew', pady=5)
 
         self.holdCbn = ttk.Checkbutton(
             self.navFrm,
             text='set OCLC holdings',
             variable=self.hold_var)
         self.holdCbn.grid(
-            row=0, column=2, sticky='snw', pady=5)
+            row=2, column=2, sticky='snw', pady=5)
 
-        self.confirmBtn = ttk.Button(
+        # destination
+        searchICO = tk.PhotoImage(file='./icons/search.gif')
+        self.dstLbl = ttk.Label(
             self.navFrm,
-            text='confirm',
-            width=10,
-            command=self.confirm)
-        self.confirmBtn.grid(
-            row=0, column=4, sticky='nsw', padx=20, pady=5)
-
-        self.cancelBtn = ttk.Button(
+            text='destination:')
+        self.dstLbl.grid(
+            row=2, column=4, sticky='sne', pady=5)
+        self.dstEnt = ttk.Entry(
             self.navFrm,
-            text='cancel',
-            width=10,
-            command=self.top.destroy)
-        self.cancelBtn.grid(
-            row=0, column=5, sticky='nsw', padx=20, pady=5)
+            textvariable=self.dst_fh)
+        self.dstEnt.grid(
+            row=2, column=5, columnspan=2, sticky='snew', padx=20, pady=5)
+        self.dstEnt['state'] = 'readonly'
+        self.dstBtn = ttk.Button(
+            self.navFrm, image=searchICO,
+            cursor='hand2',
+            command=self.find_destination)
+        self.dstBtn.image = searchICO
+        self.dstBtn.grid(
+            row=2, column=7, sticky='ne', padx=5, pady=5)
 
         self.leftBtn = ttk.Button(
             self.navFrm,
@@ -89,7 +103,7 @@ class W2SReport(tk.Frame):
             width=5,
             command=self.previous_batch)
         self.leftBtn.grid(
-            row=1, column=0, sticky='nsw', padx=5)
+            row=3, column=0, sticky='nsw', padx=5, pady=5)
 
         self.rightBtn = ttk.Button(
             self.navFrm,
@@ -97,19 +111,35 @@ class W2SReport(tk.Frame):
             width=5,
             command=self.next_batch)
         self.rightBtn.grid(
-            row=1, column=1, sticky='nse', padx=5)
+            row=3, column=1, sticky='nse', padx=5, pady=5)
 
         self.batch_dispLbl = ttk.Label(
             self.navFrm,
             textvariable=self.disp_batch)
         self.batch_dispLbl.grid(
-            row=1, column=2, columnspan=2, sticky='snw', padx=5)
+            row=3, column=2, columnspan=2, sticky='snw', padx=5)
+
+        self.confirmBtn = ttk.Button(
+            self.navFrm,
+            text='confirm',
+            width=10,
+            command=self.confirm)
+        self.confirmBtn.grid(
+            row=3, column=5, sticky='nsw', padx=20, pady=5)
+
+        self.cancelBtn = ttk.Button(
+            self.navFrm,
+            text='cancel',
+            width=10,
+            command=self.top.destroy)
+        self.cancelBtn.grid(
+            row=3, column=5, sticky='nse', padx=20, pady=5)
 
         # worlcat records display frame
         self.dispFrm = ttk.LabelFrame(
             self.top, text='Sierra & Worldcat records')
         self.dispFrm.grid(
-            row=1, column=0, columnspan=4, sticky='snew', padx=5, pady=10)
+            row=4, column=0, columnspan=4, sticky='snew', padx=5, pady=10)
 
         self.xscrollbar = ttk.Scrollbar(self.dispFrm, orient=tk.HORIZONTAL)
         self.xscrollbar.grid(
@@ -129,11 +159,12 @@ class W2SReport(tk.Frame):
         self.preview()
 
         # populate preview_frame with Sierra & Worldcat data
+        self.display_criteria()
         self.display_totals()
         self.populate_preview(self.meta_ids[:self.disp_end])
         # update count display
-        self.disp_batch.set('{} out of {} displayed'.format(
-            len(self.meta_ids[:self.disp_end]), self.count_total))
+        self.disp_batch.set('records {}-{} / total {}'.format(
+            self.disp_start + 1, self.disp_end, self.count_total))
 
     def save_choices(self):
         for k, v in self.tracker.items():
@@ -148,9 +179,13 @@ class W2SReport(tk.Frame):
             self.preview_frame.destroy()
             self.preview()
             self.disp_end = self.disp_start
-            self.start = self.disp_end - self.batch
+            self.disp_start = self.disp_start - self.batch
+            mlogger.debug('Displaying records: {}:{}'.format(
+                self.disp_start, self.disp_end))
             self.populate_preview(
                 self.meta_ids[self.disp_start:self.disp_end])
+            self.disp_batch.set('records {}-{} / total {}'.format(
+                self.disp_start + 1, self.disp_end, self.count_total))
 
     def next_batch(self):
         self.save_choices()
@@ -159,23 +194,64 @@ class W2SReport(tk.Frame):
             self.preview()
             self.disp_start = self.disp_end
             self.disp_end = self.disp_end + self.batch
+            mlogger.debug('Displaying records: {}:{}'.format(
+                self.disp_start, self.disp_end))
             self.populate_preview(
                 self.meta_ids[self.disp_start: self.disp_end])
+            self.disp_batch.set('records {}-{} / total {}'.format(
+                self.disp_start + 1, self.disp_end, self.count_total))
 
-    def confirm(self):
-        self.save_choices()
+    def find_destination(self):
+        # ask destination file
+        user_data = shelve.open(USER_DATA)
+        paths = user_data['paths']
+        if 'pvr_last_open_dir' in paths:
+            last_open_dir = paths['pvr_last_open_dir']
+        else:
+            last_open_dir = MY_DOCS
+        user_data.close()
 
-        create_marc_file(self.dst_fh, self.hold_var.get())
+        dst_fh = tkFileDialog.asksaveasfilename(
+            parent=self.top,
+            title='Save as',
+            # filetypes=(('marc file', '*.mrc')),
+            initialfile='worldcat_bibs.mrc',
+            initialdir=last_open_dir)
+        if dst_fh:
+            self.dst_fh.set(dst_fh)
+
+    def output_data(self):
+        # write pymarc obj to a MARC file
+        create_marc_file(self.dst_fh.get())
+
+        # create as csv file with report
 
         if self.hold_var.get():
             msg = 'Records have been saved to a file.\n' \
                   'OCLC Holdings have been set.'
+            set_oclc_holdings()
         else:
             msg = 'Records have been saved to a file.\n' \
                   'No OCLC holdings have been set.'
         tkMessageBox.showinfo(
             'Info', msg,
             parent=self.top)
+
+    def confirm(self):
+        self.save_choices()
+        if self.dst_fh.get():
+            self.output_data()
+        else:
+            self.find_destination()
+            if self.dst_fh.get():
+                self.output_data()
+
+    def display_criteria(self):
+        settings = get_batch_criteria()
+        self.settingsTxt.insert(1.0, settings[0] + '\n')
+        self.settingsTxt.insert(2.0, settings[1] + '\n')
+        self.settingsTxt.insert(3.0, settings[2])
+        self.settingsTxt['state'] = 'disable'
 
     def display_totals(self):
         self.count_total, self.meta_ids = count_total()

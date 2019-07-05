@@ -42,7 +42,6 @@ class Worldcat2Sierra(tk.Frame):
         self.cat_rules = tk.StringVar()
         self.cat_source = tk.StringVar()
         self.source_fh = tk.StringVar()
-        self.dst_fh = tk.StringVar()
         self.data_source = tk.StringVar()
         self.data_source.trace('w', self.data_source_observer)
         self.id_type = tk.StringVar()
@@ -251,26 +250,6 @@ class Worldcat2Sierra(tk.Frame):
         self.sourceBtn.grid(
             row=1, column=11, sticky='ne', padx=5, pady=5)
 
-        # destination row
-        self.dstLbl = ttk.Label(
-            self.actionFrm,
-            text='destination')
-        self.dstLbl.grid(
-            row=2, column=1, sticky='snew')
-        self.dstEnt = ttk.Entry(
-            self.actionFrm,
-            textvariable=self.dst_fh)
-        self.dstEnt.grid(
-            row=2, column=3, columnspan=8, sticky='snew', pady=5)
-        self.dstEnt['state'] = 'readonly'
-        self.dstBtn = ttk.Button(
-            self.actionFrm, image=searchICO,
-            cursor='hand2',
-            command=self.find_destination)
-        self.dstBtn.image = searchICO
-        self.dstBtn.grid(
-            row=2, column=11, sticky='ne', padx=5, pady=5)
-
         # progess area
         self.prog1Lbl = ttk.Label(
             self.actionFrm,
@@ -431,34 +410,12 @@ class Worldcat2Sierra(tk.Frame):
 
         user_data.close()
 
-    def find_destination(self):
-        # ask destination file
-        user_data = shelve.open(USER_DATA)
-        paths = user_data['paths']
-        if 'pvr_last_open_dir' in paths:
-            last_open_dir = paths['pvr_last_open_dir']
-        else:
-            last_open_dir = MY_DOCS
-        user_data.close()
-
-        dst_fh = tkFileDialog.asksaveasfilename(
-            parent=self,
-            title='Save as',
-            # filetypes=(('marc file', '*.mrc')),
-            initialfile='worldcat_bibs.mrc',
-            initialdir=last_open_dir)
-        if dst_fh:
-            self.dst_fh.set(dst_fh)
-
     def process(self):
         self.reset()
 
         # validate all required elements are provided
         if not self.source_fh.get():
             self.find_source()
-
-        if not self.dst_fh.get():
-            self.find_destination()
 
         issues = []
 
@@ -488,7 +445,7 @@ class Worldcat2Sierra(tk.Frame):
             issues.insert(0, 'Parameters error(s):\n')
             tkMessageBox.showerror('Error', '\n'.join(issues))
         else:
-            if self.source_fh.get() and self.dst_fh.get():
+            if self.source_fh.get():
                 # both paths provided
                 # wrap later in an exception catching & displaying
 
@@ -506,7 +463,7 @@ class Worldcat2Sierra(tk.Frame):
         try:
             launch_process(
                 self.source_fh.get(), self.data_source.get(),
-                self.dst_fh.get(), self.system.get(),
+                self.system.get(),
                 self.library.get(), self.progbar1,
                 self.progbar2, self.proc_label,
                 self.found, self.nohits, self.meet_crit_counter,
@@ -576,12 +533,7 @@ class Worldcat2Sierra(tk.Frame):
             tkMessageBox.showerror('Input error', 'Only digits are permitted')
 
     def report(self):
-        if self.dst_fh.get():
-            W2SReport(self, self.dst_fh.get())
-        else:
-            self.find_destination()
-            if self.dst_fh.get():
-                W2SReport(self, self.dst_fh.get())
+        W2SReport(self)
 
     def display_help(self):
         tkMessageBox.showinfo(

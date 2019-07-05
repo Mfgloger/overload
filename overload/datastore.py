@@ -162,13 +162,36 @@ class WCSourceBatch(Base):
     __tablename__ = 'wc_source_batch'
     wcsbid = Column(Integer, primary_key=True)
     file = Column(String, nullable=False)
+    system = Column(String, nullable=False)
+    library = Column(String)
+    action = Column(String, nullable=False)
+    api = Column(String, nullable=False)
+    data_source = Column(String, nullable=False)
+    encode_level = Column(String, nullable=False)
+    mat_type = Column(String, nullable=False)
+    cat_rules = Column(String, nullable=False)
+    cat_source = Column(String, nullable=False)
+    id_type = Column(String)
 
     meta = relationship('WCSourceMeta', cascade='all, delete-orphan')
 
     def __repr__(self):
-        return "<WCSourceBatch(wcsid=%s, file=%s)>" % (
-            self.wcsbid,
-            self.file)
+        return "<WCSourceBatch(wcsid=%s, file=%s, system='%s', " \
+            "library='%s', action='%s', api='%s', data_source='%s', " \
+            "encode_level='%s', mat_type='%s', cat_rules='%s', " \
+            "cat_source='%s', id_type='%s')>" % (
+                self.wcsbid,
+                self.file,
+                self.system,
+                self.library,
+                self.action,
+                self.api,
+                self.data_source,
+                self.encode_level,
+                self.mat_type,
+                self.cat_rules,
+                self.cat_source,
+                self.id_type)
 
 
 class WCSourceMeta(Base):
