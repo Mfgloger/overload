@@ -461,6 +461,8 @@ class Worldcat2Sierra(tk.Frame):
 
     def launch_processing(self):
         try:
+            self.progbar1['value'] = 0
+            self.progbar2['value'] = 0
             launch_process(
                 self.source_fh.get(), self.data_source.get(),
                 self.system.get(),
@@ -528,6 +530,8 @@ class Worldcat2Sierra(tk.Frame):
             start = int(recap_start.strip())
             end = int(recap_end.strip())
             self.recap_range = (start, end)
+            module_logger.debug('ReCap range entered: {}'.format(
+                self.recap_range))
             self.topRecap.destroy()
         except ValueError:
             tkMessageBox.showerror('Input error', 'Only digits are permitted')

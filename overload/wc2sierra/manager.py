@@ -66,6 +66,7 @@ def interpret_search_response(response, db_session, wcsmid):
 
 
 def remove_previous_process_data():
+    module_logger.debug('Deleting previous process data.')
     with session_scope() as db_session:
         # deletes WCSourceBatch data and all related tables
         delete_all_table_data(db_session, WCSourceBatch)
@@ -180,7 +181,16 @@ def launch_process(source_fh, data_source, system, library,
         api: str, name of api to be used for queries
     """
 
-    module_logger.debug('Launching W2S process.')
+    module_logger.debug(
+        'Launching W2S process. '
+        'Params: source_fh:{}, data_source:{}, system:{}, '
+        'library:{}, action:{}, encode_level:{}, mat_type:{}, '
+        'cat_rules:{}, cat_source:{}, recap_range:{}, id_type:{}, '
+        'api:{}'.format(
+            source_fh, data_source, system, library, action,
+            encode_level, mat_type, cat_rules, cat_source, recap_range,
+            id_type, api))
+
     remove_previous_process_data()
 
     # calculate max counter
@@ -451,7 +461,7 @@ def launch_process(source_fh, data_source, system, library,
         for row in rows:
             # initial workflow shared by updgrade fuctionality
             xml_record = row.wchits.match_marcxml
-            if xml_record:
+            if xml_record is not None:
                 marc_record = marcxml2array(xml_record)[0]
                 marc_record.remove_fields('901', '945', '949', '947')
                 initials = create_initials_field(
@@ -511,9 +521,9 @@ def launch_process(source_fh, data_source, system, library,
                             'Used all available ReCAP call numbers '
                             'assigned for W2S.')
 
-    # # show completed
-    # progbar1['value'] = progbar1['maximum']
-    # progbar2['value'] = progbar2['maximum']
+    # show completed
+    progbar1['value'] = progbar1['maximum']
+    progbar2['value'] = progbar2['maximum']
 
 
 def get_meta_by_id(session, meta_ids):

@@ -381,5 +381,8 @@ class W2SReport(tk.Frame):
         self.preview_base.config(scrollregion=self.preview_base.bbox('all'))
 
     def on_mousewheel(self, event):
-        self.preview_base.yview_scroll(
-            int(-1 * (event.delta / 120)), "units")
+        try:
+            self.preview_base.yview_scroll(
+                int(-1 * (event.delta / 120)), "units")
+        except tk.TclError:
+            pass
