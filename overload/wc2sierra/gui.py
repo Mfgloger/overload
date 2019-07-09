@@ -4,6 +4,7 @@ import Tkinter as tk
 import ttk
 import tkFileDialog
 import tkMessageBox
+import sys
 
 
 from errors import OverloadError
@@ -460,9 +461,9 @@ class Worldcat2Sierra(tk.Frame):
                     self.launch_processing()
 
     def launch_processing(self):
+        self.progbar1['value'] = 0
+        self.progbar2['value'] = 0
         try:
-            self.progbar1['value'] = 0
-            self.progbar2['value'] = 0
             launch_process(
                 self.source_fh.get(), self.data_source.get(),
                 self.system.get(),
@@ -480,6 +481,14 @@ class Worldcat2Sierra(tk.Frame):
 
         except OverloadError as e:
             tkMessageBox.showerror(e)
+
+        except Exception as exc:
+            # unhandled exception
+            _, _, exc_traceback = sys.exc_info()
+            tb = format_traceback(exc, exc_traceback)
+            module_logger.error(
+                'Unhandled error on W2S process. {}'.format(tb))
+            tkMessageBox.showerror(exc)
 
     def recap_range_widget(self):
         recap_start = tk.StringVar()
