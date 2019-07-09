@@ -1,4 +1,5 @@
 import requests
+import json
 
 
 import wskey
@@ -32,6 +33,18 @@ def get_authorizaiton_header(
         app_wskey, request_url, app_user, auth_params=None):
     authorizaiton_header = app_wskey.get_hmac_signature(
         method='GET',
+        request_url=request_url,
+        options={
+            'user': app_user,
+            'auth_params': auth_params
+        })
+    return authorizaiton_header
+
+
+def batch_set_holdings_authorizaiton_header(
+        app_wskey, request_url, app_user, auth_params=None):
+    authorizaiton_header = app_wskey.get_hmac_signature(
+        method='POST',
         request_url=request_url,
         options={
             'user': app_user,
@@ -98,7 +111,7 @@ class MetadataSession(WorldcatSession):
     def __init__(self, creds=None):
         WorldcatSession.__init__(self, creds)
 
-        self.base_url = 'https://worldcat.org/bib/data/'
+        self.base_url = 'https://worldcat.org/'
         self.wskey = get_wskey(creds['key'], creds['secret'])
         self.user = get_user(
             creds['authenticating_institution_id'],
@@ -106,7 +119,7 @@ class MetadataSession(WorldcatSession):
             creds['principal_idns'])
 
     def prep_get_request(self, oclcNo):
-        request_url = self.base_url + '{}'.format(oclcNo)
+        request_url = self.base_url + 'bib/data/{}'.format(oclcNo)
         authorization_header = get_authorizaiton_header(
             self.wskey, request_url, self.user)
         headers = {
@@ -127,14 +140,64 @@ class MetadataSession(WorldcatSession):
                 prepped_request, timeout=self.timeout)
             return response
         except requests.exceptions.Timeout:
-            # log error
             raise
         except requests.exceptions.ConnectionError:
-            # log
             raise
 
-    def set_holdings(self):
-        pass
+    def prep_batch_set_holdings_request(self, oclcNos):
+        """ oclcNos must be a string of OCLC numbers separated by comma"""
+        request_url = self.base_url + 'ih/datalist?oclcNumbers={}'.format(
+            oclcNos)
+        authorization_header = batch_set_holdings_authorizaiton_header(
+            self.wskey, request_url, self.user)
+        headers = {
+            'Accept': 'application/atom+json',
+            'Authorization': authorization_header}
+
+        # payload = {
+        #     'oclcNumbers': oclcNos
+        # }
+
+        req = requests.Request(
+            'POST', request_url, headers=headers)
+        prepped_req = req.prepare()
+
+        return prepped_req
+
+    def split_into_50s(self, oclcNos):
+        incomplete = True
+        chunks = []
+        start = 0
+        end = 50
+        while incomplete:
+            chunk = oclcNos[start:end]
+            if not chunk:
+                incomplete = False
+            elif len(chunk) < 50:
+                chunks.append(','.join([str(x) for x in chunk]))
+                incomplete = False
+            else:
+                chunks.append(','.join([str(x) for x in chunk]))
+                start += 50
+                end += 50
+
+        return chunks
+
+    def batch_set_holdings(self, oclcNos):
+        """oclcNos must be a list of numbers, 50 numbers at a time can be
+        processed
+        """
+        prepped_oclcNos = self.split_into_50s(oclcNos)
+        for batch in prepped_oclcNos:
+            prepped_req = self.prep_batch_set_holdings_request(batch)
+            try:
+                response = self.send(
+                    prepped_req, timeout=self.timeout)
+                return response
+            except requests.exceptions.Timeout:
+                raise
+            except requests.exceptions.ConnectionError:
+                raise
 
 
 class SearchSession(WorldcatSession):
@@ -287,6 +350,28 @@ def no_match(response):
             return False
     except IndexError:
         return False
+
+
+def holdings_responses(response):
+    holdings = dict()
+    if response and response.status_code == 207:
+        jres = response.json()
+        for entry in jres['entries']:
+            oclcNo = entry['content']['requestedOclcNumber']
+            res = entry['content']
+            status_msg = entry['content']['status']
+            if status_msg == 'HTTP 200 OK':
+                status = 'set'
+            elif status_msg == 'HTTP 409 Conflict':
+                status = 'exists'
+            else:
+                status = 'unknown'
+            holdings[oclcNo] = (status, res)
+
+        return holdings
+    else:
+        # errors
+        return
 
 
 def extract_record_from_response(response):

@@ -35,10 +35,10 @@ class ResultsView(tk.Frame):
 
         self.dfs = None
 
-        self.yscrollbar = tk.Scrollbar(self.base, orient=tk.VERTICAL)
+        self.yscrollbar = ttk.Scrollbar(self.base, orient=tk.VERTICAL)
         self.yscrollbar.grid(
             row=1, column=2, rowspan=9, sticky='nse')
-        self.xscrollbar = tk.Scrollbar(self.base, orient=tk.HORIZONTAL)
+        self.xscrollbar = ttk.Scrollbar(self.base, orient=tk.HORIZONTAL)
         self.xscrollbar.grid(
             row=10, column=1, columnspan=2, sticky='swe')
 
@@ -118,7 +118,7 @@ class ResultsView(tk.Frame):
             dst_fh = tkFileDialog.asksaveasfilename(
                 parent=self.base,
                 title='Save as',
-                initialfile='bibNos.txt',
+                initialfile='bibNos-{}.txt'.format(category),
                 initialdir=last_open_dir)
             if dst_fh:
                 d.to_csv(dst_fh, index=False)

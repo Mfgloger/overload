@@ -1,0 +1,56 @@
+{
+  "entries": [
+    {
+      "title": "850939579",
+      "content": {
+        "requestedOclcNumber": "850939579",
+        "currentOclcNumber": "850939579",
+        "institution": "NYP",
+        "status": "HTTP 409 Conflict",
+        "detail": "Holding is already set for institution",
+        "id": "http://worldcat.org/oclc/850939579"
+      },
+      "updated": "2019-07-08T13:22:06.977Z"
+    },
+    {
+      "title": "850939580",
+      "content": {
+        "requestedOclcNumber": "850939580",
+        "currentOclcNumber": "850939580",
+        "institution": "NYP",
+        "status": "HTTP 200 OK",
+        "id": "http://worldcat.org/oclc/850939580"
+      },
+      "updated": "2019-07-08T13:22:06.977Z"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "os:totalResults",
+      "attributes": {
+        "xmlns:os": "http://a9.com/-/spec/opensearch/1.1/"
+      },
+      "children": [
+        "2"
+      ]
+    },
+    {
+      "name": "os:startIndex",
+      "attributes": {
+        "xmlns:os": "http://a9.com/-/spec/opensearch/1.1/"
+      },
+      "children": [
+        "1"
+      ]
+    },
+    {
+      "name": "os:itemsPerPage",
+      "attributes": {
+        "xmlns:os": "http://a9.com/-/spec/opensearch/1.1/"
+      },
+      "children": [
+        "2"
+      ]
+    }
+  ]
+}

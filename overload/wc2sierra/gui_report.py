@@ -167,11 +167,13 @@ class W2SReport(tk.Frame):
             self.disp_start + 1, self.disp_end, self.count_total))
 
     def save_choices(self):
+        self.cur_manager.busy()
         for k, v in self.tracker.items():
             if v['check'].get():
                 persist_choice([v['wcsmid']], True)
             else:
                 persist_choice([v['wcsmid']], False)
+        self.cur_manager.notbusy()
 
     def previous_batch(self):
         self.save_choices()
@@ -221,18 +223,27 @@ class W2SReport(tk.Frame):
             self.dst_fh.set(dst_fh)
 
     def output_data(self):
-        # write pymarc obj to a MARC file
+        self.cur_manager.busy()
+        # write pymarc obj to a MARC file and create
+        # csv file
         create_marc_file(self.dst_fh.get())
 
-        # create as csv file with report
-
         if self.hold_var.get():
-            msg = 'Records have been saved to a file.\n' \
-                  'OCLC Holdings have been set.'
-            set_oclc_holdings()
+            msg = 'Records have been saved to a file.\n'
+
+            holdings = set_oclc_holdings(self.dst_fh.get())
+            if holdings:
+                msg += 'OCLC holdings have been set.'
+            else:
+                msg += 'Unable to set holding for all records.\n' \
+                       'See "holdings-issues.cvs" for a list of\n' \
+                       'OCLC numbers for which holdings were not set.'
         else:
             msg = 'Records have been saved to a file.\n' \
                   'No OCLC holdings have been set.'
+
+        self.cur_manager.notbusy()
+
         tkMessageBox.showinfo(
             'Info', msg,
             parent=self.top)
@@ -257,6 +268,7 @@ class W2SReport(tk.Frame):
         self.count_total, self.meta_ids = count_total()
 
     def populate_preview(self, meta_ids):
+        self.cur_manager.busy()
         data = retrieve_bibs_batch(meta_ids)
         row = 0
         self.tracker = {}
@@ -264,6 +276,7 @@ class W2SReport(tk.Frame):
             wid, wdict = self.create_resource(d, row)
             self.tracker[wid] = wdict
             row += 1
+        self.cur_manager.notbusy()
 
     def create_resource(self, data, row):
         unitFrm = tk.Frame(self.preview_frame)

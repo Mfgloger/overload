@@ -18,7 +18,8 @@ from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
                            results2record_list)
 from connectors.worldcat.session import (SearchSession, MetadataSession,
                                          is_positive_response, no_match,
-                                         extract_record_from_response)
+                                         extract_record_from_response,
+                                         holdings_responses)
 from credentials import get_from_vault, evaluate_worldcat_creds
 from criteria import (meets_upgrade_criteria, meets_catalog_criteria,
                       meets_user_criteria)
@@ -450,53 +451,54 @@ def launch_process(source_fh, data_source, system, library,
         for row in rows:
             # initial workflow shared by updgrade fuctionality
             xml_record = row.wchits.match_marcxml
-            marc_record = marcxml2array(xml_record)[0]
-            marc_record.remove_fields('901', '945', '949', '947')
-            initials = create_initials_field(
-                system, library, 'W2Sbot')
-            marc_record.add_ordered_field(initials)
+            if xml_record:
+                marc_record = marcxml2array(xml_record)[0]
+                marc_record.remove_fields('901', '945', '949', '947')
+                initials = create_initials_field(
+                    system, library, 'W2Sbot')
+                marc_record.add_ordered_field(initials)
 
-            if data_source == 'Sierra export':
-                order_data = row.meta
-                if order_data.sierraId:
-                    overlay_tag = create_target_id_field(
-                        system,
-                        order_data.sierraId)
-                    marc_record.add_ordered_field(
-                        overlay_tag)
-
-                if system == 'NYPL':
-                    marc_record.remove_fields('001')
-                    tag_001 = nypl_oclcNo_field(xml_record)
-                    marc_record.add_ordered_field(tag_001)
-                    # add Sierra bib code 3
-                    tag_949 = create_command_line_field(
-                        '*b3=h;')
-                    marc_record.add_ordered_field(tag_949)
-
-            if action == 'catalog':
-                # add call number & persist
                 if data_source == 'Sierra export':
                     order_data = row.meta
+                    if order_data.sierraId:
+                        overlay_tag = create_target_id_field(
+                            system,
+                            order_data.sierraId)
+                        marc_record.add_ordered_field(
+                            overlay_tag)
 
-                    local_fields = create_local_fields(
-                        xml_record, system, library, order_data,
-                        recap_no)
-
-                else:
-                    # data source a list of IDs
-                    local_fields = create_local_fields(
-                        xml_record, system, library)
-
-                if local_fields:
-                    for field in local_fields:
-                        marc_record.add_ordered_field(field)
                     if system == 'NYPL':
-                        recap_no += 1
+                        marc_record.remove_fields('001')
+                        tag_001 = nypl_oclcNo_field(xml_record)
+                        marc_record.add_ordered_field(tag_001)
+                        # add Sierra bib code 3
+                        tag_949 = create_command_line_field(
+                            '*b3=h;')
+                        marc_record.add_ordered_field(tag_949)
 
-            update_hit_record(
-                db_session, WCHit, row.wchits.wchid,
-                prepped_marc=marc_record)
+                if action == 'catalog':
+                    # add call number & persist
+                    if data_source == 'Sierra export':
+                        order_data = row.meta
+
+                        local_fields = create_local_fields(
+                            xml_record, system, library, order_data,
+                            recap_no)
+
+                    else:
+                        # data source a list of IDs
+                        local_fields = create_local_fields(
+                            xml_record, system, library)
+
+                    if local_fields:
+                        for field in local_fields:
+                            marc_record.add_ordered_field(field)
+                        if system == 'NYPL':
+                            recap_no += 1
+
+                update_hit_record(
+                    db_session, WCHit, row.wchits.wchid,
+                    prepped_marc=marc_record)
 
             update_progbar(progbar1)
             update_progbar(progbar2)
@@ -607,9 +609,9 @@ def create_marc_file(dst_fh):
             db_session, WCSourceMeta, 'wchits')
         for r in recs:
             if r.selected and r.wchits.prepped_marc:
-                result = 'success'
+                result = 'pass'
             else:
-                result = 'failed'
+                result = 'reject'
             row = [
                 r.wchits.wchid,
                 result,
@@ -618,8 +620,9 @@ def create_marc_file(dst_fh):
             save2csv(dst_fh, row)
 
 
-def set_oclc_holdings():
+def set_oclc_holdings(dst_fh):
     oclc_numbers = []
+    hold_not_set = []
     with session_scope() as db_session:
         recs = retrieve_related(
             db_session, WCSourceMeta, 'wchits', selected=True)
@@ -627,5 +630,40 @@ def set_oclc_holdings():
             if r.wchits.match_oclcNo:
                 oclc_numbers.append(r.wchits.match_oclcNo)
 
-    # update holdings here, max 50 numbers at a time
-    print(oclc_numbers)
+        # update holdings here, max 50 numbers at a time
+        batch_rec = retrieve_record(db_session, WCSourceBatch)
+        creds = get_credentials(batch_rec.api)
+        with MetadataSession(creds) as session:
+            response = session.batch_set_holdings(oclc_numbers)
+            holdings = holdings_responses(response)
+            if holdings:
+                for oclcNo, holding in holdings.items():
+                    rec = retrieve_record(
+                        db_session, WCHit, match_oclcNo=oclcNo)
+                    if holding[0] in ('set', 'exists'):
+                        holding_set = True
+                    else:
+                        holding_set = False
+                    update_hit_record(
+                        db_session, WCHit, rec.wchid,
+                        holding_set=holding_set,
+                        holding_status=holding[0],
+                        holding_response=holding[1])
+
+        db_session.commit()
+
+        # verify all selected had holdings set
+        recs = retrieve_related(
+            db_session, WCSourceMeta, 'wchits', selected=True)
+        for r in recs:
+            if not r.wchits.holding_set:
+                hold_not_set.append(r.wchits.match_oclcNo)
+
+    fh_csv = os.path.join(
+        os.path.split(dst_fh)[0], 'holdings-issues.csv')
+    if hold_not_set:
+        for oclcNo in hold_not_set:
+            save2csv(fh_csv, [oclcNo])
+        return False
+    else:
+        return True
