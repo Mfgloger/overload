@@ -149,7 +149,7 @@ class W2SReport(tk.Frame):
             row=1, column=0, rowspan=20, sticky='nse')
         self.preview_base = tk.Canvas(
             self.dispFrm, bg='gray',
-            height='20c',
+            height='18c',
             width='25c',
             xscrollcommand=self.xscrollbar.set,
             yscrollcommand=self.yscrollbar.set)
