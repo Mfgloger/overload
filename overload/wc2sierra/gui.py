@@ -488,7 +488,7 @@ class Worldcat2Sierra(tk.Frame):
             tb = format_traceback(exc, exc_traceback)
             module_logger.error(
                 'Unhandled error on W2S process. {}'.format(tb))
-            tkMessageBox.showerror(exc)
+            tkMessageBox.showerror('Error', exc)
 
     def recap_range_widget(self):
         recap_start = tk.StringVar()

@@ -16,7 +16,7 @@ To create executable file (requires pyinstaller):
 4. Add loggly token in the logging_setup.py
 5. Add hook-keyring.backend.py file into the root directory (copy from previous runs)
 6. Update __version__.py and windows_version_info_txt files
-6. Run CMD and enter command:
+7. Run CMD and enter command:
 pyinstaller --onefile --windowed --version-file=windows_version_info.txt --icon="./icons/SledgeHammer.ico" --additional-hooks-dir=. overload.py
 
 ## License
