@@ -52,7 +52,7 @@ def launch_process(
     header = None
 
     # calc progbar maximum and dedup
-    ids = set()
+    ids = []
     dups = set()
     with open(source_fh) as source:
         reader = csv.reader(source)
@@ -68,7 +68,7 @@ def launch_process(
                     d += 1
                     dups.add(rid)
                 else:
-                    ids.add(rid)
+                    ids.append(rid)
         progbar['maximum'] = c
 
     # determine correct matchpoint based on id_type
