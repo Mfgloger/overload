@@ -170,9 +170,9 @@ class W2SReport(tk.Frame):
         self.cur_manager.busy()
         for k, v in self.tracker.items():
             if v['check'].get():
-                persist_choice([v['wcsmid']], True)
+                persist_choice([v['wcsmid']], True, barcode_var=v['barcode'])
             else:
-                persist_choice([v['wcsmid']], False)
+                persist_choice([v['wcsmid']], False, barcode_var=v['barcode'])
         self.cur_manager.notbusy()
 
     def previous_batch(self):
@@ -286,6 +286,9 @@ class W2SReport(tk.Frame):
 
         var = tk.IntVar()
         var.set(data[1]['choice'])
+        barcode = tk.StringVar()
+        if data[1]['barcode'] is not None:
+            barcode.set(data[1]['barcode'])
 
         selCbn = ttk.Checkbutton(
             unitFrm,
@@ -302,11 +305,19 @@ class W2SReport(tk.Frame):
         sierraTxt.grid(
             row=0, column=1, columnspan=6, sticky='snew', pady=5)
 
-        self.pupulate_sierra_data(sierraTxt, data[1])
+        ttk.Label(unitFrm, text='barcode:').grid(
+            row=1, column=1, columnspan=2, sticky='snw', pady=5)
+        barcodeEnt = ttk.Entry(
+            unitFrm,
+            textvariable=barcode)
+        barcodeEnt.grid(
+            row=1, column=2, sticky='sne', padx=5, pady=5)
+
+        self.populate_sierra_data(sierraTxt, data[1])
 
         scrollbar = ttk.Scrollbar(unitFrm)
         scrollbar.grid(
-            row=1, column=1, sticky='snw', pady=5, padx=2)
+            row=2, column=1, sticky='snw', pady=5, padx=2)
         worldcatTxt = tk.Text(
             unitFrm,
             wrap='word',
@@ -314,17 +325,19 @@ class W2SReport(tk.Frame):
             borderwidth=0,
             yscrollcommand=scrollbar.set)
         worldcatTxt.grid(
-            row=1, column=2, columnspan=6, sticky='snew', padx=2, pady=5)
+            row=2, column=2, columnspan=6, sticky='snew', padx=2, pady=5)
         scrollbar.config(command=worldcatTxt.yview)
 
-        self.pupulate_worldcat_data(worldcatTxt, data[2])
+        self.populate_worldcat_data(worldcatTxt, data[2])
 
         ttk.Separator(unitFrm, orient=tk.HORIZONTAL).grid(
-            row=2, column=0, columnspan=8, sticky='sew', padx=10, pady=10)
+            row=3, column=0, columnspan=8, sticky='sew', padx=10, pady=10)
 
-        return (selCbn.winfo_name(), dict(check=var, wcsmid=data[0]))
+        return (
+            selCbn.winfo_name(),
+            dict(check=var, wcsmid=data[0], barcode=barcode))
 
-    def pupulate_sierra_data(self, widget, data):
+    def populate_sierra_data(self, widget, data):
         l1 = '  {}\n'.format(data['title'])
         l2 = '  bib #: {}, ord #: {}\n'.format(
             data['sierraId'], data['oid'])
@@ -345,9 +358,15 @@ class W2SReport(tk.Frame):
             "tahoma", "11", "bold"), foreground='tomato2')
         widget['state'] = 'disable'
 
-    def pupulate_worldcat_data(self, widget, data):
+    def populate_worldcat_data(self, widget, data):
         if data:
             widget.insert(1.0, data)
+            widget.tag_add(
+                'lvl', '1.23')
+            widget.tag_config(
+                'lvl',
+                font=("tahoma", "11", "bold"),
+                foreground='tomato2')
         else:
             l1 = 'NO GOOD MATCHES FOUND IN WORLDCAT'
             widget.insert(1.0, l1)

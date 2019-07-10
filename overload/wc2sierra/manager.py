@@ -548,7 +548,8 @@ def retrieve_bibs_batch(meta_ids):
                 venNote=r.meta.venNote,
                 note=r.meta.note,
                 intNote=r.meta.intNote,
-                choice=r.selected)
+                choice=r.selected,
+                barcode=r.barcode)
             if r.wchits.prepped_marc:
                 worldcat_data = str(r.wchits.prepped_marc)
             else:
@@ -590,12 +591,21 @@ def get_batch_criteria():
                 rec.id_type))
 
 
-def persist_choice(meta_ids, selected):
+def persist_choice(meta_ids, selected, barcode_var=None):
     with session_scope() as db_session:
         for mid in meta_ids:
+            if barcode_var:
+                if barcode_var.get():
+                    barcode = barcode_var.get()
+                else:
+                    barcode = None
+            else:
+                barcode = None
+
             update_meta_record(
                 db_session, WCSourceMeta, mid,
-                selected=selected)
+                selected=selected,
+                barcode=barcode)
 
 
 def create_marc_file(dst_fh):

@@ -202,6 +202,7 @@ class WCSourceMeta(Base):
     wcsbid = Column(
         Integer, ForeignKey('wc_source_batch.wcsbid'), nullable=False)
     selected = Column(Boolean, default=False)
+    barcode = Column(String)
     meta = Column(PickleType)
 
     wchits = relationship(
@@ -211,9 +212,12 @@ class WCSourceMeta(Base):
         lazy='joined')
 
     def __repr__(self):
-        return "<WCSourceMeta(wcsmid=%s, wcsbid=%s)>" % (
-            self.wcsmid,
-            self.wcsbid)
+        return "<WCSourceMeta(wcsmid=%s, wcsbid=%s, selected='%s', " \
+            "barcode='%s')>" % (
+                self.wcsmid,
+                self.wcsbid,
+                self.selected,
+                self.barcode)
 
 
 class WCHit(Base):
