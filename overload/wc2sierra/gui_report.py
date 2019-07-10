@@ -139,22 +139,22 @@ class W2SReport(tk.Frame):
         self.dispFrm = ttk.LabelFrame(
             self.top, text='Sierra & Worldcat records')
         self.dispFrm.grid(
-            row=4, column=0, columnspan=4, sticky='snew', padx=5, pady=10)
+            row=4, column=0, columnspan=6, sticky='snew', padx=5, pady=10)
 
         self.xscrollbar = ttk.Scrollbar(self.dispFrm, orient=tk.HORIZONTAL)
         self.xscrollbar.grid(
-            row=0, column=1, columnspan=10, sticky='nwe')
+            row=0, column=1, columnspan=5, sticky='nwe')
         self.yscrollbar = ttk.Scrollbar(self.dispFrm, orient=tk.VERTICAL)
         self.yscrollbar.grid(
             row=1, column=0, rowspan=20, sticky='nse')
         self.preview_base = tk.Canvas(
             self.dispFrm, bg='gray',
-            height=600,
-            width=1000,
+            height='20c',
+            width='25c',
             xscrollcommand=self.xscrollbar.set,
             yscrollcommand=self.yscrollbar.set)
         self.preview_base.grid(
-            row=1, column=1, rowspan=20, columnspan=10, sticky='nwe')
+            row=1, column=1, rowspan=20, columnspan=5)
         self.preview_base.bind_all("<MouseWheel>", self.on_mousewheel)
         self.preview()
 
@@ -300,27 +300,27 @@ class W2SReport(tk.Frame):
             wrap='word',
             borderwidth=0)
         sierraTxt.grid(
-            row=0, column=1, columnspan=10, sticky='snew', pady=5)
+            row=0, column=1, columnspan=6, sticky='snew', pady=5)
 
         self.pupulate_sierra_data(sierraTxt, data[1])
 
         scrollbar = ttk.Scrollbar(unitFrm)
         scrollbar.grid(
-            row=1, column=11, sticky='snw', pady=5)
+            row=1, column=1, sticky='snw', pady=5, padx=2)
         worldcatTxt = tk.Text(
             unitFrm,
             wrap='word',
-            width=118,
+            width=115,
             borderwidth=0,
             yscrollcommand=scrollbar.set)
         worldcatTxt.grid(
-            row=1, column=1, columnspan=10, sticky='snew', pady=5)
+            row=1, column=2, columnspan=6, sticky='snew', padx=2, pady=5)
         scrollbar.config(command=worldcatTxt.yview)
 
         self.pupulate_worldcat_data(worldcatTxt, data[2])
 
         ttk.Separator(unitFrm, orient=tk.HORIZONTAL).grid(
-            row=2, column=0, columnspan=10, sticky='sew', padx=10, pady=10)
+            row=2, column=0, columnspan=8, sticky='sew', padx=10, pady=10)
 
         return (selCbn.winfo_name(), dict(check=var, wcsmid=data[0]))
 
