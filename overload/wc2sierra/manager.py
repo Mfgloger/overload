@@ -12,7 +12,8 @@ from bibs.bpl_callnum import create_bpl_fiction_callnum
 from bibs.nypl_callnum import (create_nypl_fiction_callnum,
                                create_nypl_recap_callnum,
                                create_nypl_recap_item)
-from bibs.sierra_dicts import NW2SEXPORT_COLS, BW2SEXPORT_COLS
+from bibs.sierra_dicts import (NW2SEXPORT_COLS, BW2SEXPORT_COLS,
+                               NBIB_DEFAULT_LOCATIONS)
 from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
                            get_tag_008, get_record_leader, get_tag_300a,
                            results2record_list)
@@ -478,9 +479,15 @@ def launch_process(source_fh, data_source, system, library,
                         marc_record.remove_fields('001')
                         tag_001 = nypl_oclcNo_field(xml_record)
                         marc_record.add_ordered_field(tag_001)
-                        # add Sierra bib code 3
+
+                        # add Sierra bib code 3 and default location
+                        if library == 'branches':
+                            defloc = NBIB_DEFAULT_LOCATIONS['branches']
+                        elif library == 'research':
+                            defloc = NBIB_DEFAULT_LOCATIONS['research']
+
                         tag_949 = create_command_line_field(
-                            '*b3=h;')
+                            '*b3=h;bn={};'.format(defloc))
                         marc_record.add_ordered_field(tag_949)
 
                 if action == 'catalog':
@@ -612,6 +619,11 @@ def create_marc_file(dst_fh):
         for r in recs:
             marc = r.wchits.prepped_marc
             if marc:
+                # add barcode if added by user
+                if r.barcode is not None:
+                    for field in marc.get_fields('949'):
+                        if field.indicators == [' ', '1']:
+                            field.add_subfield('i', r.barcode)
                 write_marc21(dst_fh, marc)
 
     if '.mrc' in dst_fh:
