@@ -1,6 +1,7 @@
 # datastore functions
 
 from sqlalchemy.orm import subqueryload
+from sqlalchemy.orm.exc import NoResultFound
 
 
 from datastore import NYPLOrderTemplate
@@ -54,8 +55,11 @@ def retrieve_one_related(session, model, related, **kwargs):
 
 
 def retrieve_record(session, model, **kwargs):
-    instance = session.query(model).filter_by(**kwargs).one()
-    return instance
+    try:
+        instance = session.query(model).filter_by(**kwargs).one()
+        return instance
+    except NoResultFound:
+        return None
 
 
 def delete_record(session, model, **kwargs):
