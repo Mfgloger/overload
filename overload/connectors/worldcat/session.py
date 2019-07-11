@@ -93,7 +93,7 @@ class WorldcatSession(requests.Session):
         if not creds:
             raise AttributeError('Session requrires worlcat credentials')
 
-        self.timeout = (5, 5)
+        self.timeout = (10, 10)
         self.headers.update({
             'User-Agent': 'BookOps/Overload',
 
@@ -340,16 +340,16 @@ def is_positive_response(response):
         return False
 
 
-def no_match(response):
+def has_records(response):
     response_body = string2xml(response.content)
-    try:
-        message = response_body[0][1].text
-        if message == 'Record does not exist':
-            return True
-        else:
-            return False
-    except IndexError:
+
+    numberOfRecords = response_body.find(
+        'response:numberOfRecords', ONS).text
+
+    if numberOfRecords == '0':
         return False
+    else:
+        return True
 
 
 def holdings_responses(response):
