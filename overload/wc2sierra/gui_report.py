@@ -32,6 +32,8 @@ class W2SReport(tk.Frame):
         self.top.title('W2S Report & Selection')
 
         # variables
+        self.system = None
+        self.library = None
         self.sel_lbl = tk.StringVar()
         self.sel_lbl.set('select all')
         self.sel_var = tk.IntVar()
@@ -45,6 +47,10 @@ class W2SReport(tk.Frame):
         self.disp_end = self.batch
         self.total_count = 0
         self.selected_count = 0
+
+        # register barcode validation
+        self.vb = (self.register(self.onValidateBarcode),
+                   '%d', '%i', '%P')
 
         # navigation frame
         self.navFrm = ttk.Frame(self.top)
@@ -259,6 +265,9 @@ class W2SReport(tk.Frame):
 
     def display_criteria(self):
         settings = get_batch_criteria()
+        set1 = settings[1].split(', ')
+        self.system = set1[0][8:]
+        self.library = set1[1][9:]
         self.settingsTxt.insert(1.0, settings[0] + '\n')
         self.settingsTxt.insert(2.0, settings[1] + '\n')
         self.settingsTxt.insert(3.0, settings[2])
@@ -309,7 +318,8 @@ class W2SReport(tk.Frame):
             row=1, column=1, columnspan=2, sticky='snw', pady=5)
         barcodeEnt = ttk.Entry(
             unitFrm,
-            textvariable=barcode)
+            textvariable=barcode,
+            validate="key", validatecommand=self.vb)
         barcodeEnt.grid(
             row=1, column=2, sticky='sne', padx=5, pady=5)
 
@@ -405,3 +415,36 @@ class W2SReport(tk.Frame):
                 int(-1 * (event.delta / 120)), "units")
         except tk.TclError:
             pass
+
+    def onValidateBarcode(self, d, i, P):
+        print(d, i, P)
+        valid = True
+        if self.system == 'NYPL':
+            if self.library == 'research':
+                if d == '1':
+                    if int(i) in (0, 1, 3, 4):
+                        if P[int(i)] != '3':
+                            valid = False
+                    elif int(i) == 3:
+                        if P[3] != '4':
+                            valid = False
+                    elif int(i) > 4:
+                        if not P.isdigit():
+                            valid = False
+
+        return valid
+
+        # %d = Type of action (1=insert, 0=delete, -1 for others)
+        # %i = index of char string to be inserted/deleted, or -1
+        # %P = value of the entry if the edit is allowed
+
+        # valid = True
+
+
+        # if d == '1' and not P.isdigit():
+        #     valid = False
+        # if int(i) > 1:
+        #     valid = False
+        # if P == '0' and W == str(self.header_row):
+        #     valid = False
+        # return valid
