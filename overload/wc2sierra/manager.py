@@ -17,7 +17,7 @@ from bibs.xml_bibs import (get_oclcNo, get_cuttering_fields,
                            get_tag_008, get_record_leader, get_tag_300a,
                            results2record_list)
 from connectors.worldcat.session import (SearchSession, MetadataSession,
-                                         is_positive_response, no_match,
+                                         is_positive_response, has_records,
                                          extract_record_from_response,
                                          holdings_responses)
 from credentials import get_from_vault, evaluate_worldcat_creds
@@ -44,23 +44,25 @@ def update_progbar(progbar):
     progbar.update()
 
 
-def store_meta(model, record):
-    pass
-
-
 def interpret_search_response(response, db_session, wcsmid):
+    rec = retrieve_record(db_session, WCHit, wcsmid=wcsmid)
     if is_positive_response(response) and \
-            not no_match(response):
+            has_records(response):
         hit = True
         doc = string2xml(response.content)
+
+    else:
+        hit = False
+        doc = None
+
+    if not rec:
         insert_or_ignore(
             db_session, WCHit, wcsmid=wcsmid,
             hit=hit, query_results=doc)
     else:
-        hit = False
-        insert_or_ignore(
-            db_session, WCHit, wcsmid=wcsmid,
-            hit=hit, search_marcxml=None)
+        update_hit_record(
+            db_session, WCHit, rec.wchid,
+            hit=hit, query_results=doc)
 
     return hit
 
@@ -88,7 +90,7 @@ def request_record(session, oclcNo):
     if oclcNo:
         res = session.get_record(oclcNo)
         module_logger.info('Metadata API request: {}'.format(res.url))
-        if is_positive_response(res) and not no_match(res):
+        if is_positive_response(res):
             module_logger.info('Match found.')
             xml_record = extract_record_from_response(res)
             return xml_record
@@ -308,8 +310,6 @@ def launch_process(source_fh, data_source, system, library,
 
                     if hit:
                         found_counter += 1
-                    else:
-                        not_found_counter += 1
 
                 if m.meta.t010 and not hit:
                     res = session.cql_query(
@@ -320,8 +320,6 @@ def launch_process(source_fh, data_source, system, library,
 
                     if hit:
                         found_counter += 1
-                    else:
-                        not_found_counter += 1
 
                 if m.meta.t020 and not hit:
                     # will iterate over all ISBNs if no hits
@@ -339,9 +337,6 @@ def launch_process(source_fh, data_source, system, library,
                             found_counter += 1
                             break  # stop searching
 
-                    if not found:
-                        not_found_counter += 1
-
                 if m.meta.t024 and not hit:
                     found = False
                     for upc in m.meta.t024:
@@ -357,8 +352,8 @@ def launch_process(source_fh, data_source, system, library,
                             found_counter += 1
                             break  # stop searching
 
-                    if not found:
-                        not_found_counter += 1
+                if not found:
+                    not_found_counter += 1
 
                 hits.set(found_counter)
                 nohits.set(not_found_counter)
@@ -428,6 +423,8 @@ def launch_process(source_fh, data_source, system, library,
                 else:
                     fail_glob_crit_counter.set(
                         fail_glob_crit_counter.get() + 1)
+
+        db_session.commit()
 
         # download and prep
         process_label.set('downloading:')
