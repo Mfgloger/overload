@@ -575,24 +575,11 @@ def count_total():
     return total, meta_ids
 
 
-def get_batch_criteria():
+def get_batch_criteria_record():
     with session_scope() as db_session:
         rec = retrieve_record(db_session, WCSourceBatch)
         db_session.expunge_all()
-        return (
-            'source: {}'.format(rec.file),
-            'system: {}, library: {}, action: {}, API: {}, data source: {}'.format(
-                rec.system,
-                rec.library,
-                rec.action,
-                rec.api,
-                rec.data_source),
-            'encode lvl: {}, mat type: {}, cat rules: {}, cat source: {}, id type: {}'.format(
-                rec.encode_level,
-                rec.mat_type,
-                rec.cat_rules,
-                rec.cat_source,
-                rec.id_type))
+        return rec
 
 
 def persist_choice(meta_ids, selected, barcode_var=None):

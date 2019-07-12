@@ -10,7 +10,8 @@ from errors import OverloadError
 from gui_utils import ToolTip, BusyManager
 from logging_setup import format_traceback, LogglyAdapter
 from manager import (retrieve_bibs_batch, count_total, persist_choice,
-                     create_marc_file, set_oclc_holdings, get_batch_criteria)
+                     create_marc_file, set_oclc_holdings,
+                     get_batch_criteria_record)
 from setup_dirs import USER_DATA, MY_DOCS
 
 
@@ -172,14 +173,33 @@ class W2SReport(tk.Frame):
         self.disp_batch.set('records {}-{} / total {}'.format(
             self.disp_start + 1, self.disp_end, self.count_total))
 
+    def verify_barcodes(self):
+        valid = True
+        if self.system == 'NYPL' and self.library == 'research':
+            for v in self.tracker.values():
+                if len(v['barcode'].get()) not in (0, 14):
+                    valid = False
+        return valid
+
     def save_choices(self):
         self.cur_manager.busy()
-        for k, v in self.tracker.items():
-            if v['check'].get():
-                persist_choice([v['wcsmid']], True, barcode_var=v['barcode'])
-            else:
-                persist_choice([v['wcsmid']], False, barcode_var=v['barcode'])
-        self.cur_manager.notbusy()
+        valid_barcodes = self.verify_barcodes()
+        if valid_barcodes:
+            for k, v in self.tracker.items():
+                if v['check'].get():
+                    persist_choice(
+                        [v['wcsmid']], True, barcode_var=v['barcode'])
+                else:
+                    persist_choice(
+                        [v['wcsmid']], False, barcode_var=v['barcode'])
+            self.cur_manager.notbusy()
+        else:
+            self.cur_manager.notbusy()
+            msg = 'Invalid barcodes have been found.\n' \
+                'Unable to save data.'
+            tkMessageBox.showwarning(
+                'Barcode warning', msg,
+                parent=self.top)
 
     def previous_batch(self):
         self.save_choices()
@@ -264,13 +284,26 @@ class W2SReport(tk.Frame):
                 self.output_data()
 
     def display_criteria(self):
-        settings = get_batch_criteria()
-        set1 = settings[1].split(', ')
-        self.system = set1[0][8:]
-        self.library = set1[1][9:]
-        self.settingsTxt.insert(1.0, settings[0] + '\n')
-        self.settingsTxt.insert(2.0, settings[1] + '\n')
-        self.settingsTxt.insert(3.0, settings[2])
+        rec = get_batch_criteria_record()
+        self.system = rec.system
+        self.library = rec.library
+        line2 = 'system: {}, library: {}, action: {}, API: {}, '\
+            'data source: {}'.format(
+                rec.system,
+                rec.library,
+                rec.action,
+                rec.api,
+                rec.data_source)
+        line3 = 'encode lvl: {}, mat type: {}, cat rules: {}, ' \
+            'cat source: {}, id type: {}'.format(
+                rec.encode_level,
+                rec.mat_type,
+                rec.cat_rules,
+                rec.cat_source,
+                rec.id_type)
+        self.settingsTxt.insert(1.0, rec.file + '\n')
+        self.settingsTxt.insert(2.0, line2 + '\n')
+        self.settingsTxt.insert(3.0, line3)
         self.settingsTxt['state'] = 'disable'
 
     def display_totals(self):
@@ -375,7 +408,7 @@ class W2SReport(tk.Frame):
                 'lvl', '1.23')
             widget.tag_config(
                 'lvl',
-                font=("tahoma", "11", "bold"),
+                font=("tahoma", "13", "bold"),
                 foreground='tomato2')
         else:
             l1 = 'NO GOOD MATCHES FOUND IN WORLDCAT'
@@ -417,7 +450,6 @@ class W2SReport(tk.Frame):
             pass
 
     def onValidateBarcode(self, d, i, P):
-        print(d, i, P)
         valid = True
         if self.system == 'NYPL':
             if self.library == 'research':
@@ -425,26 +457,12 @@ class W2SReport(tk.Frame):
                     if int(i) in (0, 1, 3, 4):
                         if P[int(i)] != '3':
                             valid = False
-                    elif int(i) == 3:
-                        if P[3] != '4':
+                    if int(i) == 2:
+                        if P[2] != '4':
                             valid = False
-                    elif int(i) > 4:
+                    if int(i) > 4:
                         if not P.isdigit():
                             valid = False
-
+                    if int(i) > 13:
+                        valid = False
         return valid
-
-        # %d = Type of action (1=insert, 0=delete, -1 for others)
-        # %i = index of char string to be inserted/deleted, or -1
-        # %P = value of the entry if the edit is allowed
-
-        # valid = True
-
-
-        # if d == '1' and not P.isdigit():
-        #     valid = False
-        # if int(i) > 1:
-        #     valid = False
-        # if P == '0' and W == str(self.header_row):
-        #     valid = False
-        # return valid
