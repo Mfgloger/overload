@@ -68,11 +68,16 @@ class LogglyAdapter(logging.LoggerAdapter):
     """
 
     def process(self, msg, kwargs):
-        return '%s' % (
-            msg.replace('\\', '/').
-            replace('"', "'").
-            replace('\n', '\\n').
-            replace('\t', '\\t')), kwargs
+        try:
+            format_msg = '%s' % (
+                msg.replace('\\', '/').
+                replace('"', "'").
+                replace('\n', '\\n').
+                replace('\t', '\\t'))
+        except AttributeError:
+            format_msg = msg
+
+        return format_msg, kwargs
 
 
 def format_traceback(exc, exc_traceback=None):

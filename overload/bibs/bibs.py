@@ -2,47 +2,12 @@
 
 from pymarc import MARCReader, JSONReader, MARCWriter, Field
 from pymarc.exceptions import RecordLengthInvalid, RecordDirectoryInvalid
-import re
 from datetime import datetime
+
+
 from errors import OverloadError
+from parsers import (parse_isbn, parse_issn, parse_upc, parse_sierra_id)
 from sierra_dicts import NBIB_DEFAULT_LOCATIONS
-
-
-def parse_isbn(field):
-    field = field.replace('-', '')
-    p = re.compile(r'^(97[8|9])?\d{9}[\dxX]')
-
-    m = re.search(p, field)
-    if m:
-        return str(m.group(0))
-    else:
-        return None
-
-
-def parse_issn(field):
-    p = re.compile(r'^(\d{4}-\d{3}[\dxX]$)')
-    m = re.search(p, field)
-    if m:
-        return str(m.group(0).replace('-', ''))
-    else:
-        return None
-
-
-def parse_upc(field):
-    return field.split(' ')[0]
-
-
-def parse_sierra_id(field):
-    try:
-        p = re.compile(r'\.b\d{8}.|\.o\d{7}.')
-
-        m = re.match(p, field)
-        if m:
-            return str(m.group())[2:-1]
-        else:
-            return None
-    except TypeError:
-        return None
 
 
 def read_marc21(file):
@@ -67,12 +32,20 @@ def read_marc_in_json(data):
     return reader
 
 
+def create_field(tag, indicators=[' ', ' '], subfields=['a']):
+    return Field(
+        tag=tag,
+        indicators=indicators,
+        subfields=subfields)
+
+
 def create_target_id_field(system, bNumber):
     if len(bNumber) != 8:
         raise ValueError(
             'incorrect Sierra bib number encountered '
             'while creating target id field')
     bNumber = '.b{}a'.format(bNumber)
+    system = system.lower()
     if system == 'bpl':
         return Field(
             tag='907',
@@ -178,6 +151,36 @@ def create_field_from_template(template):
         indicators=[ind1, ind2],
         subfields=subfields)
     return field
+
+
+def create_initials_field(system, library, value):
+    """
+    creates intitials marc field
+    args:
+        system: str, NYPL or BPL
+        library: str, branches or research
+        value: str, value to be entered in subfield $a
+    returns:
+        field: pymarc Field object
+    """
+
+    if system == 'NYPL':
+        tag = '901'
+        if library == 'research':
+            subfields = ['a', value, 'b', 'CATRL']
+        else:
+            subfields = ['a', value, 'b', 'CATBL']
+    elif system == 'BPL':
+        tag = '947'
+        subfields = ['a', value]
+
+    return Field(tag=tag, indicators=[' ', ' '], subfields=subfields)
+
+
+def create_controlfield(tag, data):
+    return Field(
+        tag=tag,
+        data=data)
 
 
 def count_bibs(file):
@@ -547,6 +550,14 @@ def db_template_to_949(mat_format):
     return field
 
 
+def create_command_line_field(command):
+    field = Field(
+        tag='949',
+        indicators=[' ', ' '],
+        subfields=['a', command])
+    return field
+
+
 class BibMeta:
     """
     creates a general record meta object
@@ -567,6 +578,7 @@ class BibMeta:
         self.t901 = []
         self.t947 = []
         self.sierraId = sierraId
+        self.title = None
         self.bCallNumber = None
         self.rCallNumber = []
 
@@ -642,6 +654,8 @@ class BibMeta:
                 if field.indicators[0] == '8':
                     self.rCallNumber.append(
                         field.value())
+
+        self.title = bib.title()
 
     def __repr__(self):
         return "<BibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, 024:{}, " \
@@ -792,3 +806,238 @@ class InhouseBibMeta(BibMeta):
                 self.rCallNumber,
                 self.catSource,
                 self.ownLibrary)
+
+
+class BibOrderMeta():
+    """
+    Bib with corresponding order metadata
+    """
+
+    def __init__(
+            self, system=None, dstLibrary=None, sierraId=None,
+            oid=None, t010=None, t001=None, t005=None,
+            t020=[], t024=[], title=None, locs=None, venNote=None, note=None,
+            intNote=None, code2=None, code4=None, oFormat=None,
+            vendor=None):
+
+        self.system = system
+        self.dstLibrary = dstLibrary
+        self.sierraId = sierraId
+        self.oid = oid
+        self.t001 = t001
+        self.t005 = t005
+        self.t010 = t010
+        self.t020 = t020
+        self.t024 = t024
+        self.title = title
+        self.venNote = venNote
+        self.note = note
+        self.intNote = intNote
+        self.code2 = code2
+        self.code4 = code4
+        self.locs = locs
+        self.oFormat = oFormat
+        self.vendor = vendor
+        # self.contentType = None
+        self.callType = None
+        self.callLabel = None
+        self.wlPrefix = self._has_world_language_prefix()
+        self.audnType = None
+        self.bCallNumber = None
+        self.rCallNumber = []
+
+        self._normalize_data()
+        self._determine_audience()
+        self.fiction_location = self._has_fiction_location_code()
+        self._determine_callNumber()
+
+    def _normalize_data(self):
+        try:
+            self.venNote = self.venNote.lower()
+        except AttributeError:
+            pass
+
+        try:
+            self.code2 = self.code2.lower()
+        except AttributeError:
+            pass
+
+        try:
+            self.code4 = self.code4.lower()
+        except AttributeError:
+            pass
+
+        try:
+            self.locs = self.locs.lower()
+        except AttributeError:
+            pass
+
+        try:
+            self.oFormat = self.oFormat.lower()
+        except AttributeError:
+            pass
+
+        try:
+            self.vendor = self.vendor.lower()
+
+        except AttributeError:
+            pass
+
+        self.t020 = [parse_isbn(x) for x in self.t020]
+
+    def _has_world_language_prefix(self):
+        if self.system == 'NYPL':
+            try:
+                if self.locs[4] == 'l':
+                    return True
+                else:
+                    return False
+            except IndexError:
+                return False
+            except TypeError:
+                return False
+        elif self.system == 'BPL':
+            try:
+                if self.locs[4] == 'l':
+                    return True
+                else:
+                    return False
+            except IndexError:
+                return False
+            except TypeError:
+                return False
+        else:
+            raise ValueError
+
+    def _determine_audience(self):
+        # default audn is adult/young adult
+        self.audnType = 'a'
+        if self.system == 'NYPL':
+            # use first location code only
+            try:
+                loc_audn = self.locs[2]
+            except IndexError:
+                loc_audn = None
+            except TypeError:
+                loc_audn = None
+
+            if loc_audn not in ('a', 'j', 'y'):
+                loc_audn = None
+
+            if self.code4 in ('n', '-', None):
+                c4_audn = None
+            else:
+                c4_audn = self.code4
+
+            if loc_audn and not c4_audn:
+                self.audnType = loc_audn
+            elif c4_audn and not loc_audn:
+                self.audnType = c4_audn
+            elif loc_audn == c4_audn:
+                self.audnType = c4_audn
+            else:
+                self.audnType = None
+
+        elif self.system == 'BPL':
+            pass
+            # raise ValueError(
+            #     'BPL BibOrdMeta _determine_audience not implemented yet')
+        else:
+            raise ValueError
+
+    def _has_fiction_location_code(self):
+        """
+        checks only first location and assumes the rest is the same
+        """
+        if self.system == 'NYPL':
+            try:
+                if self.locs[4] in ('a', 'f', 'i', 'y', 'l'):
+                    return True
+                else:
+                    return False
+            except IndexError:
+                return None
+            except TypeError:
+                return None
+        elif self.system == 'BPL':
+            pass
+            # raise ValueError(
+            #     'BPL BibOrdMeta _has_fiction_location_code not'
+                # 'implemented yet')
+        else:
+            raise ValueError
+
+    def _determine_callNumber(self):
+        """
+        only easy, picture books, fiction, and genres for NYPL
+        """
+        try:
+            if self.system == 'NYPL':
+                if self.fiction_location:
+                    if self.locs[4] == 'i':
+                        self.callType = 'pic'
+                    elif self.locs[4] == 'a':
+                        self.callType = 'eas'
+                    elif self.locs[4] in ('f', 'y'):
+                        self.callType = 'fic'
+                    elif self.locs[4] == 'l':
+                        self.callType = 'und'  # undetermined for world lang
+
+                    if self.venNote in ('m', 'e,m', 'n,m', 't,m'):
+                        self.callType = 'mys'  # MYSTERY
+                    elif self.venNote in ('r', 'e,r', 'n,r', 't,r'):
+                        self.callType = 'rom'  # ROMANCE
+                    elif self.venNote in ('s', 'e,s', 'n,s', 't,s'):
+                        self.callType = 'sfn'  # SCI-FI
+                    elif self.venNote in ('w', 'e,w', 'n,w', 't,w'):
+                        self.callType = 'wes'  # WESTERN
+                    elif self.venNote in ('u', 'e,u', 'n,u', 't,u'):
+                        self.callType = 'urb'  # URBAN
+
+                if self.venNote in ('t', 't,m', 't,r', 't,s', 't,w', 't,u'):
+                    self.callLabel = 'lgp'  # large print
+                elif 'hol' in self.venNote:
+                    # note HOLIDAY label takes precedence over YR when applied
+                    # together; must go first
+                    self.callLabel = 'hol'  # holiday
+                elif 'yr' in self.venNote:
+                    self.callLabel = 'yrd'  # young reader
+                elif self.venNote == 'l':
+                    self.callLabel = 'cla'  # classics
+                elif self.venNote == 'g':
+                    self.callLabel = 'gra'  # graphic novel
+                elif self.venNote == 'bil':
+                    self.callLabel = 'bil'  # bilingual
+        except TypeError:
+            pass
+
+    def __repr__(self):
+        return "<BibOrderMeta(system='%s', dstLibrary='%s', sierraId='%s', " \
+            " oid='%s', t001='%s', t005='%s', t010='%s', t020='%s', " \
+            "t024='%s', title='%s', locs='%s', venNote='%s', note='%s', " \
+            "intNote='%s', code2='%s', code4='%s', oFormat='%s', " \
+            "vendor='%s', callLabel='%s', callType='%s', audnType='%s', " \
+            "fic_loc='%s', wlPrefix='%s')>" % (
+                self.system,
+                self.dstLibrary,
+                self.sierraId,
+                self.oid,
+                self.t001,
+                self.t005,
+                self.t010,
+                self.t020,
+                self.t024,
+                self.title,
+                self.locs,
+                self.venNote,
+                self.note,
+                self.intNote,
+                self.code2,
+                self.code4,
+                self.oFormat,
+                self.vendor,
+                self.callLabel,
+                self.callType,
+                self.audnType,
+                self.fiction_location,
+                self.wlPrefix)

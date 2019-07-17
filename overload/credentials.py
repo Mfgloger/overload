@@ -1,6 +1,7 @@
 # handles initial ingests services credentials and
 # stores them in Windows Credential manager
 
+from ast import literal_eval
 from Crypto.Cipher import AES
 import json
 import keyring
@@ -12,7 +13,7 @@ import shelve
 from errors import OverloadError
 
 
-def locate_goo_credentials(shelf_fh, goo_creds_fh):
+def locate_credentials(shelf_fh, creds_fh):
     """
     creates a path to folder where credentials are
     stored
@@ -27,7 +28,7 @@ def locate_goo_credentials(shelf_fh, goo_creds_fh):
             return None
         else:
             creds_path = os.path.join(
-                os.path.split(update_dir)[0], goo_creds_fh)
+                os.path.split(update_dir)[0], creds_fh)
             return creds_path
     except KeyError:
         return None
@@ -150,3 +151,7 @@ def delete_from_vault(application, user):
         keyring.delete_password(application, user)
     except PasswordDeleteError:
         pass
+
+
+def evaluate_worldcat_creds(string):
+    return literal_eval(string)

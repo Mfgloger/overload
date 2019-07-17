@@ -1,0 +1,22 @@
+Worldcat2Sierra (W2S) module can be used to search and download MARC records from OCLC
+Worldcat database to be upgraded or cataloged.
+
+W2S accepts data in two formats:
+1. A text file with identification numbers (ISBNs, OCLC control numbers, UPCs - each number
+    in new line, the script expects that the first line includes a heading and does not
+    contain any data for query)
+2. A text file created via Sierra Export with following order of columns:
+    - bibliographic: MARC Tag 020|a
+    - bibliographic: Record Number
+    - bibliographic: MARC tag 005
+    - bibliographic: MARC tag 010|a
+    - bibliographic: MARC tag 024|a
+    - bibliographic: MARC tag 035|a
+    - order: Record Number
+    - order: Vendor Note
+    - order: Order Code2
+    - order: Order Code4
+    - order: Location
+    - order: Form
+    - order: Vendor
+    - order: Status

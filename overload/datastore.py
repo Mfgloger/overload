@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import (Column, ForeignKey, Integer, String,
+from sqlalchemy import (Boolean, Column, ForeignKey, Integer, PickleType, String,
                         create_engine)
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.orm import relationship, sessionmaker
@@ -154,6 +154,98 @@ class FTPs(Base):
                "user='%s', password='%s', system='%s')>" % (
                    self.fid, self.name, self.host, self.folder,
                    self.user, self.password, self.system)
+
+
+class WCSourceBatch(Base):
+    """Worldcat module source file data"""
+
+    __tablename__ = 'wc_source_batch'
+    wcsbid = Column(Integer, primary_key=True)
+    file = Column(String, nullable=False)
+    system = Column(String, nullable=False)
+    library = Column(String)
+    action = Column(String, nullable=False)
+    api = Column(String, nullable=False)
+    data_source = Column(String, nullable=False)
+    encode_level = Column(String, nullable=False)
+    mat_type = Column(String, nullable=False)
+    cat_rules = Column(String, nullable=False)
+    cat_source = Column(String, nullable=False)
+    id_type = Column(String)
+
+    meta = relationship('WCSourceMeta', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return "<WCSourceBatch(wcsid=%s, file=%s, system='%s', " \
+            "library='%s', action='%s', api='%s', data_source='%s', " \
+            "encode_level='%s', mat_type='%s', cat_rules='%s', " \
+            "cat_source='%s', id_type='%s')>" % (
+                self.wcsbid,
+                self.file,
+                self.system,
+                self.library,
+                self.action,
+                self.api,
+                self.data_source,
+                self.encode_level,
+                self.mat_type,
+                self.cat_rules,
+                self.cat_source,
+                self.id_type)
+
+
+class WCSourceMeta(Base):
+    """Worldcat module individual bib/order metadata"""
+
+    __tablename__ = 'wc_source_meta'
+    wcsmid = Column(Integer, primary_key=True)
+    wcsbid = Column(
+        Integer, ForeignKey('wc_source_batch.wcsbid'), nullable=False)
+    selected = Column(Boolean, default=False)
+    barcode = Column(String)
+    meta = Column(PickleType)
+
+    wchits = relationship(
+        'WCHit',
+        cascade='all, delete-orphan',
+        uselist=False,
+        lazy='joined')
+
+    def __repr__(self):
+        return "<WCSourceMeta(wcsmid=%s, wcsbid=%s, selected='%s', " \
+            "barcode='%s')>" % (
+                self.wcsmid,
+                self.wcsbid,
+                self.selected,
+                self.barcode)
+
+
+class WCHit(Base):
+    """
+    Worldcat results
+    """
+
+    __tablename__ = 'wc_hit'
+    wchid = Column(Integer, primary_key=True)
+    wcsmid = Column(
+        Integer, ForeignKey('wc_source_meta.wcsmid'), nullable=False)
+    hit = Column(Boolean, nullable=False)
+    query_results = Column(PickleType)
+    match_oclcNo = Column(String, default=None)
+    match_marcxml = Column(PickleType)
+    prepped_marc = Column(PickleType)
+    holding_set = Column(Boolean, default=False)
+    holdings_status = Column(String)
+    holding_response = Column(PickleType)
+
+    def __repr__(self):
+        return "<WCHit(wchid=%s, wcsmid=%s, hit=%s, match_oclcNo=%s," \
+            "holding_set=%s)>" % (
+                self.wchid,
+                self.wcsmid,
+                self.hit,
+                self.match_oclcNo,
+                self.holding_set)
 
 
 class DataAccessLayer:

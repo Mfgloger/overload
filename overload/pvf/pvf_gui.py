@@ -2072,7 +2072,7 @@ class ProcessVendorFiles(tk.Frame):
             title='Select files',
             initialdir=last_open_dir)
 
-        if len(files) > 0:
+        if files:
             self.files = files
             # update selected qty
             self.file_count.set('{} file(s) selected:'.format(len(self.files)))
@@ -2089,9 +2089,10 @@ class ProcessVendorFiles(tk.Frame):
             paths = user_data['paths']
             paths['pvr_last_open_dir'] = last_open_dir
             user_data['paths'] = paths
-            user_data.close()
 
             self.reset()
+
+        user_data.close()
 
     def ftp(self):
         if self.system.get() == '':
@@ -2153,7 +2154,7 @@ class ProcessVendorFiles(tk.Frame):
         if self.last_directory_check.get() == 0:
             dir_opt['initialdir'] = MY_DOCS
             d = tkFileDialog.askdirectory(**dir_opt)
-            if d != '':
+            if d:
                 self.last_directory = d
                 paths = user_data['paths']
                 paths['pvr_default_save_dir'] = d

@@ -1,5 +1,4 @@
-# GUI for OpsUtils
-
+import ast
 import base64
 import calendar
 import datetime
@@ -21,7 +20,7 @@ import tkFileDialog
 
 
 from datastore import session_scope, PVR_Batch
-from db_worker import retrieve_values
+from db_worker import retrieve_records
 from connectors import goo
 from connectors.goo_settings.scopes import SHEET_SCOPE, FDRIVE_SCOPE
 from connectors.goo_settings.access_names import GAPP, GUSER
@@ -34,6 +33,8 @@ from pvf.pvf_gui import ProcessVendorFiles
 from pvf.reports import cumulative_nypl_stats, cumulative_bpl_stats, \
     cumulative_vendor_stats
 from setup_dirs import *
+from wc2sierra.gui import Worldcat2Sierra
+from getbib.gui import GetBibs
 
 
 def updates(manual=True):
@@ -117,9 +118,10 @@ class MainApplication(tk.Tk):
         # spawn Overload frames
         self.frames = {}
         for F in (
-                Main, ProcessVendorFiles, UpgradeBib, Reports,
+                Main, ProcessVendorFiles, Worldcat2Sierra,
+                GetBibs, Reports,
                 Settings, DefaultDirs, SierraAPIs, PlatformAPIs,
-                Z3950s, GooAPI, About):
+                Z3950s, GooAPI, WorldcatAPIs, About):
             page_name = F.__name__
             frame = F(parent=container, controller=self,
                       **self.app_data)
@@ -138,7 +140,10 @@ class MainApplication(tk.Tk):
                                    'ProcessVendorFiles'))
         navig_menu.add_command(label='upgrade bibs',
                                command=lambda: self.show_frame(
-                                   'UpgradeBib'))
+                                   'Worldcat2Sierra'))
+        navig_menu.add_command(label='get bib',
+                               command=lambda: self.show_frame(
+                                   'GetBibs'))
         navig_menu.add_command(label='settings',
                                command=lambda: self.show_frame('Settings'))
         navig_menu.add_separator()
@@ -200,32 +205,36 @@ class Main(tk.Frame):
         upgradeICO = tk.PhotoImage(file='./icons/upgrade.gif')
         self.upgradeBtn = ttk.Button(
             self, image=upgradeICO,
-            text='upgrade bib',
+            text='worldcat2sierra',
             compound=tk.TOP,
             cursor='hand2',
             width=15,
-            command=None)
+            command=lambda: controller.show_frame('Worldcat2Sierra'))
         self.upgradeBtn.image = upgradeICO
         self.upgradeBtn.grid(
             row=1, column=3, sticky='snew')
-        self.createToolTip(self.upgradeBtn, 'coming soon ...')
+        # self.createToolTip(
+        #     self.upgradeBtn,
+        #     'Upgrade existing records and catalog new\n'
+        #     'materials using Worldcat')
 
-        jsonQueryICO = tk.PhotoImage(file='./icons/json_query_icon.gif')
-        self.jsonQueryBtn = ttk.Button(
-            self, image=jsonQueryICO,
-            text='JSON query',
+        getBibICO = tk.PhotoImage(file='./icons/getbib.gif')
+        self.getBibBtn = ttk.Button(
+            self, image=getBibICO,
+            text='get bib',
             compound=tk.TOP,
             cursor='hand2',
             width=15,
-            command=None)
-        self.jsonQueryBtn.image = jsonQueryICO
-        self.jsonQueryBtn.grid(
+            command=lambda: controller.show_frame('GetBibs'))
+        self.getBibBtn.image = getBibICO
+        self.getBibBtn.grid(
             row=1, column=5, sticky='snew')
-        self.createToolTip(
-            self.jsonQueryBtn,
-            'creates Sierra List\n'
-            'query in JSON format\n'
-            '(coming soon...)')
+        # self.createToolTip(
+        #     self.getBibBtn,
+        #     'retrieves marc records\n'
+        #     'or Sierra bib numbers\n'
+        #     'based on list of ISBNs,\n'
+        #     'or other IDs')
 
         nextICO = tk.PhotoImage(file='./icons/killer_tool.gif')
         self.nextToolBtn = ttk.Button(
@@ -255,9 +264,9 @@ class Main(tk.Frame):
         self.reportsBtn.image = reportsICO
         self.reportsBtn.grid(
             row=3, column=1, sticky='snew')
-        self.createToolTip(
-            self.reportsBtn,
-            'user monthly reports')
+        # self.createToolTip(
+        #     self.reportsBtn,
+        #     'user monthly reports')
 
         settingsICO = tk.PhotoImage(file='./icons/settings.gif')
         self.settingsBtn = ttk.Button(
@@ -282,16 +291,6 @@ class Main(tk.Frame):
 
         widget.bind('<Enter>', enter)
         widget.bind('<Leave>', leave)
-
-
-class UpgradeBib(tk.Frame):
-    """Upgrades bibs in a file by quering and finding fuller records in
-       WorldCat"""
-
-    def __init__(self, parent, controller, **app_data):
-        self.parent = parent
-        tk.Frame.__init__(self, parent)
-        self.controller = controller
 
 
 class Reports(tk.Frame):
@@ -590,7 +589,7 @@ class Reports(tk.Frame):
 
             # find out date values for PFV report
             with session_scope() as session:
-                records = retrieve_values(session, PVR_Batch, 'timestamp')
+                records = retrieve_records(session, PVR_Batch)
                 values = list(
                     set([record.timestamp[:7] for record in records]))
             self.userReportCbx['values'] = values
@@ -632,7 +631,7 @@ class Settings(tk.Frame):
         self.defaultDirBtn.grid(
             row=1, column=1, sticky='snew')
 
-        apiICO = tk.PhotoImage(file='./icons/remoteDB.gif')
+        apiICO = tk.PhotoImage(file='./icons/key-lock.gif')
 
         self.platform_apiBtn = ttk.Button(
             self, image=apiICO,
@@ -646,29 +645,27 @@ class Settings(tk.Frame):
         self.platform_apiBtn.grid(
             row=1, column=3, sticky='snew')
 
-        gooICO = tk.PhotoImage(file='./icons/key-lock.gif')
-
         self.goo_apiBtn = ttk.Button(
-            self, image=gooICO,
+            self, image=apiICO,
             text='Google APIs',
             compound=tk.TOP,
             cursor='hand2',
             width=15,
             command=lambda: controller.show_frame('GooAPI'))
 
-        self.goo_apiBtn.image = gooICO
+        self.goo_apiBtn.image = apiICO
         self.goo_apiBtn.grid(
             row=1, column=5, sticky='snew')
 
-        self.sierra_apiBtn = ttk.Button(
+        self.z3950_apiBtn = ttk.Button(
             self, image=apiICO,
             text='Z950s',
             compound=tk.TOP,
             cursor='hand2',
             width=15,
             command=lambda: controller.show_frame('Z3950s'))
-        self.sierra_apiBtn.image = apiICO
-        self.sierra_apiBtn.grid(
+        self.z3950_apiBtn.image = apiICO
+        self.z3950_apiBtn.grid(
             row=3, column=1, sticky='snew')
 
         self.sierra_apiBtn = ttk.Button(
@@ -682,6 +679,18 @@ class Settings(tk.Frame):
         self.sierra_apiBtn.image = apiICO
         self.sierra_apiBtn.grid(
             row=3, column=3, sticky='snew')
+
+        self.wc_apiBtn = ttk.Button(
+            self, image=apiICO,
+            text='Worldcat APIs',
+            compound=tk.TOP,
+            cursor='hand2',
+            width=15,
+            command=lambda: controller.show_frame('WorldcatAPIs'))
+
+        self.wc_apiBtn.image = apiICO
+        self.wc_apiBtn.grid(
+            row=3, column=5, sticky='snew')
 
         self.closeBtn = ttk.Button(
             self, text='close',
@@ -872,7 +881,7 @@ class SierraAPIs(tk.Frame):
             user_data.close()
 
             # store critical data in Windows Vault
-            credentials.standard_to_vault(
+            credentials.store_in_vault(
                 self.host.get(), client_id, client_secret)
 
             tkMessageBox.showinfo('Input', 'Settings have been saved')
@@ -1184,7 +1193,7 @@ class PlatformAPIs(tk.Frame):
             user_data.close()
 
             # store critical data in Windows Vault
-            credentials.standard_to_vault(
+            credentials.store_to_vault(
                 oauth_server, client_id, client_secret)
 
             tkMessageBox.showinfo('Input', 'Settings have been saved')
@@ -1309,6 +1318,261 @@ class PlatformAPIs(tk.Frame):
                         conn_names.append(name)
                     self.conn_nameCbx['value'] = sorted(conn_names)
             user_data.close()
+
+
+class WorldcatAPIs(tk.Frame):
+
+    """records Worldcat Services API settings"""
+
+    def __init__(self, parent, controller, **app_data):
+        self.parent = parent
+        tk.Frame.__init__(self, parent, background='white')
+        self.controller = controller
+        self.activeW = app_data['activeW']
+        self.activeW.trace('w', self.observer)
+
+        # variables
+        self.key = tk.StringVar()
+        self.cred_fhs = []
+
+        # main frame
+        self.baseFrm = ttk.LabelFrame(self, text='WorldCat API credentials')
+        self.baseFrm.grid(
+            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm.rowconfigure(0, minsize=20)
+        self.baseFrm.rowconfigure(2, minsize=5)
+        self.baseFrm.rowconfigure(4, minsize=5)
+        self.baseFrm.rowconfigure(6, minsize=5)
+        self.baseFrm.rowconfigure(8, minsize=5)
+        self.baseFrm.rowconfigure(10, minsize=250)
+        self.baseFrm.rowconfigure(12, minsize=20)
+        self.baseFrm.columnconfigure(0, minsize=10)
+        self.baseFrm.columnconfigure(2, minsize=10)
+        self.baseFrm.columnconfigure(5, minsize=10)
+
+        self.autolinkBtn = ttk.Button(
+            self.baseFrm, text='auto credentials',
+            cursor='hand2',
+            width=15,
+            command=self.get_worldcat_creds)
+        self.autolinkBtn.grid(
+            row=1, column=1, sticky='sew')
+
+        self.addBtn = ttk.Button(
+            self.baseFrm, text='add credential',
+            cursor='hand2',
+            width=15,
+            command=self.add_worldcat_cred)
+        self.addBtn.grid(
+            row=3, column=1, sticky='sew')
+
+        self.testBtn = ttk.Button(
+            self.baseFrm, text='test',
+            cursor='hand2',
+            width=15,
+            command=self.test_worldcat_cred)
+        self.testBtn.grid(
+            row=5, column=1, sticky='sew')
+
+        self.deleteBtn = ttk.Button(
+            self.baseFrm, text='delete credential',
+            cursor='hand2',
+            width=15,
+            command=self.delete_worldcat_cred)
+        self.deleteBtn.grid(
+            row=7, column=1, sticky='sew')
+
+        self.helpBtn = ttk.Button(
+            self.baseFrm, text='help',
+            cursor='hand2',
+            width=15,
+            command=self.show_help)
+        self.helpBtn.grid(
+            row=9, column=1, sticky='sew')
+
+        self.closeBtn = ttk.Button(
+            self.baseFrm, text='close',
+            cursor='hand2',
+            width=15,
+            command=lambda: controller.show_frame('Main'))
+        self.closeBtn.grid(
+            row=11, column=1, sticky='sew')
+
+        # info canvas
+        self.yscrollbar = tk.Scrollbar(self.baseFrm, orient=tk.VERTICAL)
+        self.yscrollbar.grid(
+            row=1, column=3, rowspan=10, sticky='nse', padx=2)
+        self.infoCnv = tk.Canvas(
+            self.baseFrm, bg='white',
+            width=570,
+            height=400,
+            yscrollcommand=self.yscrollbar.set)
+        self.infoCnv.grid(
+            row=1, column=4, rowspan=10)
+
+        self.infoFrm = tk.Frame(
+            self.infoCnv)
+        self.yscrollbar.config(command=self.infoCnv.yview)
+        self.infoCnv.create_window(
+            (0, 0), window=self.infoFrm, anchor="nw",
+            tags="self.infoFrm")
+        self.infoFrm.bind("<Configure>", self.onFrameConfigure)
+
+        self.napisFrm = ttk.LabelFrame(self.infoFrm, text='NYPL')
+        self.napisFrm.columnconfigure(2, minsize=200)
+        self.napisFrm.grid(
+            row=0, column=0, sticky='nsw')
+
+        self.bapisFrm = ttk.LabelFrame(self.infoFrm, text='BPL')
+        self.bapisFrm.columnconfigure(2, minsize=200)
+        self.bapisFrm.grid(
+            row=1, column=0, sticky='nsw')
+
+    def onFrameConfigure(self, event):
+        self.infoCnv.config(scrollregion=self.infoCnv.bbox('all'))
+
+    def get_worldcat_creds(self):
+        # look up update folder and determine path to
+        # credential file
+
+        creds_dir = credentials.locate_credentials(USER_DATA, WORLDCAT_CREDS)
+        if os.path.isdir(creds_dir):
+            for filename in os.listdir(creds_dir):
+                if filename.endswith(".bin"):
+                    self.cred_fhs.append(os.path.join(creds_dir, filename))
+
+        if self.cred_fhs:
+            # ask for decryption key, decrypt creds and
+            # store in Windows vault
+            self.ask_decryption_key()
+            self.wait_window(self.top)
+        else:
+            overload_logger.error(
+                'Worlcat credentials not found at {}'.format(
+                    creds_dir))
+            m = 'WorldCat credentials at\n {}\n' \
+                'appear to be missing. Please report the problem.'.format(
+                    creds_dir)
+            tkMessageBox.showerror('Settings Error', m)
+
+    def add_worldcat_cred(self):
+        print('open pop-up window and add individual credentials')
+
+    def test_worldcat_cred(self):
+        print('testing selected credentials')
+
+    def delete_worldcat_cred(self):
+        print('delete cred from the Vault')
+
+    def show_help(self):
+        print('show_help here')
+
+    def ask_decryption_key(self):
+        self.top = tk.Toplevel(self, background='white')
+        self.top.iconbitmap('./icons/key.ico')
+        self.top.title('Decryption Key')
+
+        # reset key
+        self.key.set('')
+
+        # layout
+        self.top.columnconfigure(0, minsize=10)
+        self.top.columnconfigure(2, minsize=5)
+        self.top.columnconfigure(4, minsize=10)
+        self.top.rowconfigure(0, minsize=10)
+        self.top.rowconfigure(2, minsize=5)
+        self.top.rowconfigure(4, minsize=5)
+        self.top.rowconfigure(6, minsize=10)
+
+        ttk.Label(
+            self.top,
+            text='please provide decryption key:').grid(
+                row=1, column=1, columnspan=3, sticky='nw', padx=10)
+
+        self.keyEnt = tk.Entry(
+            self.top, textvariable=self.key, show='*')
+        self.keyEnt.grid(
+            row=3, column=1, columnspan=3, sticky='snew', padx=10)
+
+        self.decryptBtn = ttk.Button(
+            self.top,
+            text='decrypt',
+            command=self.decrypt_creds)
+        self.decryptBtn.grid(
+            row=5, column=1, sticky='sew', padx=10, pady=10)
+
+        self.closeBtn = ttk.Button(
+            self.top,
+            text='close',
+            command=self.top.destroy)
+        self.closeBtn.grid(
+            row=5, column=3, sticky='sew', padx=10, pady=10)
+
+    def decrypt_creds(self):
+        key = self.key.get().strip()
+        nypl_apis = dict()
+        bpl_apis = dict()
+        success = True
+        for cred_fh in self.cred_fhs:
+            try:
+                decrypted_creds = credentials.decrypt_file_data(key, cred_fh)
+                name = ast.literal_eval(decrypted_creds)['name']
+                library = ast.literal_eval(decrypted_creds)['library']
+                credentials.store_in_vault(
+                    name, 'Overload', decrypted_creds)
+                # add credentials names to user_data for retrieval
+                details = {'last_token': None, 'expires_on': None}
+                if library == 'NYPL':
+                    nypl_apis[name] = details
+                elif library == 'BPL':
+                    bpl_apis[name] = details
+            except OverloadError as e:
+                success = False
+                overload_logger.error('Decryption error: {}'.format(e))
+                m = 'Decryption error: {}'.format(e)
+                tkMessageBox.showerror('Decryption error', m, parent=self.top)
+        if success:
+            wc_apis = dict(NYPL=nypl_apis, BPL=bpl_apis)
+            user_data = shelve.open(USER_DATA)
+            user_data['WorldcatAPIs'] = wc_apis
+            user_data.close()
+            self.top.destroy()
+
+    def create_individual_api_info(self, parent, name, row):
+        cred = credentials.get_from_vault(name, 'Overload')
+        if cred:
+            api = ast.literal_eval(cred)
+            ttk.Label(parent, text=name).grid(
+                row=row, column=0, sticky='nsw', pady=5)
+            ttk.Label(parent, text='scopes').grid(
+                row=row, column=1, sticky='nsw', padx=5)
+            ttk.Label(parent, text=','.join(api['scopes'])).grid(
+                row=row, column=2, columnspan=5, sticky='nsw', padx=5)
+            ttk.Label(parent, text='institution id').grid(
+                row=row + 1, column=1, sticky='nsw', padx=5)
+            ttk.Label(parent, text=api['authenticating_institution_id']).grid(
+                row=row + 1, column=2, columnspan=5, sticky='nsw', padx=5)
+
+    def display_available_apis(self):
+        user_data = shelve.open(USER_DATA)
+        try:
+            apis = user_data['WorldcatAPIs']
+            r = 0
+            for name in apis['NYPL']:
+                self.create_individual_api_info(self.napiFrm, name, r)
+                r += 2
+            r = 0
+            for name in apis['BPL']:
+                self.create_individual_api_info(self.bapisFrm, name, r)
+                r += 2
+        except KeyError:
+            pass
+        finally:
+            user_data.close()
+
+    def observer(self, *args):
+        if self.activeW.get() == 'WorldcatAPIs':
+            self.display_available_apis()
 
 
 class Z3950s(tk.Frame):
@@ -1867,7 +2131,7 @@ class GooAPI(tk.Frame):
     def link_GSuite(self):
         # look up update folder and determine path to
         # credential file
-        self.creds = credentials.locate_goo_credentials(USER_DATA, GOO_CREDS)
+        self.creds = credentials.locate_credentials(USER_DATA, GOO_CREDS)
         if self.creds:
             if not os.path.isfile(self.creds):
                 overload_logger.error(

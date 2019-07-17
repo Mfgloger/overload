@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 
 from datastore import FTPs, session_scope
-from db_worker import insert_or_ignore, retrieve_values, retrieve_record, \
+from db_worker import insert_or_ignore, retrieve_records, retrieve_record, \
     delete_record
 from errors import OverloadError
 from logging_setup import format_traceback, LogglyAdapter
@@ -74,10 +74,9 @@ def delete_connection(name, system):
 
 def get_ftp_connections(system):
     with session_scope() as db_session:
-        names = retrieve_values(
+        names = retrieve_records(
             db_session,
             FTPs,
-            'host',
             system=system)
         return [x.name for x in names]
 

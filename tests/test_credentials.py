@@ -39,8 +39,8 @@ class TestCredentials(unittest.TestCase):
         except keyring.errors.PasswordDeleteError:
             pass
 
-    def test_locate_goo_credentials(self):
-        loc = credentials.locate_goo_credentials(USER_DATA, GOO_CREDS)
+    def test_locate_credentials(self):
+        loc = credentials.locate_credentials(USER_DATA, GOO_CREDS)
         self.assertTrue(
             os.path.exists(loc))
 

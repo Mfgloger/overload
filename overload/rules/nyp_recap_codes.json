@@ -1,0 +1,68 @@
+{
+    "ReCAP":
+    {
+        "MAB": {
+            "loc_code": "RCMB2",
+            "item_type": "2",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
+        },
+        "MAS": {
+            "loc_code": "RCMB2",
+            "item_type": "2",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
+        },
+        "MAL": {
+            "loc_code": "RC2MA",
+            "item_type": "55",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
+        },
+        "MAF": {
+            "loc_code": "RCMF2",
+            "item_type": "55",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
+        },
+        "MAG": {
+            "loc_code": "RCMG2",
+            "item_type": "55",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
+        },
+        "MAP": {
+            "loc_code": "RCMP2",
+            "item_type": "55",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": ""
+        },
+        "MYM": {
+            "loc_code": "RCPM2",
+            "item_type": "55",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
+        },
+        "MYH": {
+            "loc_code": "RCPH2",
+            "item_type": "55",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
+        },
+        "MYT": {
+            "loc_code": "RCPT2",
+            "item_type": "55",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
+        }
+    }
+}
