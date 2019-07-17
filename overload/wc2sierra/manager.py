@@ -142,10 +142,6 @@ def nypl_oclcNo_field(marcxml):
     return tag_001
 
 
-def selected2marc():
-    pass
-
-
 def launch_process(source_fh, data_source, system, library,
                    progbar1, progbar2,
                    process_label, hits, nohits, meet_crit_counter,
