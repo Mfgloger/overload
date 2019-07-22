@@ -320,7 +320,6 @@ def launch_process(source_fh, data_source, system, library,
 
                 if m.meta.t020 and not hit:
                     # will iterate over all ISBNs if no hits
-                    found = False
                     for isbn in m.meta.t020:
                         res = session.cql_query(
                             isbn, 'ISBN', mat_type, cat_source)
@@ -330,12 +329,10 @@ def launch_process(source_fh, data_source, system, library,
                             res, db_session, m.wcsmid)
 
                         if hit:
-                            found = True
                             found_counter += 1
                             break  # stop searching
 
                 if m.meta.t024 and not hit:
-                    found = False
                     for upc in m.meta.t024:
                         res = session.cql_query(
                             upc, 'UPC', mat_type, cat_source)
@@ -345,11 +342,10 @@ def launch_process(source_fh, data_source, system, library,
                             res, db_session, m.wcsmid)
 
                         if hit:
-                            found = True
                             found_counter += 1
                             break  # stop searching
 
-                if not found:
+                if not hit:
                     not_found_counter += 1
 
                 hits.set(found_counter)
