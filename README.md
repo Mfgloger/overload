@@ -3,7 +3,7 @@
 BookOps Cataloging Deptartment toolbox.
 
 Warning, the project is a work in progress.
-At the momement Overload includes following functionality:
+At the moment Overload includes following functionality:
 * Processing Vendor File (PVF) - prepares records for import into BPL & NYPL Sierra
 * Worldcat2Sierra - queries and downloads bibliographic records from OCLC Worldcat based on Sierra's report or a list of identifiers (ISBNs, LCCN, OCLC #, UPC)
 * GetBib - retrieves BPL & NYPL Sierra record number for matching ISBN, UPC, LCCN, and OCLC #
