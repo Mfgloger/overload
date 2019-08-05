@@ -27,7 +27,7 @@ class ResultsView(tk.Frame):
         self.base.title('GetBib Report')
 
         self.base.columnconfigure(0, minsize=10)
-        self.base.columnconfigure(1, minsize=1100)
+        self.base.columnconfigure(1, minsize=1200)
         self.base.columnconfigure(3, minsize=200)
         self.base.columnconfigure(5, minsize=10)
         self.base.rowconfigure(0, minsize=10)

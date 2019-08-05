@@ -154,7 +154,8 @@ def launch_process(
             header = analysis.to_dict().keys()
             header.insert(0, 'pos')
             save2csv(GETBIB_REP, header)
-        analysis.target_sierraId = 'b{}a'.format(analysis.target_sierraId)
+        if analysis.target_sierraId:
+            analysis.target_sierraId = 'b{}a'.format(analysis.target_sierraId)
         row = analysis.to_dict().values()
         row.insert(0, progbar['value'])
         save2csv(GETBIB_REP, row)
