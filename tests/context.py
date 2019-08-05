@@ -13,7 +13,7 @@ from overload.connectors import goo
 from overload.connectors.goo_settings.access_names import GAPP, GUSER
 from overload import credentials
 from overload.utils import *
-from overload.bibs import bibs, crosswalks, patches, dedup
+from overload.bibs import bibs, crosswalks, patches, dedup, sierra_dicts
 from overload.pvf import vendors
 from overload.pvf.analyzer import PVRReport, PVR_NYPLReport
 from overload.pvf import reports

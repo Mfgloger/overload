@@ -1,18 +1,113 @@
-import logging
-import logging.config
-import sys
-from logging_setup import DEV_LOGGING, LogglyAdapter, format_traceback
-from setup_dirs import APP_DIR
+# import logging
+# import logging.config
+# import sys
+# from logging_setup import DEV_LOGGING, LogglyAdapter, format_traceback
+# from setup_dirs import APP_DIR
 
-logging.config.dictConfig(DEV_LOGGING)
-logger = logging.getLogger('overload')
-appLogger = LogglyAdapter(logger, {'version': '0.5.0'})
+# logging.config.dictConfig(DEV_LOGGING)
+# logger = logging.getLogger('overload')
+# appLogger = LogglyAdapter(logger, {'version': '0.5.0'})
 
 
-appLogger.info('Test')
-appLogger.error('{}'.format(APP_DIR))
-try:
-	int('a')
-except ValueError as exc:
-	_, _, exc_traceback = sys.exc_info()
-	appLogger.error('Error. {}'.format(format_traceback(exc, exc_traceback)))
+# appLogger.info('Test')
+# appLogger.error('{}'.format(APP_DIR))
+# try:
+# 	int('a')
+# except ValueError as exc:
+# 	_, _, exc_traceback = sys.exc_info()
+# 	appLogger.error('Error. {}'.format(format_traceback(exc, exc_traceback)))
+
+    "ag",
+    "al",
+    "ba",
+    "bc",
+    "be",
+    "bl",
+    "br",
+    "bt",
+    "ca",
+    "cc",
+    "ch",
+    "ci",
+    "cl",
+    "cp",
+    "cs",
+    "ct",
+    "dh",
+    "dy",
+    "ea",
+    "ep",
+    "ew",
+    "fe",
+    "fw",
+    "fx",
+    "gc",
+    "gd",
+    "gk",
+    "hb",
+    "hd",
+    "hf",
+    "hg",
+    "hk",
+    "hl",
+    "hp",
+    "hs",
+    "ht",
+    "hu",
+    "in",
+    "jm",
+    "jp",
+    "kb",
+    "kp",
+    "lb",
+    "lm",
+    "ma",
+    "mb",
+    "me",
+    "mh",
+    "ml",
+    "mm",
+    "mn",
+    "mo",
+    "mp",
+    "mr",
+    "mu",
+    "my",
+    "nb",
+    "nd",
+    "ns",
+    "ot",
+    "pk",
+    "pm",
+    "pr",
+    "rd",
+    "ri",
+    "rs",
+    "rt",
+    "sa",
+    "sb",
+    "sc",
+    "sd",
+    "se",
+    "sg",
+    "sl",
+    "ss",
+    "st",
+    "sv",
+    "tg",
+    "th",
+    "tm",
+    "ts",
+    "tv",
+    "vc",
+    "vn",
+    "wb",
+    "wf",
+    "wh",
+    "wk",
+    "wl",
+    "wo",
+    "wt",
+    "yv",
+    "ft",
+    "ls"
