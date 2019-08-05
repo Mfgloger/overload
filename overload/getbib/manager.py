@@ -176,3 +176,4 @@ def launch_process(
         'dups': dups
     }
     user_data.close()
+    progbar['value'] = progbar['maximum']

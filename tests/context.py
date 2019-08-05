@@ -13,7 +13,8 @@ from overload.connectors import goo
 from overload.connectors.goo_settings.access_names import GAPP, GUSER
 from overload import credentials
 from overload.utils import *
-from overload.bibs import bibs, crosswalks, patches, dedup, parsers
+from overload.bibs import (bibs, crosswalks, patches, dedup, parsers,
+                           sierra_dicts)
 from overload.bibs.nypl_callnum import (remove_special_characters,
                                         create_nypl_fiction_callnum)
 from overload.pvf import vendors

@@ -7,7 +7,7 @@ from datetime import datetime
 
 from errors import OverloadError
 from parsers import (parse_isbn, parse_issn, parse_upc, parse_sierra_id)
-from sierra_dicts import NBIB_DEFAULT_LOCATIONS
+from sierra_dicts import NBIB_DEFAULT_LOCATIONS, NYPL_BRANCHES
 
 
 def read_marc21(file):
@@ -740,7 +740,7 @@ class InhouseBibMeta(BibMeta):
         if sierraId is not None:
             self.sierraId = sierraId
         self.catSource = 'vendor'
-        self.ownLibrary = None
+        self.ownLibrary = self._determine_ownLibrary(bib, locations)
 
         # source of cataloging
         # check 049 code to determine library
@@ -760,31 +760,54 @@ class InhouseBibMeta(BibMeta):
                                 self.catSource = 'inhouse'
                                 break
 
+    def _determine_ownLibrary(self, bib, locations):
         # owning library
         # for nypl check also locations
+
         bl = False
         rl = False
+
         # brief order record scenario
         if 'zzzzz' in locations:
             bl = True
         if 'xxx' in locations:
             rl = True
+
         # full bib scenario
-        if self.ownLibrary is None:
-            if '091' in bib or '099' in bib:
-                bl = True
-            if '852' in bib:
-                for field in bib.get_fields('852'):
-                    if field.indicators[0] == '8':
+        if '091' in bib or '099' in bib:
+            bl = True
+        if '852' in bib:
+            for field in bib.get_fields('852'):
+                if field.indicators[0] == '8':
+                    rl = True
+                    break
+
+        # explicit NYPL locations
+        rl_my_locs = ['myd', 'myh', 'mym', 'myt']
+        for l in locations:
+            try:
+                if l[:2] == 'my':
+                    if l in rl_my_locs:
                         rl = True
-                        break
+                    else:
+                        bl = True
+                elif l[:2] == 'sc':
+                    rl = True
+                elif l[:2] == 'ma':
+                    rl = True
+                elif l[:2] in NYPL_BRANCHES.keys():
+                    bl = True
+            except IndexError:
+                pass
+            except TypeError:
+                pass
 
         if bl and not rl:
-            self.ownLibrary = 'branches'
+            return 'branches'
         elif bl and rl:
-            self.ownLibrary = 'mixed'
+            return 'mixed'
         elif not bl and rl:
-            self.ownLibrary = 'research'
+            return 'research'
 
     def __repr__(self):
         return "<InhouseBibMeta(001:{}, 003:{}, 005:{}, 020:{}, 022:{}, " \

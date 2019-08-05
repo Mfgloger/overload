@@ -4,7 +4,7 @@ import unittest
 from pymarc import Record, Field, MARCReader, JSONReader
 import os
 
-from context import bibs, parsers
+from context import bibs, parsers, sierra_dicts
 
 
 class TestUtils(unittest.TestCase):
@@ -508,11 +508,26 @@ class TestTemplate_to_961(unittest.TestCase):
     """
     Tests of creation of order varied fields in 961 MARC tag
     """
+
     def setUp(self):
         class template:
             pass
 
         self.temp = template()
+        self.temp.identity = None
+        self.temp.generalNote = None
+        self.temp.internalNote = None
+        self.temp.oldOrdNo = None
+        self.temp.selector = None
+        self.temp.venAddr = None
+        self.temp.venNote = None
+        self.temp.blanketPO = None
+        self.temp.venTitleNo = None
+        self.temp.paidNote = None
+        self.temp.shipTo = None
+        self.temp.requestor = None
+
+    def tearDown(self):
         self.temp.identity = None
         self.temp.generalNote = None
         self.temp.internalNote = None
@@ -560,7 +575,7 @@ class TestTemplate_to_961(unittest.TestCase):
         self.temp.oldOrdNo = 'e'
         self.temp.selector = 'f'
         self.temp.venAddr = 'g'
-        self.temp.venNote = 'v'
+        self.temp.venNote = 'h'
         self.temp.blanketPO = 'm'
         self.temp.venTitleNo = 'i'
         self.temp.paidNote = 'j'
@@ -582,12 +597,12 @@ class TestTemplate_to_961(unittest.TestCase):
                 'k', '10',
                 'l', '11',
                 'm', '12',
-                'v', '13',
+                'h', '13',
             ])
         field = bibs.db_template_to_961(self.temp, vfield)
         self.assertEqual(
             str(field),
-            '=961  \\\\$aa$cc$dd$ee$ff$gg$vv$mm$ii$jj$kk$ll')
+            '=961  \\\\$aa$cc$dd$ee$ff$gg$hh$mm$ii$jj$kk$ll')
 
     def test_template_attr_None_keeps_vendor_subfields(self):
         vfield = Field(
@@ -605,12 +620,12 @@ class TestTemplate_to_961(unittest.TestCase):
                 'k', '9',
                 'l', '10',
                 'm', '11',
-                'v', '12',
+                'h', '12',
             ])
         field = bibs.db_template_to_961(self.temp, vfield)
         self.assertEqual(
             str(field),
-            '=961  \\\\$a1$c2$d3$e4$f5$g6$v12$m11$i7$j8$k9$l10')
+            '=961  \\\\$a1$c2$d3$e4$f5$g6$h12$m11$i7$j8$k9$l10')
 
     def test_mixed_vendor_template_field(self):
         vfield = Field(
@@ -704,6 +719,208 @@ class TestNYPLBranchBibOrderMeta(unittest.TestCase):
         self.assertEqual(data.audnType, 'a')
         self.assertIsNone(data.bCallNumber)
         self.assertEqual(data.rCallNumber, [])
+
+
+class TestInhouseBibMeta(unittest.TestCase):
+    """
+    Inhouse meta analysis tests
+    """
+
+    def setUp(self):
+        # Test MARC record
+
+        # NYPL bib
+        self.n_marc = Record()
+        self.n_marc.leader = '00000nam a2200000u  4500'
+        tags = []
+        tags.append(
+            Field(tag='001', data='o1234'))
+        tags.append(
+            Field(tag='003', data='OCoLC'))
+        tags.append(
+            Field(
+                tag='049',
+                indicators=[' ', ' '],
+                subfields=['a', 'NYPP']))
+
+        tags.append(
+            Field(tag='245',
+                  indicators=['0', '0'],
+                  subfields=['a', 'Test title']))
+
+        for tag in tags:
+            self.n_marc.add_ordered_field(tag)
+
+        # BPL bib
+        self.b_marc = Record()
+        self.b_marc.leader = '00000nam a2200000u  4500'
+        tags = []
+        tags.append(
+            Field(tag='001', data='o1234'))
+        tags.append(
+            Field(tag='003', data='OCoLC'))
+        tags.append(
+            Field(
+                tag='049',
+                indicators=[' ', ' '],
+                subfields=['a', 'BKL']))
+
+        tags.append(
+            Field(tag='245',
+                  indicators=['0', '0'],
+                  subfields=['a', 'Test title']))
+
+        for tag in tags:
+            self.b_marc.add_ordered_field(tag)
+
+    def tearDown(self):
+        # Test MARC record
+
+        # NYPL bib
+        self.n_marc = Record()
+
+        # BPL bib
+        self.b_marc = Record()
+
+    def test_nypl_ownLibrary_no_locations(self):
+        locs = []
+
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertIsNone(meta.ownLibrary)
+
+    def test_nypl_ownLibrary_xxx(self):
+        locs = ['xxx']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'research')
+
+    def test_nypl_ownLibrary_zzzzz(self):
+        locs = ['zzzzz']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'branches')
+
+    def test_nypl_ownLibrary_mixed_order(self):
+        locs = ['zzzzz', 'xxx']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'mixed')
+
+    def test_nypl_ownLibrary_mixed_explicit_my(self):
+        locs = ['mya0f', 'myd']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'mixed')
+
+    def test_nypl_ownLibrary_mixed_explicit_ma(self):
+        locs = ['mya0n', 'mal']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'mixed')
+
+    def test_nypl_ownLibrary_branch_locs_only(self):
+        locs = sierra_dicts.NYPL_BRANCHES.keys()
+        locs.remove('ma')
+        locs.remove('sc')
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'branches')
+
+    def test_nypl_ownLibrary_research_my_locs(self):
+        locs = ['myd', 'myh', 'mym', 'myt']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'research')
+
+    def test_nypl_ownLibrary_branches_my_locs(self):
+        locs = ['mya0n', 'mya0v', 'myj0f']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'branches')
+
+    def test_nypl_ownLibrary_resarch_ma_loc(self):
+        locs = ['mal']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'research')
+
+    def test_nypl_ownLibrary_research_sc_loc(self):
+        locs = ['sc']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'research')
+
+    def test_nypl_branch_full_no_order(self):
+        tag = Field(
+            tag='091',
+            indicators=[' ', ' '],
+            subfields=['f', 'FIC', 'a', 'ADAMS'])
+        self.n_marc.add_ordered_field(tag)
+        meta = bibs.InhouseBibMeta(self.n_marc)
+        self.assertEqual(meta.ownLibrary, 'branches')
+
+    def test_nypl_research_full_no_order(self):
+        tag = Field(
+            tag='852',
+            indicators=['8', ' '],
+            subfields=['h', 'ReCAP 0001'])
+        self.n_marc.add_ordered_field(tag)
+        meta = bibs.InhouseBibMeta(self.n_marc)
+        self.assertEqual(meta.ownLibrary, 'research')
+
+    def test_nypl_mixed_full_no_order(self):
+        tag = Field(
+            tag='852',
+            indicators=['8', ' '],
+            subfields=['h', 'ReCAP 0001'])
+        self.n_marc.add_ordered_field(tag)
+
+        tag = Field(
+            tag='091',
+            indicators=[' ', ' '],
+            subfields=['f', 'FIC', 'a', 'ADAMS'])
+        self.n_marc.add_ordered_field(tag)
+
+        meta = bibs.InhouseBibMeta(self.n_marc)
+        self.assertEqual(meta.ownLibrary, 'mixed')
+
+    def test_nypl_mixed_branch_full_research_order(self):
+        tag = Field(
+            tag='091',
+            indicators=[' ', ' '],
+            subfields=['f', 'FIC', 'a', 'ADAMS'])
+        self.n_marc.add_ordered_field(tag)
+        locs = ['xxx']
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'mixed')
+
+    def test_nypl_mixed_research_full_branch_order(self):
+        tag = Field(
+            tag='852',
+            indicators=['8', ' '],
+            subfields=['h', 'ReCAP 0001'])
+        self.n_marc.add_ordered_field(tag)
+
+        locs = ['zzzzz']
+
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'mixed')
+
+    def test_nypl_mixed_research_full_branch_order_explicit(self):
+        tag = Field(
+            tag='852',
+            indicators=['8', ' '],
+            subfields=['h', 'ReCAP 0001'])
+        self.n_marc.add_ordered_field(tag)
+        self.assertFalse('091' in self.n_marc)
+
+        locs = ['mya0n']
+
+        meta = bibs.InhouseBibMeta(self.n_marc, locations=locs)
+        self.assertEqual(meta.ownLibrary, 'mixed')
+
+    def test_bpl_ownLibrary_order(self):
+        meta = bibs.InhouseBibMeta(self.b_marc)
+        self.assertIsNone(meta.ownLibrary)
+
+    def test_bpl_ownLibrary_full(self):
+        tag = Field(
+            tag='099',
+            indicators=[' ', ' '],
+            subfields=['a', 'FIC', 'a', 'ADAMS'])
+        self.b_marc.add_ordered_field(tag)
+        meta = bibs.InhouseBibMeta(self.b_marc)
+        self.assertEqual(meta.ownLibrary, 'branches')
 
 
 if __name__ == '__main__':

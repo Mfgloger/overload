@@ -16,6 +16,7 @@ class PVRReport:
         self.callNo_match = False
         self.vendor_callNo = meta_vendor.bCallNumber
         self.target_sierraId = meta_vendor.sierraId
+        self.target_title = None
         self.target_callNo = None
         self.inhouse_dups = []
         self.action = 'insert'
