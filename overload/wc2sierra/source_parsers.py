@@ -10,7 +10,7 @@ def sierra_export_data(source_fh, system, dstLibrary):
         meta, single_order: tuple, (BibOrderMeta obj, single_order)
     """
     with open(source_fh) as source:
-        reader = csv.reader(source, delimiter='~')
+        reader = csv.reader(source, delimiter='~', quotechar=None)
         # skip header
         reader.next()
         for row in reader:
