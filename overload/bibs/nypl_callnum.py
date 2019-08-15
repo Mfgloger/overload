@@ -162,8 +162,11 @@ def create_nypl_recap_item(order_data, recap_no=None):
     recap_codes = settings_dict['ReCAP']
 
     # determine correct codes based on order data
-    loc = order_data.locs[:3].upper()
-    codes = recap_codes[loc]
+    if order_data:
+        loc = order_data.locs[:3].upper()
+        codes = recap_codes[loc]
+    else:
+        codes = recap_codes['generic']
 
     item_field = Field(
         tag='949',

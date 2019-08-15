@@ -63,6 +63,13 @@
             "agency": "43",
             "opac_msg": "2",
             "status": "b"
+        },
+        "generic": {
+            "loc_code": "RC2MA",
+            "item_type": "55",
+            "agency": "43",
+            "opac_msg": "2",
+            "status": "b"
         }
     }
 }

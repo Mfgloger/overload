@@ -6,7 +6,7 @@ import os
 from bibs.bibs import (BibOrderMeta, create_initials_field,
                        write_marc21, create_controlfield,
                        create_target_id_field, create_command_line_field)
-from bibs.parsers import (parse_isbn, remove_oclcNo_prefix)
+from bibs.parsers import (parse_isbn, parse_upc, remove_oclcNo_prefix)
 from bibs.crosswalks import string2xml, marcxml2array
 from bibs.bpl_callnum import create_bpl_fiction_callnum
 from bibs.nypl_callnum import (create_nypl_fiction_callnum,
@@ -196,8 +196,10 @@ def launch_process(source_fh, data_source, system, library,
     process_label.set('reading:')
     with open(source_fh, 'r') as file:
         reader = csv.reader(file)
+
         # skip header
         header = reader.next()
+
         # check if Sierra export file has a correct structure
         if data_source == 'Sierra export':
             if system == 'NYPL':
@@ -221,6 +223,8 @@ def launch_process(source_fh, data_source, system, library,
     # keep track of recap call numbers
     if recap_range:
         recap_no = recap_range[0]
+    else:
+        recap_no = None
 
     with session_scope() as db_session:
         # create batch record
@@ -258,8 +262,17 @@ def launch_process(source_fh, data_source, system, library,
                         update_progbar(progbar1)
                         update_progbar(progbar2)
                 elif id_type == 'UPC':
-                    # to be implemented
+                    raise OverloadError('Not implemented.')
                     pass
+
+                    # will be implemented later
+                    # for row in reader:
+                    #     meta = BibOrderMeta(
+                    #         system=system,
+                    #         dstLibrary=library,
+                    #         t024=[parse_upc(row[0])])
+                else:
+                    raise OverloadError('Not implemented.')
 
         elif data_source == 'Sierra export':
             data = sierra_export_data(source_fh, system, library)
@@ -453,7 +466,7 @@ def launch_process(source_fh, data_source, system, library,
             xml_record = row.wchits.match_marcxml
             if xml_record is not None:
                 marc_record = marcxml2array(xml_record)[0]
-                marc_record.remove_fields('901', '945', '949', '947')
+                marc_record.remove_fields('901', '907', '945', '949', '947')
                 initials = create_initials_field(
                     system, library, 'W2Sbot')
                 marc_record.add_ordered_field(initials)
@@ -467,20 +480,20 @@ def launch_process(source_fh, data_source, system, library,
                         marc_record.add_ordered_field(
                             overlay_tag)
 
-                    if system == 'NYPL':
-                        marc_record.remove_fields('001')
-                        tag_001 = nypl_oclcNo_field(xml_record)
-                        marc_record.add_ordered_field(tag_001)
+                if system == 'NYPL':
+                    marc_record.remove_fields('001')
+                    tag_001 = nypl_oclcNo_field(xml_record)
+                    marc_record.add_ordered_field(tag_001)
 
-                        # add Sierra bib code 3 and default location
-                        if library == 'branches':
-                            defloc = NBIB_DEFAULT_LOCATIONS['branches']
-                        elif library == 'research':
-                            defloc = NBIB_DEFAULT_LOCATIONS['research']
+                    # add Sierra bib code 3 and default location
+                    if library == 'branches':
+                        defloc = NBIB_DEFAULT_LOCATIONS['branches']
+                    elif library == 'research':
+                        defloc = NBIB_DEFAULT_LOCATIONS['research']
 
-                        tag_949 = create_command_line_field(
-                            '*b3=h;bn={};'.format(defloc))
-                        marc_record.add_ordered_field(tag_949)
+                    tag_949 = create_command_line_field(
+                        '*b3=h;bn={};'.format(defloc))
+                    marc_record.add_ordered_field(tag_949)
 
                 if action == 'catalog':
                     # add call number & persist
@@ -488,18 +501,18 @@ def launch_process(source_fh, data_source, system, library,
                         order_data = row.meta
 
                         local_fields = create_local_fields(
-                            xml_record, system, library, order_data,
-                            recap_no)
+                            xml_record, system, library, order_data=order_data,
+                            recap_no=recap_no)
 
                     else:
                         # data source a list of IDs
                         local_fields = create_local_fields(
-                            xml_record, system, library)
+                            xml_record, system, library, recap_no=recap_no)
 
                     if local_fields:
                         for field in local_fields:
                             marc_record.add_ordered_field(field)
-                        if system == 'NYPL':
+                        if system == 'NYPL' and library == 'research':
                             recap_no += 1
 
                 update_hit_record(
