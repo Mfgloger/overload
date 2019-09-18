@@ -386,7 +386,7 @@ def cumulative_vendor_stats(start_date, end_date):
             func.sum(PVR_File.mixed),
             func.sum(PVR_File.other),
             Vendor.name)
-        query = query.join(PVR_File).join(Vendor)
+        query = query.join(PVR_File, PVR_File.vid == Vendor.vid)
 
         nypl_br_results = query.filter(
             PVR_Batch.timestamp >= start_date,
