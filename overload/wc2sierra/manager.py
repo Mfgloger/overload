@@ -40,7 +40,7 @@ module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
 def update_progbar(progbar):
-    """creates progbar ticks"""
+    """progbar ticks"""
     progbar['value'] += 1
     progbar.update()
 

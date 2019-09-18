@@ -319,7 +319,7 @@ def cumulative_nypl_stats(start_date, end_date):
             func.sum(PVR_File.mixed),
             func.sum(PVR_File.other),
             Vendor.name)
-        query = query.join(PVR_File).join(Vendor)
+        query = query.join(PVR_File, PVR_File.vid == Vendor.vid)
         nypl_results = query.filter(
             PVR_Batch.timestamp >= start_date,
             PVR_Batch.timestamp < end_date,
@@ -358,7 +358,7 @@ def cumulative_bpl_stats(start_date, end_date):
             func.sum(PVR_File.dups),
             func.sum(PVR_File.updated),
             Vendor.name)
-        query = query.join(PVR_File).join(Vendor)
+        query = query.join(PVR_File, PVR_File.vid == Vendor.vid)
         results = query.filter(
             PVR_Batch.timestamp >= start_date,
             PVR_Batch.timestamp < end_date,
