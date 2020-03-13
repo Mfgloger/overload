@@ -874,9 +874,12 @@ class TransferFiles(tk.Frame):
             module_logger.error(
                 'WindowsError when populating FTP local panel.'
                 'Error: {}'.format(e))
-            self.locTrv.insert(
-                '', tk.END, values=('...', '', ''),
-                tags='o', open=False)
+            tkMessageBox.showerror(
+                'FTP Error',
+                'Unable to retrieve previously used folder.',
+                parent=self.top)
+            self.local_directory = MY_DOCS
+            self.populate_local_panel
 
     def populate_remote_panel(self):
         self.remTrv.delete(*self.remTrv.get_children())
@@ -912,8 +915,6 @@ class TransferFiles(tk.Frame):
                     self.remTrv.insert(
                         '', tk.END, values=(f, '', ''),
                         tags='d', open=False)
-
-                mtime = f[2]
 
                 self.remTrv.insert(
                     '', tk.END,
