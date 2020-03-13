@@ -9,27 +9,39 @@ import re
 from unidecode import unidecode
 
 
-def extract_record_encoding(leader_string):
-    return leader_string[9]
+def extract_record_encoding(leader_string=None):
+    try:
+        return leader_string[9]
+    except TypeError:
+        return None
 
 
-def extract_record_lvl(leader_string):
-    return leader_string[17]
+def extract_record_lvl(leader_string=None):
+    try:
+        return leader_string[17]
+    except TypeError:
+        return None
 
 
-def extract_record_type(leader_string):
-    return leader_string[6]
+def extract_record_type(leader_string=None):
+    try:
+        return leader_string[6]
+    except TypeError:
+        return None
 
 
 def get_audience_code(leader_string, tag_008):
     rec_type = extract_record_type(leader_string)
     if rec_type == 'a':
-        return tag_008[22]
+        try:
+            return tag_008[22]
+        except TypeError:
+            return None
     else:
-        return
+        return None
 
 
-def get_language_code(tag_008):
+def get_language_code(tag_008=None):
     """
     extracts language code form control field 008
     args:
@@ -37,7 +49,12 @@ def get_language_code(tag_008):
     returns:
         code: str, 3 character long language code
     """
-    return tag_008[35:38]
+    try:
+        return tag_008[35:38]
+    except TypeError:
+        return None
+    except IndexError:
+        return None
 
 
 def get_literary_form(leader_string, tag_008):
@@ -51,20 +68,23 @@ def get_literary_form(leader_string, tag_008):
 def is_short(tag_300a):
     # shorter than 50 pages (kind of arbitrary)
     short = False
-    if 'volume' in tag_300a or ' v.' in tag_300a:
-        # children's picture books are often unpaged and short
-        short = True
-    else:
-        words = tag_300a.split(' ')
-        for w in words:
-            try:
-                w_int = int(w)
-                if w_int < 50:
-                    short = True
-            except TypeError:
-                pass
-            except ValueError:
-                pass
+    try:
+        if 'volume' in tag_300a or ' v.' in tag_300a:
+            # children's picture books are often unpaged and short
+            short = True
+        else:
+            words = tag_300a.split(' ')
+            for w in words:
+                try:
+                    w_int = int(w)
+                    if w_int < 50:
+                        short = True
+                except TypeError:
+                    pass
+                except ValueError:
+                    pass
+    except TypeError:
+        pass
     return short
 
 
