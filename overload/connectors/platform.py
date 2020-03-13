@@ -317,7 +317,7 @@ class PlatformSession(requests.Session):
         """
         requests item data for particular barcode
         args:
-            keywords list (list of barcodes)
+            keyword: str, barcode
             source str
             limit int
         return:
