@@ -239,8 +239,23 @@ bib_template option: 'skip' - skip if present, 'add' - always add
 			<query_tag preference = "primary" type = 'tag'>020</query_tag>
 			<existing_sierraId>keep</existing_sierraId>
 		</vendor>
+		<vendor name = "Ingram">
+			<vendor_tag type = "standard" tag = "947a" operator = "main">INGRAM</vendor_tag>
+			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
+			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
+			<query_tag preference = "tertiary" type = 'tag'>001</query_tag>
+			<existing_sierraId>keep</existing_sierraId>
+			<bib_template>
+				<field option = "skip">
+					<tag>949</tag>
+					<ind1></ind1>
+					<ind2></ind2>
+					<subfield code = "a">*b2=a;</subfield>
+				</field>
+			</bib_template>
+		</vendor>
 		<vendor name = "BT CLS">
-			<vendor_tag type = "standard" tag = "049a" operator = "main">BKLA</vendor_tag>
+			<vendor_tag type = "standard" tag = "960n" operator = "main">B&amp;T</vendor_tag>
 			<query_tag preference = "primary" type = 'id'>sierra_id</query_tag>
 			<query_tag preference = "secondary" type = 'tag'>020</query_tag>
 			<query_tag preference = "tertiary" type = 'tag'>022</query_tag>
