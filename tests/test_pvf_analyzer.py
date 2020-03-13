@@ -328,8 +328,8 @@ class TestPVR_NYPLReport(unittest.TestCase):
         self.assertEqual(
             self.report.to_dict().keys(),
             ['inhouse_dups', 'vendor', 'vendor_id', 'updated_by_vendor',
-             'target_sierraId', 'mixed', 'target_callNo', 'vendor_callNo',
-             'other', 'callNo_match', 'action'])
+             'target_sierraId', 'action', 'target_callNo', 'vendor_callNo',
+             'target_title', 'other', 'callNo_match', 'mixed'])
         self.assertIsInstance(
             self.report.to_dict()['vendor_id'], str)
         self.assertIsInstance(
