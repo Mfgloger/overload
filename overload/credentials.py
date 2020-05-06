@@ -23,12 +23,11 @@ def locate_credentials(shelf_fh, creds_fh):
 
     user_data = shelve.open(shelf_fh)
     try:
-        update_dir = user_data['paths']['update_dir']
-        if update_dir == '':
+        update_dir = user_data["paths"]["update_dir"]
+        if update_dir == "":
             return None
         else:
-            creds_path = os.path.join(
-                os.path.split(update_dir)[0], creds_fh)
+            creds_path = os.path.join(os.path.split(update_dir)[0], creds_fh)
             return creds_path
     except KeyError:
         return None
@@ -48,21 +47,21 @@ def store_goo_folder_ids(shelf_fh, goo_folders_fh):
     user_data = shelve.open(shelf_fh, writeback=True)
     # get location of update folder from user data
     try:
-        update_dir = user_data['paths']['update_dir']
-        if update_dir == '':
+        update_dir = user_data["paths"]["update_dir"]
+        if update_dir == "":
             user_data.close()
             return False
         else:
-            goo_ids_file = os.path.join(
-                os.path.split(update_dir)[0], goo_folders_fh)
+            goo_ids_file = os.path.join(os.path.split(update_dir)[0], goo_folders_fh)
             if os.path.isfile(goo_ids_file):
                 # retrieve folder ids
-                with open(goo_ids_file, 'r') as source:
+                with open(goo_ids_file, "r") as source:
                     data = json.load(source)
                     # store in user_data
-                    user_data['gdrive'] = dict(
-                        nypl_folder_id=data['nypl_gdrive_folder_id'],
-                        bpl_folder_id=data['bpl_gdrive_folder_id'])
+                    user_data["gdrive"] = dict(
+                        nypl_folder_id=data["nypl_gdrive_folder_id"],
+                        bpl_folder_id=data["bpl_gdrive_folder_id"],
+                    )
                     user_data.close()
                     return True
             else:
@@ -83,10 +82,10 @@ def encrypt_file_data(key, source, dst):
     """
 
     cipher = AES.new(key, AES.MODE_EAX)
-    with open(source, 'rb') as file:
+    with open(source, "rb") as file:
         data = file.read()
         ciphertext, tag = cipher.encrypt_and_digest(data)
-        file_out = open(dst, 'wb')
+        file_out = open(dst, "wb")
         [file_out.write(x) for x in (cipher.nonce, tag, ciphertext)]
 
 
@@ -100,7 +99,7 @@ def decrypt_file_data(key, fh):
         data: string
     """
     try:
-        with open(fh, 'rb') as file:
+        with open(fh, "rb") as file:
             nonce, tag, ciphertext = [file.read(x) for x in (16, 16, -1)]
             cipher = AES.new(key, AES.MODE_EAX, nonce)
             data = cipher.decrypt_and_verify(ciphertext, tag)
