@@ -30,81 +30,89 @@ from gui_utils import BusyManager, ToolTip
 from logging_setup import LOGGING, DEV_LOGGING, LogglyAdapter
 import overload_help
 from pvf.pvf_gui import ProcessVendorFiles
-from pvf.reports import cumulative_nypl_stats, cumulative_bpl_stats, \
-    cumulative_vendor_stats
+from pvf.reports import (
+    cumulative_nypl_stats,
+    cumulative_bpl_stats,
+    cumulative_vendor_stats,
+)
 from setup_dirs import *
 from wc2sierra.gui import Worldcat2Sierra
 from getbib.gui import GetBibs
 
 
 def updates(manual=True):
-    with open('version.txt', 'r') as app_fh:
+    with open("version.txt", "r") as app_fh:
         app_version = app_fh.readline()[9:].strip()
         overload_logger.debug(
-            'Checking for Overload updates. Current version: {}'.format(
-                app_version))
+            "Checking for Overload updates. Current version: {}".format(app_version)
+        )
 
     user_data = shelve.open(USER_DATA)
-    if 'update_dir' in user_data['paths']:
-        update_dir = user_data['paths']['update_dir']
+    if "update_dir" in user_data["paths"]:
+        update_dir = user_data["paths"]["update_dir"]
         overload_logger.debug(
-            'Using update directory from user_data: {}'.format(
-                update_dir))
-        if os.path.isfile(update_dir + r'\version.txt'):
-            overload_logger.debug(
-                'Found version.txt in update directory')
-            up_fh = update_dir + r'\version.txt'
-            with open(up_fh, 'r') as up_f:
+            "Using update directory from user_data: {}".format(update_dir)
+        )
+        if os.path.isfile(update_dir + r"\version.txt"):
+            overload_logger.debug("Found version.txt in update directory")
+            up_fh = update_dir + r"\version.txt"
+            with open(up_fh, "r") as up_f:
                 update_version = up_f.readline()[9:].strip()
                 overload_logger.debug(
-                    'Version available for pull: {}'.format(
-                        update_version))
+                    "Version available for pull: {}".format(update_version)
+                )
                 if app_version != update_version:
                     overload_logger.debug(
-                        'Local version different than in update directory')
-                    m = 'A new version ({}) of Overload has been ' \
-                        'found.\nWould you like to run the ' \
-                        'update?'.format(update_version)
-                    if tkMessageBox.askyesno('Update Info', m):
+                        "Local version different than in update directory"
+                    )
+                    m = (
+                        "A new version ({}) of Overload has been "
+                        "found.\nWould you like to run the "
+                        "update?".format(update_version)
+                    )
+                    if tkMessageBox.askyesno("Update Info", m):
                         overload_logger.info(
-                            '{} user is upgrading to overload version {}'.format(
-                                USER_NAME, update_version))
+                            "{} user is upgrading to overload version {}".format(
+                                USER_NAME, update_version
+                            )
+                        )
                         # launch updater & quit main app
                         user_data.close()
-                        args = '{} "{}"'.format(
-                            'updater.exe', update_dir)
+                        args = '{} "{}"'.format("updater.exe", update_dir)
                         CREATE_NO_WINDOW = 0x08000000
-                        subprocess.call(
-                            args, creationflags=CREATE_NO_WINDOW)
+                        subprocess.call(args, creationflags=CREATE_NO_WINDOW)
                 else:
                     if manual:
                         overload_logger.debug(
-                            'Local and update directory versions are '
-                            'the same')
-                        m = 'Babel is up-to-date'
-                        tkMessageBox.showinfo('Info', m)
+                            "Local and update directory versions are " "the same"
+                        )
+                        m = "Babel is up-to-date"
+                        tkMessageBox.showinfo("Info", m)
         else:
             overload_logger.error(
-                'Missing files. Failed to find version.txt in ({})'.format(
-                    update_dir))
-            m = '"version.txt" file in update folder not found.\n' \
-                'Please provide update directory to correct folder\n' \
-                'Go to:\n' \
-                'settings>default directories>update folder'
-            tkMessageBox.showwarning('Missing Files', m)
+                "Missing files. Failed to find version.txt in ({})".format(update_dir)
+            )
+            m = (
+                '"version.txt" file in update folder not found.\n'
+                "Please provide update directory to correct folder\n"
+                "Go to:\n"
+                "settings>default directories>update folder"
+            )
+            tkMessageBox.showwarning("Missing Files", m)
     else:
         overload_logger.warning(
-            'Update directory not setup in Settings: user={}'.format(
-                USER_NAME))
-        m = 'please provide update directory\n' \
-            'Go to:\n' \
-            'settings>default directories>update folder'
-        tkMessageBox.showwarning('Missing Directory', m)
+            "Update directory not setup in Settings: user={}".format(USER_NAME)
+        )
+        m = (
+            "please provide update directory\n"
+            "Go to:\n"
+            "settings>default directories>update folder"
+        )
+        tkMessageBox.showwarning("Missing Directory", m)
     user_data.close()
 
 
 class MainApplication(tk.Tk):
-
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         # container where frames are stacked
@@ -113,56 +121,68 @@ class MainApplication(tk.Tk):
 
         # bind shared data between windows
         self.activeW = tk.StringVar()
-        self.app_data = {'activeW': self.activeW}
+        self.app_data = {"activeW": self.activeW}
 
         # spawn Overload frames
         self.frames = {}
         for F in (
-                Main, ProcessVendorFiles, Worldcat2Sierra,
-                GetBibs, Reports,
-                Settings, DefaultDirs, SierraAPIs, PlatformAPIs,
-                Z3950s, GooAPI, WorldcatAPIs, About):
+            Main,
+            ProcessVendorFiles,
+            Worldcat2Sierra,
+            GetBibs,
+            Reports,
+            Settings,
+            DefaultDirs,
+            SierraAPIs,
+            PlatformAPIs,
+            Z3950s,
+            GooAPI,
+            WorldcatAPIs,
+            About,
+        ):
             page_name = F.__name__
-            frame = F(parent=container, controller=self,
-                      **self.app_data)
+            frame = F(parent=container, controller=self, **self.app_data)
             self.frames[page_name] = frame
 
             # put all windows in the same location
-            frame.grid(row=0, column=0, sticky='snew', padx=10, pady=10)
+            frame.grid(row=0, column=0, sticky="snew", padx=10, pady=10)
 
         # set up menu bar
         menubar = tk.Menu(self)
         navig_menu = tk.Menu(menubar, tearoff=0)
-        navig_menu.add_command(label='home',
-                               command=lambda: self.show_frame('Main'))
-        navig_menu.add_command(label='process vendor files',
-                               command=lambda: self.show_frame(
-                                   'ProcessVendorFiles'))
-        navig_menu.add_command(label='upgrade bibs',
-                               command=lambda: self.show_frame(
-                                   'Worldcat2Sierra'))
-        navig_menu.add_command(label='get bib',
-                               command=lambda: self.show_frame(
-                                   'GetBibs'))
-        navig_menu.add_command(label='settings',
-                               command=lambda: self.show_frame('Settings'))
+        navig_menu.add_command(label="home", command=lambda: self.show_frame("Main"))
+        navig_menu.add_command(
+            label="process vendor files",
+            command=lambda: self.show_frame("ProcessVendorFiles"),
+        )
+        navig_menu.add_command(
+            label="upgrade bibs", command=lambda: self.show_frame("Worldcat2Sierra")
+        )
+        navig_menu.add_command(
+            label="get bib", command=lambda: self.show_frame("GetBibs")
+        )
+        navig_menu.add_command(
+            label="settings", command=lambda: self.show_frame("Settings")
+        )
         navig_menu.add_separator()
-        navig_menu.add_command(label='exit', command=self.quit)
-        menubar.add_cascade(label='Menu', menu=navig_menu)
+        navig_menu.add_command(label="exit", command=self.quit)
+        menubar.add_cascade(label="Menu", menu=navig_menu)
         report_menu = tk.Menu(menubar, tearoff=0)
         report_menu.add_command(
-            label='reports', command=lambda: self.show_frame('Reports'))
-        menubar.add_cascade(label='Reports', menu=report_menu)
+            label="reports", command=lambda: self.show_frame("Reports")
+        )
+        menubar.add_cascade(label="Reports", menu=report_menu)
         help_menu = tk.Menu(menubar, tearoff=0)
-        help_menu.add_command(label='help index', command=None)
-        help_menu.add_command(label='updates', command=updates)
-        help_menu.add_command(label='about...',
-                              command=lambda: self.show_frame('About'))
-        menubar.add_cascade(label='Help', menu=help_menu)
+        help_menu.add_command(label="help index", command=None)
+        help_menu.add_command(label="updates", command=updates)
+        help_menu.add_command(
+            label="about...", command=lambda: self.show_frame("About")
+        )
+        menubar.add_cascade(label="Help", menu=help_menu)
         self.config(menu=menubar)
 
         # lift to the top main window
-        self.show_frame('Main')
+        self.show_frame("Main")
 
     def show_frame(self, page_name):
         """show frame for the given page name"""
@@ -173,10 +193,9 @@ class MainApplication(tk.Tk):
 
 
 class Main(tk.Frame):
-
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
 
         self.rowconfigure(0, minsize=25)
@@ -188,47 +207,50 @@ class Main(tk.Frame):
         self.columnconfigure(6, minsize=20)
         self.columnconfigure(8, minsize=30)
 
-        getRecNoICO = tk.PhotoImage(file='./icons/ProcessVendorFiles.gif')
+        getRecNoICO = tk.PhotoImage(file="./icons/ProcessVendorFiles.gif")
         self.getRecNoBtn = ttk.Button(
-            self, image=getRecNoICO,
-            text='process vendor file',
+            self,
+            image=getRecNoICO,
+            text="process vendor file",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('ProcessVendorFiles'))
+            command=lambda: controller.show_frame("ProcessVendorFiles"),
+        )
 
         # prevent image to be garbage collected by Python
         self.getRecNoBtn.image = getRecNoICO
-        self.getRecNoBtn.grid(
-            row=1, column=1, sticky='snew')
+        self.getRecNoBtn.grid(row=1, column=1, sticky="snew")
 
-        upgradeICO = tk.PhotoImage(file='./icons/upgrade.gif')
+        upgradeICO = tk.PhotoImage(file="./icons/upgrade.gif")
         self.upgradeBtn = ttk.Button(
-            self, image=upgradeICO,
-            text='worldcat2sierra',
+            self,
+            image=upgradeICO,
+            text="worldcat2sierra",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('Worldcat2Sierra'))
+            command=lambda: controller.show_frame("Worldcat2Sierra"),
+        )
         self.upgradeBtn.image = upgradeICO
-        self.upgradeBtn.grid(
-            row=1, column=3, sticky='snew')
+        self.upgradeBtn.grid(row=1, column=3, sticky="snew")
         # self.createToolTip(
         #     self.upgradeBtn,
         #     'Upgrade existing records and catalog new\n'
         #     'materials using Worldcat')
 
-        getBibICO = tk.PhotoImage(file='./icons/getbib.gif')
+        getBibICO = tk.PhotoImage(file="./icons/getbib.gif")
         self.getBibBtn = ttk.Button(
-            self, image=getBibICO,
-            text='get bib',
+            self,
+            image=getBibICO,
+            text="get bib",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('GetBibs'))
+            command=lambda: controller.show_frame("GetBibs"),
+        )
         self.getBibBtn.image = getBibICO
-        self.getBibBtn.grid(
-            row=1, column=5, sticky='snew')
+        self.getBibBtn.grid(row=1, column=5, sticky="snew")
         # self.createToolTip(
         #     self.getBibBtn,
         #     'retrieves marc records\n'
@@ -236,49 +258,53 @@ class Main(tk.Frame):
         #     'based on list of ISBNs,\n'
         #     'or other IDs')
 
-        nextICO = tk.PhotoImage(file='./icons/killer_tool.gif')
+        nextICO = tk.PhotoImage(file="./icons/killer_tool.gif")
         self.nextToolBtn = ttk.Button(
-            self, image=nextICO,
-            text='(TBA)',
+            self,
+            image=nextICO,
+            text="(TBA)",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=None)
+            command=None,
+        )
         self.nextToolBtn.image = nextICO
-        self.nextToolBtn.grid(
-            row=1, column=7, sticky='snew')
+        self.nextToolBtn.grid(row=1, column=7, sticky="snew")
         self.createToolTip(
             self.nextToolBtn,
-            'Do you have an idea for a tool that\n'
-            'could improve your work?\n'
-            'Let us know and we may build it!')
+            "Do you have an idea for a tool that\n"
+            "could improve your work?\n"
+            "Let us know and we may build it!",
+        )
 
-        reportsICO = tk.PhotoImage(file='./icons/report.gif')
+        reportsICO = tk.PhotoImage(file="./icons/report.gif")
         self.reportsBtn = ttk.Button(
-            self, image=reportsICO,
-            text='reports',
+            self,
+            image=reportsICO,
+            text="reports",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('Reports'))
+            command=lambda: controller.show_frame("Reports"),
+        )
         self.reportsBtn.image = reportsICO
-        self.reportsBtn.grid(
-            row=3, column=1, sticky='snew')
+        self.reportsBtn.grid(row=3, column=1, sticky="snew")
         # self.createToolTip(
         #     self.reportsBtn,
         #     'user monthly reports')
 
-        settingsICO = tk.PhotoImage(file='./icons/settings.gif')
+        settingsICO = tk.PhotoImage(file="./icons/settings.gif")
         self.settingsBtn = ttk.Button(
-            self, image=settingsICO,
-            text='settings',
+            self,
+            image=settingsICO,
+            text="settings",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('Settings'))
+            command=lambda: controller.show_frame("Settings"),
+        )
         self.settingsBtn.image = settingsICO
-        self.settingsBtn.grid(
-            row=3, column=3, sticky='snew')
+        self.settingsBtn.grid(row=3, column=3, sticky="snew")
 
     def createToolTip(self, widget, text):
         toolTip = ToolTip(widget)
@@ -289,8 +315,8 @@ class Main(tk.Frame):
         def leave(event):
             toolTip.hidetip()
 
-        widget.bind('<Enter>', enter)
-        widget.bind('<Leave>', leave)
+        widget.bind("<Enter>", enter)
+        widget.bind("<Leave>", leave)
 
 
 class Reports(tk.Frame):
@@ -300,10 +326,10 @@ class Reports(tk.Frame):
 
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
-        self.activeW = app_data['activeW']
-        self.activeW.trace('w', self.observer)
+        self.activeW = app_data["activeW"]
+        self.activeW.trace("w", self.observer)
 
         # variables
         self.pvf_user_months = tk.StringVar()
@@ -320,133 +346,119 @@ class Reports(tk.Frame):
         self.columnconfigure(6, minsize=10)
 
         self.helpBtn = ttk.Button(
-            self,
-            text='help',
-            command=self.help,
-            cursor='hand2',
-            width=15)
-        self.helpBtn.grid(
-            row=7, column=2, sticky='sw')
+            self, text="help", command=self.help, cursor="hand2", width=15
+        )
+        self.helpBtn.grid(row=7, column=2, sticky="sw")
 
         self.closeBtn = ttk.Button(
             self,
-            text='close',
-            command=lambda: controller.show_frame('Main'),
-            cursor='hand2',
-            width=15)
-        self.closeBtn.grid(
-            row=7, column=4, sticky='sw')
+            text="close",
+            command=lambda: controller.show_frame("Main"),
+            cursor="hand2",
+            width=15,
+        )
+        self.closeBtn.grid(row=7, column=4, sticky="sw")
 
-        self.mainFrm = ttk.LabelFrame(
-            self,
-            text='reports')
-        self.mainFrm.grid(
-            row=1, column=1, rowspan=5, columnspan=5, sticky='snew')
+        self.mainFrm = ttk.LabelFrame(self, text="reports")
+        self.mainFrm.grid(row=1, column=1, rowspan=5, columnspan=5, sticky="snew")
 
         self.yscrollbar = tk.Scrollbar(self.mainFrm, orient=tk.VERTICAL)
-        self.yscrollbar.grid(
-            row=0, column=10, rowspan=10, sticky='nse', padx=2)
+        self.yscrollbar.grid(row=0, column=10, rowspan=10, sticky="nse", padx=2)
         self.base = tk.Canvas(
-            self.mainFrm, bg='white',
+            self.mainFrm,
+            bg="white",
             width=720,
             height=400,
-            yscrollcommand=self.yscrollbar.set)
-        self.base.grid(
-            row=0, column=0, columnspan=10, rowspan=10)
+            yscrollcommand=self.yscrollbar.set,
+        )
+        self.base.grid(row=0, column=0, columnspan=10, rowspan=10)
 
-        self.baseFrm = tk.Frame(
-            self.base)
+        self.baseFrm = tk.Frame(self.base)
         self.yscrollbar.config(command=self.base.yview)
         self.base.create_window(
-            (0, 0), window=self.baseFrm, anchor="nw",
-            tags="self.baseFrm")
+            (0, 0), window=self.baseFrm, anchor="nw", tags="self.baseFrm"
+        )
         self.baseFrm.bind("<Configure>", self.onFrameConfigure)
 
         self.pvfFrm = ttk.LabelFrame(
-            self.baseFrm,
-            text='processing vendor files user stats')
+            self.baseFrm, text="processing vendor files user stats"
+        )
         self.pvfFrm.grid(
-            row=0, column=0, columnspan=10, sticky='snew', padx=10, pady=10)
+            row=0, column=0, columnspan=10, sticky="snew", padx=10, pady=10
+        )
         self.pvfFrm.rowconfigure(0, minsize=10)
         self.pvfFrm.columnconfigure(4, minsize=200)
         self.pvfFrm.rowconfigure(4, minsize=10)
 
         # user monthly usage stats
-        ttk.Label(self.pvfFrm, text='user stats: ').grid(
-            row=1, column=0, sticky='nsw', padx=5, pady=5)
+        ttk.Label(self.pvfFrm, text="user stats: ").grid(
+            row=1, column=0, sticky="nsw", padx=5, pady=5
+        )
 
         self.userReportCbx = ttk.Combobox(
-            self.pvfFrm,
-            textvariable=self.pvf_user_months,
-            width=20)
-        self.userReportCbx.grid(
-            row=1, column=1, sticky='nsw', padx=5, pady=10)
+            self.pvfFrm, textvariable=self.pvf_user_months, width=20
+        )
+        self.userReportCbx.grid(row=1, column=1, sticky="nsw", padx=5, pady=10)
 
         self.pvf_openUserRepBtn = ttk.Button(
             self.pvfFrm,
-            text='open',
+            text="open",
             command=self.pvf_user_report,
-            cursor='hand2',
-            width=10)
-        self.pvf_openUserRepBtn.grid(
-            row=1, column=2, sticky='sw', padx=5, pady=5)
+            cursor="hand2",
+            width=10,
+        )
+        self.pvf_openUserRepBtn.grid(row=1, column=2, sticky="sw", padx=5, pady=5)
 
-        ttk.Label(self.pvfFrm, text='vendor stats: ').grid(
-            row=2, column=0, sticky='nsw', padx=5, pady=5)
+        ttk.Label(self.pvfFrm, text="vendor stats: ").grid(
+            row=2, column=0, sticky="nsw", padx=5, pady=5
+        )
 
         # vendor combined reports
         self.ven_dateAReportCbx = ttk.Combobox(
-            self.pvfFrm,
-            textvariable=self.pvf_ven_dateA,
-            width=20)
-        self.ven_dateAReportCbx.grid(
-            row=2, column=1, sticky='nsw', padx=5, pady=10)
+            self.pvfFrm, textvariable=self.pvf_ven_dateA, width=20
+        )
+        self.ven_dateAReportCbx.grid(row=2, column=1, sticky="nsw", padx=5, pady=10)
         self.ven_dateBReportCbx = ttk.Combobox(
-            self.pvfFrm,
-            textvariable=self.pvf_ven_dateB,
-            width=20)
-        self.ven_dateBReportCbx.grid(
-            row=2, column=2, sticky='nsw', padx=5, pady=10)
+            self.pvfFrm, textvariable=self.pvf_ven_dateB, width=20
+        )
+        self.ven_dateBReportCbx.grid(row=2, column=2, sticky="nsw", padx=5, pady=10)
         self.pvf_openVenRepBtn = ttk.Button(
             self.pvfFrm,
-            text='open',
+            text="open",
             command=self.pvf_vendor_report,
-            cursor='hand2',
-            width=10)
-        self.pvf_openVenRepBtn.grid(
-            row=2, column=3, sticky='sw', padx=5, pady=5)
+            cursor="hand2",
+            width=10,
+        )
+        self.pvf_openVenRepBtn.grid(row=2, column=3, sticky="sw", padx=5, pady=5)
 
         # error combined reports
-        ttk.Label(self.pvfFrm, text='error stats: ').grid(
-            row=3, column=0, sticky='nsw', padx=5, pady=5)
+        ttk.Label(self.pvfFrm, text="error stats: ").grid(
+            row=3, column=0, sticky="nsw", padx=5, pady=5
+        )
         self.err_dateAReportCbx = ttk.Combobox(
-            self.pvfFrm,
-            textvariable=self.pvf_err_dateA,
-            width=20)
-        self.err_dateAReportCbx.grid(
-            row=3, column=1, sticky='nsw', padx=5, pady=10)
+            self.pvfFrm, textvariable=self.pvf_err_dateA, width=20
+        )
+        self.err_dateAReportCbx.grid(row=3, column=1, sticky="nsw", padx=5, pady=10)
         self.err_dateBReportCbx = ttk.Combobox(
-            self.pvfFrm,
-            textvariable=self.pvf_err_dateB,
-            width=20)
-        self.err_dateBReportCbx.grid(
-            row=3, column=2, sticky='nsw', padx=5, pady=10)
+            self.pvfFrm, textvariable=self.pvf_err_dateB, width=20
+        )
+        self.err_dateBReportCbx.grid(row=3, column=2, sticky="nsw", padx=5, pady=10)
         self.pvf_openErrRepBtn = ttk.Button(
             self.pvfFrm,
-            text='open',
+            text="open",
             command=self.pvf_error_report,
-            cursor='hand2',
-            width=10)
-        self.pvf_openErrRepBtn.grid(
-            row=3, column=3, sticky='sw', padx=5, pady=5)
+            cursor="hand2",
+            width=10,
+        )
+        self.pvf_openErrRepBtn.grid(row=3, column=3, sticky="sw", padx=5, pady=5)
 
     def onFrameConfigure(self, event):
-        self.base.config(scrollregion=self.base.bbox('all'))
+        self.base.config(scrollregion=self.base.bbox("all"))
 
     def report_display(self):
-        self.repTop = tk.Toplevel(self, background='white')
-        self.repTop.iconbitmap('./icons/report.ico')
-        self.repTop.title('Vendor files report')
+        self.repTop = tk.Toplevel(self, background="white")
+        self.repTop.iconbitmap("./icons/report.ico")
+        self.repTop.title("Vendor files report")
 
         self.repTop.columnconfigure(0, minsize=10)
         self.repTop.columnconfigure(1, minsize=750)
@@ -457,90 +469,79 @@ class Reports(tk.Frame):
         self.repTop.rowconfigure(13, minsize=10)
 
         self.yscrollbarD = tk.Scrollbar(self.repTop, orient=tk.VERTICAL)
-        self.yscrollbarD.grid(
-            row=1, column=10, rowspan=9, sticky='nse', padx=2)
+        self.yscrollbarD.grid(row=1, column=10, rowspan=9, sticky="nse", padx=2)
         self.xscrollbarD = tk.Scrollbar(self.repTop, orient=tk.HORIZONTAL)
-        self.xscrollbarD.grid(
-            row=10, column=1, columnspan=9, sticky='swe')
+        self.xscrollbarD.grid(row=10, column=1, columnspan=9, sticky="swe")
 
         self.reportTxt = tk.Text(
             self.repTop,
             borderwidth=0,
             wrap=tk.NONE,
             yscrollcommand=self.yscrollbarD.set,
-            xscrollcommand=self.xscrollbarD.set)
-        self.reportTxt.grid(
-            row=1, column=1, rowspan=9, columnspan=9, sticky='snew')
-        self.reportTxt.tag_config('blue', foreground='blue', underline=1)
-        self.reportTxt.tag_config('red', foreground='red')
+            xscrollcommand=self.xscrollbarD.set,
+        )
+        self.reportTxt.grid(row=1, column=1, rowspan=9, columnspan=9, sticky="snew")
+        self.reportTxt.tag_config("blue", foreground="blue", underline=1)
+        self.reportTxt.tag_config("red", foreground="red")
 
         self.yscrollbarD.config(command=self.reportTxt.yview)
         self.xscrollbarD.config(command=self.reportTxt.xview)
 
         ttk.Button(
             self.repTop,
-            text='close',
+            text="close",
             width=12,
-            cursor='hand2',
-            command=self.repTop.destroy).grid(
-            row=12, column=6, sticky='nw', padx=5)
+            cursor="hand2",
+            command=self.repTop.destroy,
+        ).grid(row=12, column=6, sticky="nw", padx=5)
 
     def pvf_user_report(self):
-        overload_logger.debug(
-            'Displaying user reports')
+        overload_logger.debug("Displaying user reports")
         month = self.pvf_user_months.get()
-        if month == '':
-            m = 'plase select month to display user stats'
-            tkMessageBox.showwarning('Input Error', m)
+        if month == "":
+            m = "plase select month to display user stats"
+            tkMessageBox.showwarning("Input Error", m)
         else:
             self.report_display()
             start_date = datetime.datetime.strptime(month, "%Y-%m").date()
-            days_in_month = calendar.monthrange(
-                start_date.year, start_date.month)[1]
+            days_in_month = calendar.monthrange(start_date.year, start_date.month)[1]
             end_date = start_date + datetime.timedelta(days=days_in_month)
             nypl_stats = cumulative_nypl_stats(start_date, end_date)
             nypl_branch_stats = nypl_stats[0]
             nypl_research_stats = nypl_stats[1]
             self.reportTxt.insert(
-                tk.END, 'Report for period from {} to {}\n'.format(
-                    start_date, end_date))
+                tk.END, "Report for period from {} to {}\n".format(start_date, end_date)
+            )
+            self.reportTxt.insert(tk.END, "NYPL\n", "red")
+            self.reportTxt.insert(tk.END, "Branches vendor breakdown:\n", "blue")
             self.reportTxt.insert(
-                tk.END, 'NYPL\n', 'red')
+                tk.END, nypl_branch_stats.to_string(index=False) + "\n"
+            )
+            self.reportTxt.insert(tk.END, "Research vendor breakdown:\n", "blue")
             self.reportTxt.insert(
-                tk.END, 'Branches vendor breakdown:\n', 'blue')
-            self.reportTxt.insert(
-                tk.END, nypl_branch_stats.to_string(index=False) + '\n')
-            self.reportTxt.insert(
-                tk.END, 'Research vendor breakdown:\n', 'blue')
-            self.reportTxt.insert(
-                tk.END, nypl_research_stats.to_string(index=False) + '\n')
-            self.reportTxt.insert(tk.END, '\n' + ('-' * 60) + '\n')
-            self.reportTxt.insert(
-                tk.END, 'BPL\n', 'red')
-            self.reportTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
+                tk.END, nypl_research_stats.to_string(index=False) + "\n"
+            )
+            self.reportTxt.insert(tk.END, "\n" + ("-" * 60) + "\n")
+            self.reportTxt.insert(tk.END, "BPL\n", "red")
+            self.reportTxt.insert(tk.END, "Vendor breakdown:\n", "blue")
             bpl_stats = cumulative_bpl_stats(start_date, end_date)
-            self.reportTxt.insert(
-                tk.END, bpl_stats.to_string(index=False) + '\n')
+            self.reportTxt.insert(tk.END, bpl_stats.to_string(index=False) + "\n")
 
     def pvf_vendor_report(self):
-        overload_logger.debug(
-            'Displaying vendor reports')
+        overload_logger.debug("Displaying vendor reports")
         start_month = self.pvf_ven_dateA.get()
         end_month = self.pvf_ven_dateB.get()
-        if start_month == '' or end_month == '':
-            m = 'Please select start and end month\nto display vendor stats.'
-            tkMessageBox.showwarning('Input Error', m)
+        if start_month == "" or end_month == "":
+            m = "Please select start and end month\nto display vendor stats."
+            tkMessageBox.showwarning("Input Error", m)
         else:
             # summon the widget
             self.report_display()
 
             # parse start and end dates
-            start_date = datetime.datetime.strptime(
-                start_month, "%Y-%m").date()
-            end_date = datetime.datetime.strptime(
-                end_month, "%Y-%m").date()
-            days_in_month = calendar.monthrange(
-                end_date.year, end_date.month)[1]
+            start_date = datetime.datetime.strptime(start_month, "%Y-%m").date()
+            end_date = datetime.datetime.strptime(end_month, "%Y-%m").date()
+            days_in_month = calendar.monthrange(end_date.year, end_date.month)[1]
             end_date = end_date + datetime.timedelta(days=days_in_month)
 
             # get dataframes for specified time period
@@ -548,56 +549,48 @@ class Reports(tk.Frame):
 
             # enter stats into widget
             self.reportTxt.insert(
-                tk.END, 'Report for period from {} to {}\n'.format(
-                    start_date, end_date))
-            self.reportTxt.insert(
-                tk.END, 'NYPL\n', 'red')
-            self.reportTxt.insert(
-                tk.END, 'Branches vendor breakdown:\n', 'blue')
-            self.reportTxt.insert(
-                tk.END, nbdf.to_string(index=False) + '\n')
-            self.reportTxt.insert(
-                tk.END, 'Research vendor breakdown:\n', 'blue')
-            self.reportTxt.insert(
-                tk.END, nrdf.to_string(index=False) + '\n')
-            self.reportTxt.insert(tk.END, '\n' + ('-' * 60) + '\n')
-            self.reportTxt.insert(
-                tk.END, 'BPL\n', 'red')
-            self.reportTxt.insert(tk.END, 'Vendor breakdown:\n', 'blue')
-            self.reportTxt.insert(
-                tk.END, bdf.to_string(index=False) + '\n')
+                tk.END, "Report for period from {} to {}\n".format(start_date, end_date)
+            )
+            self.reportTxt.insert(tk.END, "NYPL\n", "red")
+            self.reportTxt.insert(tk.END, "Branches vendor breakdown:\n", "blue")
+            self.reportTxt.insert(tk.END, nbdf.to_string(index=False) + "\n")
+            self.reportTxt.insert(tk.END, "Research vendor breakdown:\n", "blue")
+            self.reportTxt.insert(tk.END, nrdf.to_string(index=False) + "\n")
+            self.reportTxt.insert(tk.END, "\n" + ("-" * 60) + "\n")
+            self.reportTxt.insert(tk.END, "BPL\n", "red")
+            self.reportTxt.insert(tk.END, "Vendor breakdown:\n", "blue")
+            self.reportTxt.insert(tk.END, bdf.to_string(index=False) + "\n")
 
     def pvf_error_report(self):
-        m = 'Functionality not ready yet. Error reports are being developed'
-        tkMessageBox.showinfo('Under construction...', m)
+        m = "Functionality not ready yet. Error reports are being developed"
+        tkMessageBox.showinfo("Under construction...", m)
 
     def help(self):
-        m = 'help not available yet...'
-        tkMessageBox.showinfo('Under construction...', m)
+        m = "help not available yet..."
+        tkMessageBox.showinfo("Under construction...", m)
 
     def reset(self):
-        self.pvf_user_months.set('')
-        self.pvf_ven_dateA.set('')
-        self.pvf_ven_dateB.set('')
-        self.pvf_err_dateA.set('')
-        self.pvf_err_dateB.set('')
+        self.pvf_user_months.set("")
+        self.pvf_ven_dateA.set("")
+        self.pvf_ven_dateB.set("")
+        self.pvf_err_dateA.set("")
+        self.pvf_err_dateB.set("")
 
     def observer(self, *args):
-        if self.activeW.get() == 'Reports':
+        if self.activeW.get() == "Reports":
             # reset variables
             self.reset()
 
             # find out date values for PFV report
             with session_scope() as session:
                 records = retrieve_records(session, PVR_Batch)
-                values = list(
-                    set([record.timestamp[:7] for record in records]))
-            self.userReportCbx['values'] = values
-            self.userReportCbx['state'] = 'readonly'
-            self.ven_dateAReportCbx['values'] = values
-            self.ven_dateAReportCbx['state'] = 'readonly'
-            self.ven_dateBReportCbx['values'] = values
-            self.ven_dateBReportCbx['state'] = 'readonly'
+                values = list(set([record.timestamp[:7] for record in records]))
+            self.userReportCbx["values"] = values
+            self.userReportCbx["state"] = "readonly"
+            self.ven_dateAReportCbx["values"] = values
+            self.ven_dateAReportCbx["state"] = "readonly"
+            self.ven_dateBReportCbx["values"] = values
+            self.ven_dateBReportCbx["state"] = "readonly"
 
 
 class Settings(tk.Frame):
@@ -605,7 +598,7 @@ class Settings(tk.Frame):
 
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
 
         self.rowconfigure(0, minsize=25)
@@ -618,87 +611,94 @@ class Settings(tk.Frame):
         self.columnconfigure(8, minsize=50)
         self.columnconfigure(10, minsize=30)
 
-        foldersICO = tk.PhotoImage(file='./icons/folders.gif')
+        foldersICO = tk.PhotoImage(file="./icons/folders.gif")
         self.defaultDirBtn = ttk.Button(
-            self, image=foldersICO,
-            text='default directories',
+            self,
+            image=foldersICO,
+            text="default directories",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('DefaultDirs'))
+            command=lambda: controller.show_frame("DefaultDirs"),
+        )
         # prevent image to be garbage collected by Python
         self.defaultDirBtn.image = foldersICO
-        self.defaultDirBtn.grid(
-            row=1, column=1, sticky='snew')
+        self.defaultDirBtn.grid(row=1, column=1, sticky="snew")
 
-        apiICO = tk.PhotoImage(file='./icons/key-lock.gif')
+        apiICO = tk.PhotoImage(file="./icons/key-lock.gif")
 
         self.platform_apiBtn = ttk.Button(
-            self, image=apiICO,
-            text='Platform APIs',
+            self,
+            image=apiICO,
+            text="Platform APIs",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('PlatformAPIs'))
+            command=lambda: controller.show_frame("PlatformAPIs"),
+        )
 
         self.platform_apiBtn.image = apiICO
-        self.platform_apiBtn.grid(
-            row=1, column=3, sticky='snew')
+        self.platform_apiBtn.grid(row=1, column=3, sticky="snew")
 
         self.goo_apiBtn = ttk.Button(
-            self, image=apiICO,
-            text='Google APIs',
+            self,
+            image=apiICO,
+            text="Google APIs",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('GooAPI'))
+            command=lambda: controller.show_frame("GooAPI"),
+        )
 
         self.goo_apiBtn.image = apiICO
-        self.goo_apiBtn.grid(
-            row=1, column=5, sticky='snew')
+        self.goo_apiBtn.grid(row=1, column=5, sticky="snew")
 
         self.z3950_apiBtn = ttk.Button(
-            self, image=apiICO,
-            text='Z950s',
+            self,
+            image=apiICO,
+            text="Z950s",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('Z3950s'))
+            command=lambda: controller.show_frame("Z3950s"),
+        )
         self.z3950_apiBtn.image = apiICO
-        self.z3950_apiBtn.grid(
-            row=3, column=1, sticky='snew')
+        self.z3950_apiBtn.grid(row=3, column=1, sticky="snew")
 
         self.sierra_apiBtn = ttk.Button(
-            self, image=apiICO,
-            text='Sierra APIs',
+            self,
+            image=apiICO,
+            text="Sierra APIs",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('SierraAPIs'))
+            command=lambda: controller.show_frame("SierraAPIs"),
+        )
 
         self.sierra_apiBtn.image = apiICO
-        self.sierra_apiBtn.grid(
-            row=3, column=3, sticky='snew')
+        self.sierra_apiBtn.grid(row=3, column=3, sticky="snew")
 
         self.wc_apiBtn = ttk.Button(
-            self, image=apiICO,
-            text='Worldcat APIs',
+            self,
+            image=apiICO,
+            text="Worldcat APIs",
             compound=tk.TOP,
-            cursor='hand2',
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('WorldcatAPIs'))
+            command=lambda: controller.show_frame("WorldcatAPIs"),
+        )
 
         self.wc_apiBtn.image = apiICO
-        self.wc_apiBtn.grid(
-            row=3, column=5, sticky='snew')
+        self.wc_apiBtn.grid(row=3, column=5, sticky="snew")
 
         self.closeBtn = ttk.Button(
-            self, text='close',
-            cursor='hand2',
+            self,
+            text="close",
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('Main'))
-        self.closeBtn.grid(
-            row=5, column=1, sticky='sew')
+            command=lambda: controller.show_frame("Main"),
+        )
+        self.closeBtn.grid(row=5, column=1, sticky="sew")
 
 
 class SierraAPIs(tk.Frame):
@@ -707,14 +707,14 @@ class SierraAPIs(tk.Frame):
 
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
-        self.activeW = app_data['activeW']
-        self.activeW.trace('w', self.observer)
+        self.activeW = app_data["activeW"]
+        self.activeW.trace("w", self.observer)
 
         # widget variables
         self.conn_name = tk.StringVar()
-        self.conn_name.trace('w', self.populate_form)
+        self.conn_name.trace("w", self.populate_form)
         self.host = tk.StringVar()
         self.client_id = tk.StringVar()
         self.client_secret = tk.StringVar()
@@ -729,9 +729,8 @@ class SierraAPIs(tk.Frame):
         self.columnconfigure(4, minsize=20)
 
         # settings frame
-        self.baseFrm = ttk.LabelFrame(self, text='API settings')
-        self.baseFrm.grid(
-            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm = ttk.LabelFrame(self, text="API settings")
+        self.baseFrm.grid(row=1, column=1, rowspan=6, sticky="snew")
         self.baseFrm.rowconfigure(0, minsize=2)
         self.baseFrm.rowconfigure(2, minsize=2)
         self.baseFrm.rowconfigure(4, minsize=2)
@@ -741,109 +740,63 @@ class SierraAPIs(tk.Frame):
 
         # entry widgets
         self.conn_nameCbx = ttk.Combobox(
-            self.baseFrm,
-            textvariable=self.conn_name,
-            width=50)
-        self.conn_nameCbx.grid(
-            row=1, column=0, sticky='new')
+            self.baseFrm, textvariable=self.conn_name, width=50
+        )
+        self.conn_nameCbx.grid(row=1, column=0, sticky="new")
 
         self.libraryCbx = ttk.Combobox(
-            self.baseFrm,
-            textvariable=self.library,
-            value=['BPL', 'NYPL'],
-            width=50)
-        self.libraryCbx.grid(
-            row=3, column=0, sticky='new')
+            self.baseFrm, textvariable=self.library, value=["BPL", "NYPL"], width=50
+        )
+        self.libraryCbx.grid(row=3, column=0, sticky="new")
 
-        self.hostEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.host,
-            width=50)
-        self.hostEnt.grid(
-            row=7, column=0, sticky='new')
+        self.hostEnt = ttk.Entry(self.baseFrm, textvariable=self.host, width=50)
+        self.hostEnt.grid(row=7, column=0, sticky="new")
 
         self.client_idEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.client_id,
-            show='*',
-            width=50)
-        self.client_idEnt.grid(
-            row=9, column=0, sticky='new')
+            self.baseFrm, textvariable=self.client_id, show="*", width=50
+        )
+        self.client_idEnt.grid(row=9, column=0, sticky="new")
 
         self.client_secretEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.client_secret,
-            show='*',
-            width=50)
-        self.client_secretEnt.grid(
-            row=11, column=0, sticky='new')
+            self.baseFrm, textvariable=self.client_secret, show="*", width=50
+        )
+        self.client_secretEnt.grid(row=11, column=0, sticky="new")
 
         # label widgets
 
-        self.conn_nameLbl = ttk.Label(
-            self.baseFrm,
-            text='connection name',
-            width=20)
-        self.conn_nameLbl.grid(
-            row=1, column=2, sticky='new')
+        self.conn_nameLbl = ttk.Label(self.baseFrm, text="connection name", width=20)
+        self.conn_nameLbl.grid(row=1, column=2, sticky="new")
 
-        self.libraryLbl = ttk.Label(
-            self.baseFrm,
-            text='library',
-            width=20)
-        self.libraryLbl.grid(
-            row=3, column=2, sticky='new')
+        self.libraryLbl = ttk.Label(self.baseFrm, text="library", width=20)
+        self.libraryLbl.grid(row=3, column=2, sticky="new")
 
-        self.hostLbl = ttk.Label(
-            self.baseFrm,
-            text='API base URL',
-            width=20)
-        self.hostLbl.grid(
-            row=7, column=2, sticky='new')
+        self.hostLbl = ttk.Label(self.baseFrm, text="API base URL", width=20)
+        self.hostLbl.grid(row=7, column=2, sticky="new")
 
-        self.databaseLbl = ttk.Label(
-            self.baseFrm,
-            text='client id',
-            width=20)
-        self.databaseLbl.grid(
-            row=9, column=2, sticky='new')
+        self.databaseLbl = ttk.Label(self.baseFrm, text="client id", width=20)
+        self.databaseLbl.grid(row=9, column=2, sticky="new")
 
-        self.portLbl = ttk.Label(
-            self.baseFrm,
-            text='client secret',
-            width=20)
-        self.portLbl.grid(
-            row=11, column=2, sticky='new')
+        self.portLbl = ttk.Label(self.baseFrm, text="client secret", width=20)
+        self.portLbl.grid(row=11, column=2, sticky="new")
 
         # right menu buttons
 
-        self.saveBtn = ttk.Button(
-            self, text='save',
-            width=15,
-            command=self.save)
-        self.saveBtn.grid(
-            row=3, column=3, sticky='new')
+        self.saveBtn = ttk.Button(self, text="save", width=15, command=self.save)
+        self.saveBtn.grid(row=3, column=3, sticky="new")
 
-        self.helpBtn = ttk.Button(
-            self, text='help',
-            width=15,
-            command=self.help)
-        self.helpBtn.grid(
-            row=4, column=3, sticky='new')
+        self.helpBtn = ttk.Button(self, text="help", width=15, command=self.help)
+        self.helpBtn.grid(row=4, column=3, sticky="new")
 
-        self.deleteBtn = ttk.Button(
-            self, text='delete',
-            width=15,
-            command=self.delete)
-        self.deleteBtn.grid(
-            row=5, column=3, sticky='new')
+        self.deleteBtn = ttk.Button(self, text="delete", width=15, command=self.delete)
+        self.deleteBtn.grid(row=5, column=3, sticky="new")
 
         self.closeBtn = ttk.Button(
-            self, text='close',
+            self,
+            text="close",
             width=15,
-            command=lambda: controller.show_frame('Settings'))
-        self.closeBtn.grid(
-            row=6, column=3, sticky='new')
+            command=lambda: controller.show_frame("Settings"),
+        )
+        self.closeBtn.grid(row=6, column=3, sticky="new")
 
     def save(self):
         # validate data
@@ -853,14 +806,12 @@ class SierraAPIs(tk.Frame):
         new_conn_name = self.conn_name.get()
 
         if correct:
-            if self.client_id.get() == '' or \
-                    self.client_id.get() == 'None':
+            if self.client_id.get() == "" or self.client_id.get() == "None":
                 client_id = None
             else:
                 client_id = self.client_id.get()
             encoded_client_id = base64.b64encode(client_id)
-            if self.client_secret.get() == '' or \
-                    self.client_secret.get() == 'None':
+            if self.client_secret.get() == "" or self.client_secret.get() == "None":
                 client_secret = None
             else:
                 client_secret = self.client_secret.get()
@@ -869,71 +820,72 @@ class SierraAPIs(tk.Frame):
                 host=self.host.get(),
                 client_id=encoded_client_id,
                 library=self.library.get(),
-                method='SierraAPI')
+                method="SierraAPI",
+            )
 
             user_data = shelve.open(USER_DATA, writeback=True)
-            if 'SierraAPIs' in user_data:
-                APIs = user_data['SierraAPIs']
+            if "SierraAPIs" in user_data:
+                APIs = user_data["SierraAPIs"]
             else:
-                user_data['SierraAPIs'] = {}
-                APIs = user_data['SierraAPIs']
+                user_data["SierraAPIs"] = {}
+                APIs = user_data["SierraAPIs"]
             APIs[new_conn_name] = new_conn
             user_data.close()
 
             # store critical data in Windows Vault
-            credentials.store_in_vault(
-                self.host.get(), client_id, client_secret)
+            credentials.store_in_vault(self.host.get(), client_id, client_secret)
 
-            tkMessageBox.showinfo('Input', 'Settings have been saved')
+            tkMessageBox.showinfo("Input", "Settings have been saved")
             self.observer()
 
         else:
             m = valid_results[1]
-            tkMessageBox.showerror('Input error', m)
+            tkMessageBox.showerror("Input error", m)
 
     def help(self):
-        info = 'Please contact your ILS administrator for the\n' \
-               'details of API settings.\n' \
-               'Please note,\n' \
-               'you will need Sierra API authorization, that \n' \
-               'includes client id and client secret to use this\n' \
-               'feature.'
-        tkMessageBox.showinfo('help', info)
+        info = (
+            "Please contact your ILS administrator for the\n"
+            "details of API settings.\n"
+            "Please note,\n"
+            "you will need Sierra API authorization, that \n"
+            "includes client id and client secret to use this\n"
+            "feature."
+        )
+        tkMessageBox.showinfo("help", info)
 
     def validate(self):
-        m = ''
+        m = ""
         correct = True
 
         conn_name = self.conn_name.get()
         self.conn_name.set(conn_name.strip())
 
-        if conn_name == '':
-            m += 'connection name field cannot be empty\n'
+        if conn_name == "":
+            m += "connection name field cannot be empty\n"
             correct = False
         if len(conn_name) > 50:
-            m += 'connection name cannot be longer than 50 characters\n'
+            m += "connection name cannot be longer than 50 characters\n"
             correct = False
 
         host = self.host.get().strip()
-        p = re.compile(
-            r'https://[a-z].*\.[com|org]/iii/sierra-api/v\d|', re.IGNORECASE)
+        p = re.compile(r"https://[a-z].*\.[com|org]/iii/sierra-api/v\d|", re.IGNORECASE)
 
         if not p.match(host):
-            m += 'API URL appears to be invalid\n'
+            m += "API URL appears to be invalid\n"
             correct = False
 
         client_id = self.client_id.get().strip()
-        if client_id == '':
-            m += 'cliend id field cannot be empty\n'
+        if client_id == "":
+            m += "cliend id field cannot be empty\n"
             correct = False
 
         client_secret = self.client_secret.get().strip()
-        if client_secret == '':
-            m += 'client secret field cannot be empty\n'
+        if client_secret == "":
+            m += "client secret field cannot be empty\n"
             correct = False
 
-        if self.library.get() == '':
-            m += 'missing library field\n'
+        if self.library.get() == "":
+            m += "missing library field\n"
             correct = False
 
         self.host.set(host)
@@ -943,63 +895,63 @@ class SierraAPIs(tk.Frame):
         return (correct, m)
 
     def delete(self):
-        if self.conn_name.get() == '':
-            m = 'please select connection for deletion'
-            tkMessageBox.showerror('Input error', m)
+        if self.conn_name.get() == "":
+            m = "please select connection for deletion"
+            tkMessageBox.showerror("Input error", m)
         else:
-            if tkMessageBox.askokcancel('Deletion', 'delete connection?'):
+            if tkMessageBox.askokcancel("Deletion", "delete connection?"):
                 user_data = shelve.open(USER_DATA, writeback=True)
-                conn = user_data['SierraAPIs'][self.conn_name.get()]
+                conn = user_data["SierraAPIs"][self.conn_name.get()]
 
                 # delete from Windows Vault
                 keyring.delete_password(
-                    conn['host'],
-                    base64.b64decode(conn['client_id']))
+                    conn["host"], base64.b64decode(conn["client_id"])
+                )
 
                 # delete from user_data
-                user_data['SierraAPIs'].pop(self.conn_name.get(), None)
+                user_data["SierraAPIs"].pop(self.conn_name.get(), None)
                 user_data.close()
                 # update indexes & reset to blank form
                 self.observer()
 
     def reset_form(self):
-        self.conn_name.set('')
-        self.library.set('')
-        self.host.set('')
-        self.client_id.set('')
-        self.client_secret.set('')
+        self.conn_name.set("")
+        self.library.set("")
+        self.host.set("")
+        self.client_id.set("")
+        self.client_secret.set("")
         self.stop_tracer = False
 
     def populate_form(self, *args):
-        if self.conn_name.get() != '' and \
-                self.stop_tracer is False:
+        if self.conn_name.get() != "" and self.stop_tracer is False:
             user_data = shelve.open(USER_DATA)
             try:
-                conn = user_data['SierraAPIs'][self.conn_name.get()]
-                self.library.set(conn['library'])
-                self.host.set(conn['host'])
-                self.client_id.set(base64.b64decode(conn['client_id']))
+                conn = user_data["SierraAPIs"][self.conn_name.get()]
+                self.library.set(conn["library"])
+                self.host.set(conn["host"])
+                self.client_id.set(base64.b64decode(conn["client_id"]))
                 self.client_secret.set(
                     credentials.get_from_vault(
-                        conn['host'],
-                        base64.b64decode(conn['client_id'])))
+                        conn["host"], base64.b64decode(conn["client_id"])
+                    )
+                )
             except KeyError:
                 pass
             finally:
                 user_data.close()
 
     def observer(self, *args):
-        if self.activeW.get() == 'SierraAPIs':
+        if self.activeW.get() == "SierraAPIs":
             self.stop_tracer = False
             self.reset_form()
             user_data = shelve.open(USER_DATA)
-            if 'SierraAPIs' in user_data:
-                if len(user_data['SierraAPIs']) > 0:
-                    APIs = user_data['SierraAPIs']
+            if "SierraAPIs" in user_data:
+                if len(user_data["SierraAPIs"]) > 0:
+                    APIs = user_data["SierraAPIs"]
                     conn_names = []
                     for name in APIs.iterkeys():
                         conn_names.append(name)
-                    self.conn_nameCbx['value'] = sorted(conn_names)
+                    self.conn_nameCbx["value"] = sorted(conn_names)
             user_data.close()
 
 
@@ -1009,14 +961,14 @@ class PlatformAPIs(tk.Frame):
 
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
-        self.activeW = app_data['activeW']
-        self.activeW.trace('w', self.observer)
+        self.activeW = app_data["activeW"]
+        self.activeW.trace("w", self.observer)
 
         # widget variables
         self.conn_name = tk.StringVar()
-        self.conn_name.trace('w', self.populate_form)
+        self.conn_name.trace("w", self.populate_form)
         self.oauth_server = tk.StringVar()
         self.host = tk.StringVar()
         self.client_id = tk.StringVar()
@@ -1031,9 +983,8 @@ class PlatformAPIs(tk.Frame):
         self.columnconfigure(4, minsize=20)
 
         # settings frame
-        self.baseFrm = ttk.LabelFrame(self, text='Platform API settings')
-        self.baseFrm.grid(
-            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm = ttk.LabelFrame(self, text="Platform API settings")
+        self.baseFrm.grid(row=1, column=1, rowspan=6, sticky="snew")
         self.baseFrm.rowconfigure(0, minsize=2)
         self.baseFrm.rowconfigure(2, minsize=2)
         self.baseFrm.rowconfigure(4, minsize=2)
@@ -1043,108 +994,65 @@ class PlatformAPIs(tk.Frame):
 
         # entry widgets
         self.conn_nameCbx = ttk.Combobox(
-            self.baseFrm,
-            textvariable=self.conn_name,
-            width=50)
-        self.conn_nameCbx.grid(
-            row=1, column=0, sticky='new')
+            self.baseFrm, textvariable=self.conn_name, width=50
+        )
+        self.conn_nameCbx.grid(row=1, column=0, sticky="new")
 
         self.oauth_serverEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.oauth_server,
-            width=50)
-        self.oauth_serverEnt.grid(
-            row=3, column=0, sticky='new')
+            self.baseFrm, textvariable=self.oauth_server, width=50
+        )
+        self.oauth_serverEnt.grid(row=3, column=0, sticky="new")
 
-        self.hostEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.host,
-            width=50)
-        self.hostEnt.grid(
-            row=7, column=0, sticky='new')
+        self.hostEnt = ttk.Entry(self.baseFrm, textvariable=self.host, width=50)
+        self.hostEnt.grid(row=7, column=0, sticky="new")
 
         self.client_idEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.client_id,
-            show='*',
-            width=50)
-        self.client_idEnt.grid(
-            row=9, column=0, sticky='new')
+            self.baseFrm, textvariable=self.client_id, show="*", width=50
+        )
+        self.client_idEnt.grid(row=9, column=0, sticky="new")
 
         self.client_secretEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.client_secret,
-            show='*',
-            width=50)
-        self.client_secretEnt.grid(
-            row=11, column=0, sticky='new')
+            self.baseFrm, textvariable=self.client_secret, show="*", width=50
+        )
+        self.client_secretEnt.grid(row=11, column=0, sticky="new")
 
         # label widgets
 
-        self.conn_nameLbl = ttk.Label(
-            self.baseFrm,
-            text='connection name',
-            width=20)
-        self.conn_nameLbl.grid(
-            row=1, column=2, sticky='new')
+        self.conn_nameLbl = ttk.Label(self.baseFrm, text="connection name", width=20)
+        self.conn_nameLbl.grid(row=1, column=2, sticky="new")
 
         self.oauth_serverLbl = ttk.Label(
-            self.baseFrm,
-            text='authorization server',
-            width=20)
-        self.oauth_serverLbl.grid(
-            row=3, column=2, sticky='new')
+            self.baseFrm, text="authorization server", width=20
+        )
+        self.oauth_serverLbl.grid(row=3, column=2, sticky="new")
 
-        self.hostLbl = ttk.Label(
-            self.baseFrm,
-            text='API base URL',
-            width=20)
-        self.hostLbl.grid(
-            row=7, column=2, sticky='new')
+        self.hostLbl = ttk.Label(self.baseFrm, text="API base URL", width=20)
+        self.hostLbl.grid(row=7, column=2, sticky="new")
 
-        self.databaseLbl = ttk.Label(
-            self.baseFrm,
-            text='client id',
-            width=20)
-        self.databaseLbl.grid(
-            row=9, column=2, sticky='new')
+        self.databaseLbl = ttk.Label(self.baseFrm, text="client id", width=20)
+        self.databaseLbl.grid(row=9, column=2, sticky="new")
 
-        self.portLbl = ttk.Label(
-            self.baseFrm,
-            text='client secret',
-            width=20)
-        self.portLbl.grid(
-            row=11, column=2, sticky='new')
+        self.portLbl = ttk.Label(self.baseFrm, text="client secret", width=20)
+        self.portLbl.grid(row=11, column=2, sticky="new")
 
         # right menu buttons
 
-        self.saveBtn = ttk.Button(
-            self, text='save',
-            width=15,
-            command=self.save)
-        self.saveBtn.grid(
-            row=3, column=3, sticky='new')
+        self.saveBtn = ttk.Button(self, text="save", width=15, command=self.save)
+        self.saveBtn.grid(row=3, column=3, sticky="new")
 
-        self.helpBtn = ttk.Button(
-            self, text='help',
-            width=15,
-            command=self.help)
-        self.helpBtn.grid(
-            row=4, column=3, sticky='new')
+        self.helpBtn = ttk.Button(self, text="help", width=15, command=self.help)
+        self.helpBtn.grid(row=4, column=3, sticky="new")
 
-        self.deleteBtn = ttk.Button(
-            self, text='delete',
-            width=15,
-            command=self.delete)
-        self.deleteBtn.grid(
-            row=5, column=3, sticky='new')
+        self.deleteBtn = ttk.Button(self, text="delete", width=15, command=self.delete)
+        self.deleteBtn.grid(row=5, column=3, sticky="new")
 
         self.closeBtn = ttk.Button(
-            self, text='close',
+            self,
+            text="close",
             width=15,
-            command=lambda: controller.show_frame('Settings'))
-        self.closeBtn.grid(
-            row=6, column=3, sticky='new')
+            command=lambda: controller.show_frame("Settings"),
+        )
+        self.closeBtn.grid(row=6, column=3, sticky="new")
 
     def save(self):
         # validate data
@@ -1153,23 +1061,20 @@ class PlatformAPIs(tk.Frame):
         correct = valid_results[0]
         new_conn_name = self.conn_name.get()
         overload_logger.debug(
-            'Saving new Platform API settings under name {}'.format(
-                new_conn_name))
+            "Saving new Platform API settings under name {}".format(new_conn_name)
+        )
 
         if correct:
-            if self.oauth_server.get() == '' or \
-                    self.oauth_server.get() == 'None':
+            if self.oauth_server.get() == "" or self.oauth_server.get() == "None":
                 oauth_server = None
             else:
                 oauth_server = self.oauth_server.get().strip()
-            if self.client_id.get() == '' or \
-                    self.client_id.get() == 'None':
+            if self.client_id.get() == "" or self.client_id.get() == "None":
                 client_id = None
             else:
                 client_id = self.client_id.get()
             encoded_client_id = base64.b64encode(client_id)
-            if self.client_secret.get() == '' or \
-                    self.client_secret.get() == 'None':
+            if self.client_secret.get() == "" or self.client_secret.get() == "None":
                 client_secret = None
             else:
                 client_secret = self.client_secret.get()
@@ -1180,125 +1085,125 @@ class PlatformAPIs(tk.Frame):
                 host=self.host.get(),
                 client_id=encoded_client_id,
                 last_token=None,
-                method='Platform API',
-                library='NYPL')
+                method="Platform API",
+                library="NYPL",
+            )
 
             user_data = shelve.open(USER_DATA, writeback=True)
-            if 'PlatformAPIs' in user_data:
-                APIs = user_data['PlatformAPIs']
+            if "PlatformAPIs" in user_data:
+                APIs = user_data["PlatformAPIs"]
             else:
-                user_data['PlatformAPIs'] = {}
-                APIs = user_data['PlatformAPIs']
+                user_data["PlatformAPIs"] = {}
+                APIs = user_data["PlatformAPIs"]
             APIs[new_conn_name] = new_conn
             user_data.close()
 
             # store critical data in Windows Vault
-            credentials.store_to_vault(
-                oauth_server, client_id, client_secret)
+            credentials.store_in_vault(oauth_server, client_id, client_secret)
 
-            tkMessageBox.showinfo('Input', 'Settings have been saved')
+            tkMessageBox.showinfo("Input", "Settings have been saved")
             self.observer()
 
         else:
             m = valid_results[1]
-            tkMessageBox.showerror('Input error', m)
+            tkMessageBox.showerror("Input error", m)
 
     def help(self):
-        info = 'Please contact your ILS administrator for the\n' \
-               'details of API settings.\n' \
-               'Please note,\n' \
-               'you will need Platform API authorization, that \n' \
-               'includes client id and client secret to use this\n' \
-               'feature.'
-        tkMessageBox.showinfo('help', info)
+        info = (
+            "Please contact your ILS administrator for the\n"
+            "details of API settings.\n"
+            "Please note,\n"
+            "you will need Platform API authorization, that \n"
+            "includes client id and client secret to use this\n"
+            "feature."
+        )
+        tkMessageBox.showinfo("help", info)
 
     def validate(self):
-        m = ''
+        m = ""
         correct = True
 
         conn_name = self.conn_name.get()
         self.conn_name.set(conn_name.strip())
 
-        if conn_name == '':
-            m += 'connection name field cannot be empty\n'
+        if conn_name == "":
+            m += "connection name field cannot be empty\n"
             correct = False
         if len(conn_name) > 50:
-            m += 'connection name cannot be longer than 50 characters\n'
+            m += "connection name cannot be longer than 50 characters\n"
             correct = False
 
         self.oauth_server.set(self.oauth_server.get().strip())
-        if self.oauth_server.get() == '':
-            m += 'authorization server info is required\n'
+        if self.oauth_server.get() == "":
+            m += "authorization server info is required\n"
             correct = False
 
         self.host.set(self.host.get().strip())
         host = self.host.get().strip()
-        p = re.compile(
-            r'https://[a-z].*\.org/api/v\d\.\d', re.IGNORECASE)
+        p = re.compile(r"https://[a-z].*\.org/api/v\d\.\d", re.IGNORECASE)
 
         if not p.match(host):
-            m += 'API URL appears to be invalid\n'
+            m += "API URL appears to be invalid\n"
             correct = False
 
         self.client_id.set(self.client_id.get().strip())
         client_id = self.client_id.get().strip()
-        if client_id == '':
-            m += 'cliend id field is required\n'
+        if client_id == "":
+            m += "cliend id field is required\n"
             correct = False
 
         self.client_secret.set(self.client_secret.get().strip())
         client_secret = self.client_secret.get().strip()
-        if client_secret == '':
-            m += 'client secret field is required\n'
+        if client_secret == "":
+            m += "client secret field is required\n"
             correct = False
 
         overload_logger.debug(
-            'Validation of entered Platform API settings. '
-            'Correct: {}, errors: {}'.format(
-                correct, m))
+            "Validation of entered Platform API settings. "
+            "Correct: {}, errors: {}".format(correct, m)
+        )
         return (correct, m)
 
     def delete(self):
-        if self.conn_name.get() == '':
-            m = 'please select connection for deletion'
-            tkMessageBox.showerror('Input error', m)
+        if self.conn_name.get() == "":
+            m = "please select connection for deletion"
+            tkMessageBox.showerror("Input error", m)
         else:
-            if tkMessageBox.askokcancel('Deletion', 'delete connection?'):
+            if tkMessageBox.askokcancel("Deletion", "delete connection?"):
                 user_data = shelve.open(USER_DATA, writeback=True)
 
                 # delete creds from Windows Vault
-                conn = user_data['PlatformAPIs'][self.conn_name.get()]
+                conn = user_data["PlatformAPIs"][self.conn_name.get()]
                 keyring.delete_password(
-                    conn['oauth_server'],
-                    base64.b64decode(conn['client_id']))
+                    conn["oauth_server"], base64.b64decode(conn["client_id"])
+                )
 
                 # delete from user_data
-                user_data['PlatformAPIs'].pop(self.conn_name.get(), None)
+                user_data["PlatformAPIs"].pop(self.conn_name.get(), None)
                 user_data.close()
                 # update indexes & reset to blank form
                 self.observer()
 
     def reset_form(self):
-        self.conn_name.set('')
-        self.oauth_server.set('')
-        self.host.set('')
-        self.client_id.set('')
-        self.client_secret.set('')
+        self.conn_name.set("")
+        self.oauth_server.set("")
+        self.host.set("")
+        self.client_id.set("")
+        self.client_secret.set("")
         self.stop_tracer = False
 
     def populate_form(self, *args):
-        if self.conn_name.get() != '' and \
-                self.stop_tracer is False:
+        if self.conn_name.get() != "" and self.stop_tracer is False:
             user_data = shelve.open(USER_DATA)
             try:
-                conn = user_data['PlatformAPIs'][self.conn_name.get()]
-                self.oauth_server.set(conn['oauth_server'])
-                self.host.set(conn['host'])
-                self.client_id.set(base64.b64decode(conn['client_id']))
+                conn = user_data["PlatformAPIs"][self.conn_name.get()]
+                self.oauth_server.set(conn["oauth_server"])
+                self.host.set(conn["host"])
+                self.client_id.set(base64.b64decode(conn["client_id"]))
                 # retrieve secret from Windows Vault
                 secret = credentials.get_from_vault(
-                    self.oauth_server.get(),
-                    self.client_id.get())
+                    self.oauth_server.get(), self.client_id.get()
+                )
                 self.client_secret.set(secret)
             except KeyError:
                 pass
@@ -1306,17 +1211,17 @@ class PlatformAPIs(tk.Frame):
                 user_data.close()
 
     def observer(self, *args):
-        if self.activeW.get() == 'PlatformAPIs':
+        if self.activeW.get() == "PlatformAPIs":
             self.stop_tracer = False
             self.reset_form()
             user_data = shelve.open(USER_DATA)
-            if 'PlatformAPIs' in user_data:
-                if len(user_data['PlatformAPIs']) > 0:
-                    APIs = user_data['PlatformAPIs']
+            if "PlatformAPIs" in user_data:
+                if len(user_data["PlatformAPIs"]) > 0:
+                    APIs = user_data["PlatformAPIs"]
                     conn_names = []
                     for name in APIs.iterkeys():
                         conn_names.append(name)
-                    self.conn_nameCbx['value'] = sorted(conn_names)
+                    self.conn_nameCbx["value"] = sorted(conn_names)
             user_data.close()
 
 
@@ -1326,19 +1231,18 @@ class WorldcatAPIs(tk.Frame):
 
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
-        self.activeW = app_data['activeW']
-        self.activeW.trace('w', self.observer)
+        self.activeW = app_data["activeW"]
+        self.activeW.trace("w", self.observer)
 
         # variables
         self.key = tk.StringVar()
         self.cred_fhs = []
 
         # main frame
-        self.baseFrm = ttk.LabelFrame(self, text='WorldCat API credentials')
-        self.baseFrm.grid(
-            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm = ttk.LabelFrame(self, text="WorldCat API credentials")
+        self.baseFrm.grid(row=1, column=1, rowspan=6, sticky="snew")
         self.baseFrm.rowconfigure(0, minsize=20)
         self.baseFrm.rowconfigure(2, minsize=5)
         self.baseFrm.rowconfigure(4, minsize=5)
@@ -1351,85 +1255,84 @@ class WorldcatAPIs(tk.Frame):
         self.baseFrm.columnconfigure(5, minsize=10)
 
         self.autolinkBtn = ttk.Button(
-            self.baseFrm, text='auto credentials',
-            cursor='hand2',
+            self.baseFrm,
+            text="auto credentials",
+            cursor="hand2",
             width=15,
-            command=self.get_worldcat_creds)
-        self.autolinkBtn.grid(
-            row=1, column=1, sticky='sew')
+            command=self.get_worldcat_creds,
+        )
+        self.autolinkBtn.grid(row=1, column=1, sticky="sew")
 
         self.addBtn = ttk.Button(
-            self.baseFrm, text='add credential',
-            cursor='hand2',
+            self.baseFrm,
+            text="add credential",
+            cursor="hand2",
             width=15,
-            command=self.add_worldcat_cred)
-        self.addBtn.grid(
-            row=3, column=1, sticky='sew')
+            command=self.add_worldcat_cred,
+        )
+        self.addBtn.grid(row=3, column=1, sticky="sew")
 
         self.testBtn = ttk.Button(
-            self.baseFrm, text='test',
-            cursor='hand2',
+            self.baseFrm,
+            text="test",
+            cursor="hand2",
             width=15,
-            command=self.test_worldcat_cred)
-        self.testBtn.grid(
-            row=5, column=1, sticky='sew')
+            command=self.test_worldcat_cred,
+        )
+        self.testBtn.grid(row=5, column=1, sticky="sew")
 
         self.deleteBtn = ttk.Button(
-            self.baseFrm, text='delete credential',
-            cursor='hand2',
+            self.baseFrm,
+            text="delete credential",
+            cursor="hand2",
             width=15,
-            command=self.delete_worldcat_cred)
-        self.deleteBtn.grid(
-            row=7, column=1, sticky='sew')
+            command=self.delete_worldcat_cred,
+        )
+        self.deleteBtn.grid(row=7, column=1, sticky="sew")
 
         self.helpBtn = ttk.Button(
-            self.baseFrm, text='help',
-            cursor='hand2',
-            width=15,
-            command=self.show_help)
-        self.helpBtn.grid(
-            row=9, column=1, sticky='sew')
+            self.baseFrm, text="help", cursor="hand2", width=15, command=self.show_help
+        )
+        self.helpBtn.grid(row=9, column=1, sticky="sew")
 
         self.closeBtn = ttk.Button(
-            self.baseFrm, text='close',
-            cursor='hand2',
+            self.baseFrm,
+            text="close",
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('Main'))
-        self.closeBtn.grid(
-            row=11, column=1, sticky='sew')
+            command=lambda: controller.show_frame("Main"),
+        )
+        self.closeBtn.grid(row=11, column=1, sticky="sew")
 
         # info canvas
         self.yscrollbar = tk.Scrollbar(self.baseFrm, orient=tk.VERTICAL)
-        self.yscrollbar.grid(
-            row=1, column=3, rowspan=10, sticky='nse', padx=2)
+        self.yscrollbar.grid(row=1, column=3, rowspan=10, sticky="nse", padx=2)
         self.infoCnv = tk.Canvas(
-            self.baseFrm, bg='white',
+            self.baseFrm,
+            bg="white",
             width=570,
             height=400,
-            yscrollcommand=self.yscrollbar.set)
-        self.infoCnv.grid(
-            row=1, column=4, rowspan=10)
+            yscrollcommand=self.yscrollbar.set,
+        )
+        self.infoCnv.grid(row=1, column=4, rowspan=10)
 
-        self.infoFrm = tk.Frame(
-            self.infoCnv)
+        self.infoFrm = tk.Frame(self.infoCnv)
         self.yscrollbar.config(command=self.infoCnv.yview)
         self.infoCnv.create_window(
-            (0, 0), window=self.infoFrm, anchor="nw",
-            tags="self.infoFrm")
+            (0, 0), window=self.infoFrm, anchor="nw", tags="self.infoFrm"
+        )
         self.infoFrm.bind("<Configure>", self.onFrameConfigure)
 
-        self.napisFrm = ttk.LabelFrame(self.infoFrm, text='NYPL')
+        self.napisFrm = ttk.LabelFrame(self.infoFrm, text="NYPL")
         self.napisFrm.columnconfigure(2, minsize=200)
-        self.napisFrm.grid(
-            row=0, column=0, sticky='nsw')
+        self.napisFrm.grid(row=0, column=0, sticky="nsw")
 
-        self.bapisFrm = ttk.LabelFrame(self.infoFrm, text='BPL')
+        self.bapisFrm = ttk.LabelFrame(self.infoFrm, text="BPL")
         self.bapisFrm.columnconfigure(2, minsize=200)
-        self.bapisFrm.grid(
-            row=1, column=0, sticky='nsw')
+        self.bapisFrm.grid(row=1, column=0, sticky="nsw")
 
     def onFrameConfigure(self, event):
-        self.infoCnv.config(scrollregion=self.infoCnv.bbox('all'))
+        self.infoCnv.config(scrollregion=self.infoCnv.bbox("all"))
 
     def get_worldcat_creds(self):
         # look up update folder and determine path to
@@ -1448,32 +1351,33 @@ class WorldcatAPIs(tk.Frame):
             self.wait_window(self.top)
         else:
             overload_logger.error(
-                'Worlcat credentials not found at {}'.format(
-                    creds_dir))
-            m = 'WorldCat credentials at\n {}\n' \
-                'appear to be missing. Please report the problem.'.format(
-                    creds_dir)
-            tkMessageBox.showerror('Settings Error', m)
+                "Worlcat credentials not found at {}".format(creds_dir)
+            )
+            m = (
+                "WorldCat credentials at\n {}\n"
+                "appear to be missing. Please report the problem.".format(creds_dir)
+            )
+            tkMessageBox.showerror("Settings Error", m)
 
     def add_worldcat_cred(self):
-        print('open pop-up window and add individual credentials')
+        print("open pop-up window and add individual credentials")
 
     def test_worldcat_cred(self):
-        print('testing selected credentials')
+        print("testing selected credentials")
 
     def delete_worldcat_cred(self):
-        print('delete cred from the Vault')
+        print("delete cred from the Vault")
 
     def show_help(self):
-        print('show_help here')
+        print("show_help here")
 
     def ask_decryption_key(self):
-        self.top = tk.Toplevel(self, background='white')
-        self.top.iconbitmap('./icons/key.ico')
-        self.top.title('Decryption Key')
+        self.top = tk.Toplevel(self, background="white")
+        self.top.iconbitmap("./icons/key.ico")
+        self.top.title("Decryption Key")
 
         # reset key
-        self.key.set('')
+        self.key.set("")
 
         # layout
         self.top.columnconfigure(0, minsize=10)
@@ -1484,29 +1388,20 @@ class WorldcatAPIs(tk.Frame):
         self.top.rowconfigure(4, minsize=5)
         self.top.rowconfigure(6, minsize=10)
 
-        ttk.Label(
-            self.top,
-            text='please provide decryption key:').grid(
-                row=1, column=1, columnspan=3, sticky='nw', padx=10)
+        ttk.Label(self.top, text="please provide decryption key:").grid(
+            row=1, column=1, columnspan=3, sticky="nw", padx=10
+        )
 
-        self.keyEnt = tk.Entry(
-            self.top, textvariable=self.key, show='*')
-        self.keyEnt.grid(
-            row=3, column=1, columnspan=3, sticky='snew', padx=10)
+        self.keyEnt = tk.Entry(self.top, textvariable=self.key, show="*")
+        self.keyEnt.grid(row=3, column=1, columnspan=3, sticky="snew", padx=10)
 
         self.decryptBtn = ttk.Button(
-            self.top,
-            text='decrypt',
-            command=self.decrypt_creds)
-        self.decryptBtn.grid(
-            row=5, column=1, sticky='sew', padx=10, pady=10)
+            self.top, text="decrypt", command=self.decrypt_creds
+        )
+        self.decryptBtn.grid(row=5, column=1, sticky="sew", padx=10, pady=10)
 
-        self.closeBtn = ttk.Button(
-            self.top,
-            text='close',
-            command=self.top.destroy)
-        self.closeBtn.grid(
-            row=5, column=3, sticky='sew', padx=10, pady=10)
+        self.closeBtn = ttk.Button(self.top, text="close", command=self.top.destroy)
+        self.closeBtn.grid(row=5, column=3, sticky="sew", padx=10, pady=10)
 
     def decrypt_creds(self):
         key = self.key.get().strip()
@@ -1516,53 +1411,55 @@ class WorldcatAPIs(tk.Frame):
         for cred_fh in self.cred_fhs:
             try:
                 decrypted_creds = credentials.decrypt_file_data(key, cred_fh)
-                name = ast.literal_eval(decrypted_creds)['name']
-                library = ast.literal_eval(decrypted_creds)['library']
-                credentials.store_in_vault(
-                    name, 'Overload', decrypted_creds)
+                name = ast.literal_eval(decrypted_creds)["name"]
+                library = ast.literal_eval(decrypted_creds)["library"]
+                credentials.store_in_vault(name, "Overload", decrypted_creds)
                 # add credentials names to user_data for retrieval
-                details = {'last_token': None, 'expires_on': None}
-                if library == 'NYPL':
+                details = {"last_token": None, "expires_on": None}
+                if library == "NYPL":
                     nypl_apis[name] = details
-                elif library == 'BPL':
+                elif library == "BPL":
                     bpl_apis[name] = details
             except OverloadError as e:
                 success = False
-                overload_logger.error('Decryption error: {}'.format(e))
-                m = 'Decryption error: {}'.format(e)
-                tkMessageBox.showerror('Decryption error', m, parent=self.top)
+                overload_logger.error("Decryption error: {}".format(e))
+                m = "Decryption error: {}".format(e)
+                tkMessageBox.showerror("Decryption error", m, parent=self.top)
         if success:
             wc_apis = dict(NYPL=nypl_apis, BPL=bpl_apis)
             user_data = shelve.open(USER_DATA)
-            user_data['WorldcatAPIs'] = wc_apis
+            user_data["WorldcatAPIs"] = wc_apis
             user_data.close()
             self.top.destroy()
 
     def create_individual_api_info(self, parent, name, row):
-        cred = credentials.get_from_vault(name, 'Overload')
+        cred = credentials.get_from_vault(name, "Overload")
         if cred:
             api = ast.literal_eval(cred)
-            ttk.Label(parent, text=name).grid(
-                row=row, column=0, sticky='nsw', pady=5)
-            ttk.Label(parent, text='scopes').grid(
-                row=row, column=1, sticky='nsw', padx=5)
-            ttk.Label(parent, text=','.join(api['scopes'])).grid(
-                row=row, column=2, columnspan=5, sticky='nsw', padx=5)
-            ttk.Label(parent, text='institution id').grid(
-                row=row + 1, column=1, sticky='nsw', padx=5)
-            ttk.Label(parent, text=api['authenticating_institution_id']).grid(
-                row=row + 1, column=2, columnspan=5, sticky='nsw', padx=5)
+            ttk.Label(parent, text=name).grid(row=row, column=0, sticky="nsw", pady=5)
+            ttk.Label(parent, text="scopes").grid(
+                row=row, column=1, sticky="nsw", padx=5
+            )
+            ttk.Label(parent, text=",".join(api["scopes"])).grid(
+                row=row, column=2, columnspan=5, sticky="nsw", padx=5
+            )
+            ttk.Label(parent, text="institution id").grid(
+                row=row + 1, column=1, sticky="nsw", padx=5
+            )
+            ttk.Label(parent, text=api["authenticating_institution_id"]).grid(
+                row=row + 1, column=2, columnspan=5, sticky="nsw", padx=5
+            )
 
     def display_available_apis(self):
         user_data = shelve.open(USER_DATA)
         try:
-            apis = user_data['WorldcatAPIs']
+            apis = user_data["WorldcatAPIs"]
             r = 0
-            for name in apis['NYPL']:
+            for name in apis["NYPL"]:
                 self.create_individual_api_info(self.napiFrm, name, r)
                 r += 2
             r = 0
-            for name in apis['BPL']:
+            for name in apis["BPL"]:
                 self.create_individual_api_info(self.bapisFrm, name, r)
                 r += 2
         except KeyError:
@@ -1571,7 +1468,7 @@ class WorldcatAPIs(tk.Frame):
             user_data.close()
 
     def observer(self, *args):
-        if self.activeW.get() == 'WorldcatAPIs':
+        if self.activeW.get() == "WorldcatAPIs":
             self.display_available_apis()
 
 
@@ -1580,14 +1477,14 @@ class Z3950s(tk.Frame):
 
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
-        self.activeW = app_data['activeW']
-        self.activeW.trace('w', self.observer)
+        self.activeW = app_data["activeW"]
+        self.activeW.trace("w", self.observer)
 
         # widget variables
         self.conn_name = tk.StringVar()
-        self.conn_name.trace('w', self.populate_form)
+        self.conn_name.trace("w", self.populate_form)
         self.host = tk.StringVar()
         self.database = tk.StringVar()
         self.port = tk.StringVar()
@@ -1604,159 +1501,91 @@ class Z3950s(tk.Frame):
         self.columnconfigure(4, minsize=20)
 
         # settings frame
-        self.baseFrm = ttk.LabelFrame(self, text='Z3950 settings')
-        self.baseFrm.grid(
-            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm = ttk.LabelFrame(self, text="Z3950 settings")
+        self.baseFrm.grid(row=1, column=1, rowspan=6, sticky="snew")
         self.baseFrm.columnconfigure(1, minsize=5)
 
         # entry widgets
 
         self.conn_nameCbx = ttk.Combobox(
-            self.baseFrm,
-            textvariable=self.conn_name,
-            width=35)
-        self.conn_nameCbx.grid(
-            row=0, column=0, sticky='new')
+            self.baseFrm, textvariable=self.conn_name, width=35
+        )
+        self.conn_nameCbx.grid(row=0, column=0, sticky="new")
 
         self.libraryCbx = ttk.Combobox(
-            self.baseFrm,
-            textvariable=self.library,
-            value=['BPL', 'NYPL'],
-            width=35)
-        self.libraryCbx.grid(
-            row=1, column=0, sticky='new')
+            self.baseFrm, textvariable=self.library, value=["BPL", "NYPL"], width=35
+        )
+        self.libraryCbx.grid(row=1, column=0, sticky="new")
 
-        self.hostEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.host,
-            width=35)
-        self.hostEnt.grid(
-            row=2, column=0, sticky='new')
+        self.hostEnt = ttk.Entry(self.baseFrm, textvariable=self.host, width=35)
+        self.hostEnt.grid(row=2, column=0, sticky="new")
 
-        self.databaseEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.database,
-            width=35)
-        self.databaseEnt.grid(
-            row=3, column=0, sticky='new')
+        self.databaseEnt = ttk.Entry(self.baseFrm, textvariable=self.database, width=35)
+        self.databaseEnt.grid(row=3, column=0, sticky="new")
 
-        self.portEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.port,
-            width=35)
-        self.portEnt.grid(
-            row=4, column=0, sticky='new')
+        self.portEnt = ttk.Entry(self.baseFrm, textvariable=self.port, width=35)
+        self.portEnt.grid(row=4, column=0, sticky="new")
 
-        self.usernameEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.username,
-            width=35)
-        self.usernameEnt.grid(
-            row=5, column=0, sticky='new')
+        self.usernameEnt = ttk.Entry(self.baseFrm, textvariable=self.username, width=35)
+        self.usernameEnt.grid(row=5, column=0, sticky="new")
 
         self.passwordEnt = ttk.Entry(
-            self.baseFrm,
-            textvariable=self.password,
-            show='*',
-            width=35)
-        self.passwordEnt.grid(
-            row=6, column=0, sticky='new')
+            self.baseFrm, textvariable=self.password, show="*", width=35
+        )
+        self.passwordEnt.grid(row=6, column=0, sticky="new")
 
         self.syntaxCbx = ttk.Combobox(
             self.baseFrm,
-            values=('USMARC', 'MARC21', 'XML'),
+            values=("USMARC", "MARC21", "XML"),
             textvariable=self.syntax,
-            width=35)
-        self.syntaxCbx.grid(
-            row=7, column=0, sticky='new')
-        self.syntax.set('MARC21')
+            width=35,
+        )
+        self.syntaxCbx.grid(row=7, column=0, sticky="new")
+        self.syntax.set("MARC21")
 
         # entry widgets' labels
 
-        self.conn_nameLbl = ttk.Label(
-            self.baseFrm,
-            text='connection name',
-            width=20)
-        self.conn_nameLbl.grid(
-            row=0, column=2, sticky='new')
+        self.conn_nameLbl = ttk.Label(self.baseFrm, text="connection name", width=20)
+        self.conn_nameLbl.grid(row=0, column=2, sticky="new")
 
-        self.libraryLbl = ttk.Label(
-            self.baseFrm,
-            text='library',
-            width=20)
-        self.libraryLbl.grid(
-            row=1, column=2, sticky='new')
+        self.libraryLbl = ttk.Label(self.baseFrm, text="library", width=20)
+        self.libraryLbl.grid(row=1, column=2, sticky="new")
 
-        self.hostLbl = ttk.Label(
-            self.baseFrm,
-            text='host or IP address',
-            width=20)
-        self.hostLbl.grid(
-            row=2, column=2, sticky='new')
+        self.hostLbl = ttk.Label(self.baseFrm, text="host or IP address", width=20)
+        self.hostLbl.grid(row=2, column=2, sticky="new")
 
-        self.databaseLbl = ttk.Label(
-            self.baseFrm,
-            text='database',
-            width=20)
-        self.databaseLbl.grid(
-            row=3, column=2, sticky='new')
+        self.databaseLbl = ttk.Label(self.baseFrm, text="database", width=20)
+        self.databaseLbl.grid(row=3, column=2, sticky="new")
 
-        self.portLbl = ttk.Label(
-            self.baseFrm,
-            text='port',
-            width=20)
-        self.portLbl.grid(
-            row=4, column=2, sticky='new')
+        self.portLbl = ttk.Label(self.baseFrm, text="port", width=20)
+        self.portLbl.grid(row=4, column=2, sticky="new")
 
-        self.usernameLbl = ttk.Label(
-            self.baseFrm,
-            text='username',
-            width=20)
-        self.usernameLbl.grid(
-            row=5, column=2, sticky='new')
+        self.usernameLbl = ttk.Label(self.baseFrm, text="username", width=20)
+        self.usernameLbl.grid(row=5, column=2, sticky="new")
 
-        self.passwordLbl = ttk.Label(
-            self.baseFrm,
-            text='password',
-            width=20)
-        self.passwordLbl.grid(
-            row=6, column=2, sticky='new')
+        self.passwordLbl = ttk.Label(self.baseFrm, text="password", width=20)
+        self.passwordLbl.grid(row=6, column=2, sticky="new")
 
-        self.syntaxLbl = ttk.Label(
-            self.baseFrm,
-            text='synax',
-            width=20)
-        self.syntaxLbl.grid(
-            row=7, column=2, sticky='new')
+        self.syntaxLbl = ttk.Label(self.baseFrm, text="synax", width=20)
+        self.syntaxLbl.grid(row=7, column=2, sticky="new")
 
         # right menu buttons
-        self.saveBtn = ttk.Button(
-            self, text='save',
-            width=15,
-            command=self.save)
-        self.saveBtn.grid(
-            row=3, column=3, sticky='new')
+        self.saveBtn = ttk.Button(self, text="save", width=15, command=self.save)
+        self.saveBtn.grid(row=3, column=3, sticky="new")
 
-        self.helpBtn = ttk.Button(
-            self, text='help',
-            width=15,
-            command=self.help)
-        self.helpBtn.grid(
-            row=4, column=3, sticky='new')
+        self.helpBtn = ttk.Button(self, text="help", width=15, command=self.help)
+        self.helpBtn.grid(row=4, column=3, sticky="new")
 
-        self.deleteBtn = ttk.Button(
-            self, text='delete',
-            width=15,
-            command=self.delete)
-        self.deleteBtn.grid(
-            row=5, column=3, sticky='new')
+        self.deleteBtn = ttk.Button(self, text="delete", width=15, command=self.delete)
+        self.deleteBtn.grid(row=5, column=3, sticky="new")
 
         self.closeBtn = ttk.Button(
-            self, text='close',
+            self,
+            text="close",
             width=15,
-            command=lambda: controller.show_frame('Settings'))
-        self.closeBtn.grid(
-            row=6, column=3, sticky='new')
+            command=lambda: controller.show_frame("Settings"),
+        )
+        self.closeBtn.grid(row=6, column=3, sticky="new")
 
     def save(self):
         # validate data
@@ -1766,13 +1595,11 @@ class Z3950s(tk.Frame):
         new_conn_name = self.conn_name.get()
 
         if correct:
-            if self.username.get() == '' or \
-                    self.username.get() == 'None':
+            if self.username.get() == "" or self.username.get() == "None":
                 user = None
             else:
                 user = self.username.get()
-            if self.password.get() == '' or \
-                    self.password.get() == 'None':
+            if self.password.get() == "" or self.password.get() == "None":
                 password = None
             else:
                 password = self.password.get()
@@ -1785,77 +1612,80 @@ class Z3950s(tk.Frame):
                 password=password,
                 syntax=self.syntax.get(),
                 library=self.library.get(),
-                method='Z3950')
+                method="Z3950",
+            )
 
             user_data = shelve.open(USER_DATA, writeback=True)
-            if 'Z3950s' in user_data:
-                Z3950s = user_data['Z3950s']
+            if "Z3950s" in user_data:
+                Z3950s = user_data["Z3950s"]
             else:
-                user_data['Z3950s'] = {}
-                Z3950s = user_data['Z3950s']
+                user_data["Z3950s"] = {}
+                Z3950s = user_data["Z3950s"]
             Z3950s[new_conn_name] = new_conn
             user_data.close()
-            tkMessageBox.showinfo('Input', 'Settings have been saved')
+            tkMessageBox.showinfo("Input", "Settings have been saved")
             self.observer()
 
         else:
             m = valid_results[1]
-            tkMessageBox.showerror('Input error', m)
+            tkMessageBox.showerror("Input error", m)
 
     def help(self):
-        info = 'Please contact your ILS administrator for the\n' \
-               'details of Z3950 settings.\n' \
-               'Please note,\n' \
-               'OpsUtils tools use USMARC syntax by default.'
-        tkMessageBox.showinfo('help', info)
+        info = (
+            "Please contact your ILS administrator for the\n"
+            "details of Z3950 settings.\n"
+            "Please note,\n"
+            "OpsUtils tools use USMARC syntax by default."
+        )
+        tkMessageBox.showinfo("help", info)
 
     def delete(self):
-        if self.conn_name.get() == '':
-            m = 'please select connection for deletion'
-            tkMessageBox.showerror('Input error', m)
+        if self.conn_name.get() == "":
+            m = "please select connection for deletion"
+            tkMessageBox.showerror("Input error", m)
         else:
-            if tkMessageBox.askokcancel('Deletion', 'delete connection?'):
+            if tkMessageBox.askokcancel("Deletion", "delete connection?"):
                 user_data = shelve.open(USER_DATA, writeback=True)
-                user_data['Z3950s'].pop(self.conn_name.get(), None)
+                user_data["Z3950s"].pop(self.conn_name.get(), None)
                 user_data.close()
                 # update indexes & reset to blank form
                 self.observer()
                 self.reset_form()
 
     def validate(self):
-        m = ''
+        m = ""
         correct = True
 
         conn_name = self.conn_name.get()
         self.conn_name.set(conn_name.strip())
-        if conn_name == '':
-            m += 'connection name field cannot be empty\n'
+        if conn_name == "":
+            m += "connection name field cannot be empty\n"
             correct = False
         if len(conn_name) > 50:
-            m += 'connection name cannot be longer than 50 characters\n'
+            m += "connection name cannot be longer than 50 characters\n"
             correct = False
 
         host = self.host.get()
         self.host.set(host.strip())
-        if '.' not in host:
-            m += 'host name appears to be incorrect\n'
+        if "." not in host:
+            m += "host name appears to be incorrect\n"
             correct = False
 
         database = self.database.get()
         self.database.set(database.strip())
-        if database == '':
-            m += 'database field cannot be empty\n'
+        if database == "":
+            m += "database field cannot be empty\n"
             correct = False
 
         port = self.port.get()
         self.port.set(port.strip())
-        if port == '':
-            m += 'port field cannot be empty\n'
+        if port == "":
+            m += "port field cannot be empty\n"
             correct = False
         try:
             port = int(port)
         except:
-            m += 'port field must consist of integers'
+            m += "port field must consist of integers"
             correct = False
 
         self.username.set(self.username.get().strip())
@@ -1863,52 +1693,51 @@ class Z3950s(tk.Frame):
 
         syntax = self.syntax.get()
         self.syntax.set(syntax.strip())
-        if syntax == '':
-            m += 'syntax field cannot be empty\n'
+        if syntax == "":
+            m += "syntax field cannot be empty\n"
             correct = False
 
         return (correct, m)
 
     def reset_form(self):
-        self.conn_name.set('')
-        self.host.set('')
-        self.database.set('')
-        self.port.set('')
+        self.conn_name.set("")
+        self.host.set("")
+        self.database.set("")
+        self.port.set("")
         self.username.set(None)
         self.password.set(None)
-        self.syntax.set('USMARC')
-        self.library.set('')
+        self.syntax.set("USMARC")
+        self.library.set("")
 
     def populate_form(self, *args):
-        if self.conn_name.get() != '' and \
-                self.stop_tracer is False:
+        if self.conn_name.get() != "" and self.stop_tracer is False:
             user_data = shelve.open(USER_DATA)
             try:
-                conn = user_data['Z3950s'][self.conn_name.get()]
-                self.library.set(conn['library'])
-                self.host.set(conn['host'])
-                self.database.set(conn['database'])
-                self.port.set(conn['port'])
-                self.username.set(conn['user'])
-                self.password.set(conn['password'])
-                self.syntax.set(conn['syntax'])
+                conn = user_data["Z3950s"][self.conn_name.get()]
+                self.library.set(conn["library"])
+                self.host.set(conn["host"])
+                self.database.set(conn["database"])
+                self.port.set(conn["port"])
+                self.username.set(conn["user"])
+                self.password.set(conn["password"])
+                self.syntax.set(conn["syntax"])
             except KeyError:
                 pass
             finally:
                 user_data.close()
 
     def observer(self, *args):
-        if self.activeW.get() == 'Z3950s':
+        if self.activeW.get() == "Z3950s":
             self.stop_tracer = False
             self.reset_form()
             user_data = shelve.open(USER_DATA)
-            if 'Z3950s' in user_data:
-                if len(user_data['Z3950s']) > 0:
-                    Z3950s = user_data['Z3950s']
+            if "Z3950s" in user_data:
+                if len(user_data["Z3950s"]) > 0:
+                    Z3950s = user_data["Z3950s"]
                     conn_names = []
                     for name in Z3950s.iterkeys():
                         conn_names.append(name)
-                    self.conn_nameCbx['value'] = sorted(conn_names)
+                    self.conn_nameCbx["value"] = sorted(conn_names)
             user_data.close()
 
 
@@ -1919,10 +1748,10 @@ class DefaultDirs(tk.Frame):
 
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
-        self.activeW = app_data['activeW']
-        self.activeW.trace('w', self.observer)
+        self.activeW = app_data["activeW"]
+        self.activeW.trace("w", self.observer)
 
         # widget variables
         self.update_dir = tk.StringVar()
@@ -1938,114 +1767,98 @@ class DefaultDirs(tk.Frame):
         self.columnconfigure(4, minsize=10)
 
         # settings frame
-        self.baseFrm = ttk.LabelFrame(self, text='default directories')
-        self.baseFrm.grid(
-            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm = ttk.LabelFrame(self, text="default directories")
+        self.baseFrm.grid(row=1, column=1, rowspan=6, sticky="snew")
         self.baseFrm.columnconfigure(2, minsize=380)
         self.baseFrm.rowconfigure(6, minsize=10)
         self.baseFrm.rowconfigure(8, minsize=10)
 
         ttk.Radiobutton(
             self.baseFrm,
-            cursor='hand2',
-            text='upgrade folder',
+            cursor="hand2",
+            text="upgrade folder",
             value=0,
-            variable=self.option).grid(
-            row=0, column=0, columnspan=2,
-            sticky='snew', padx=10, pady=5)
+            variable=self.option,
+        ).grid(row=0, column=0, columnspan=2, sticky="snew", padx=10, pady=5)
         update_dirLbl = ttk.Label(
-            self.baseFrm,
-            style='Small.TLabel',
-            textvariable=self.update_dir)
-        update_dirLbl.grid(
-            row=1, column=0, columnspan=10, sticky='nw', padx=26)
+            self.baseFrm, style="Small.TLabel", textvariable=self.update_dir
+        )
+        update_dirLbl.grid(row=1, column=0, columnspan=10, sticky="nw", padx=26)
 
         ttk.Radiobutton(
             self.baseFrm,
-            cursor='hand2',
-            text='NYPL archive folder',
+            cursor="hand2",
+            text="NYPL archive folder",
             value=1,
-            variable=self.option).grid(
-            row=2, column=0, columnspan=2,
-            sticky='snew', padx=10, pady=5)
+            variable=self.option,
+        ).grid(row=2, column=0, columnspan=2, sticky="snew", padx=10, pady=5)
         nyp_archive_dirLbl = ttk.Label(
-            self.baseFrm,
-            style='Small.TLabel',
-            textvariable=self.nyp_archive_dir)
-        nyp_archive_dirLbl.grid(
-            row=3, column=0, columnspan=10, sticky='nw', padx=26)
+            self.baseFrm, style="Small.TLabel", textvariable=self.nyp_archive_dir
+        )
+        nyp_archive_dirLbl.grid(row=3, column=0, columnspan=10, sticky="nw", padx=26)
 
         ttk.Radiobutton(
             self.baseFrm,
-            cursor='hand2',
-            text='BPL archive folder',
+            cursor="hand2",
+            text="BPL archive folder",
             value=2,
-            variable=self.option).grid(
-            row=4, column=0, columnspan=2,
-            sticky='snew', padx=10, pady=5)
+            variable=self.option,
+        ).grid(row=4, column=0, columnspan=2, sticky="snew", padx=10, pady=5)
         nyp_archive_dirLbl = ttk.Label(
-            self.baseFrm,
-            style='Small.TLabel',
-            textvariable=self.bpl_archive_dir)
-        nyp_archive_dirLbl.grid(
-            row=5, column=0, columnspan=10, sticky='nw', padx=26)
+            self.baseFrm, style="Small.TLabel", textvariable=self.bpl_archive_dir
+        )
+        nyp_archive_dirLbl.grid(row=5, column=0, columnspan=10, sticky="nw", padx=26)
+
+        ttk.Button(
+            self.baseFrm, text="set", width=15, cursor="hand2", command=self.set_dir
+        ).grid(row=7, column=0, sticky="sw", padx=5)
 
         ttk.Button(
             self.baseFrm,
-            text='set',
+            text="cancel",
             width=15,
-            cursor='hand2',
-            command=self.set_dir).grid(
-            row=7, column=0, sticky='sw', padx=5)
-
-        ttk.Button(
-            self.baseFrm,
-            text='cancel',
-            width=15,
-            cursor='hand2',
-            command=lambda: self.controller.show_frame('Settings')).grid(
-            row=7, column=1, sticky='sw', padx=5)
+            cursor="hand2",
+            command=lambda: self.controller.show_frame("Settings"),
+        ).grid(row=7, column=1, sticky="sw", padx=5)
 
     def set_dir(self):
         dir_opt = {}
-        dir_opt['mustexist'] = False
-        dir_opt['parent'] = self
-        dir_opt['title'] = 'Please select directory'
-        dir_opt['initialdir'] = MY_DOCS
+        dir_opt["mustexist"] = False
+        dir_opt["parent"] = self
+        dir_opt["title"] = "Please select directory"
+        dir_opt["initialdir"] = MY_DOCS
         d = tkFileDialog.askdirectory(**dir_opt)
-        if d != '':
+        if d != "":
             user_data = shelve.open(USER_DATA, writeback=True)
-            paths = user_data['paths']
+            paths = user_data["paths"]
             if self.option.get() == 0:
-                paths['update_dir'] = d
-                self.update_dir.set('current: {}'.format(d))
+                paths["update_dir"] = d
+                self.update_dir.set("current: {}".format(d))
             elif self.option.get() == 1:
-                paths['nyp_archive_dir'] = d
-                self.nyp_archive_dir.set('current: {}'.format(d))
+                paths["nyp_archive_dir"] = d
+                self.nyp_archive_dir.set("current: {}".format(d))
             elif self.option.get() == 2:
-                paths['bpl_archive_dir'] = d
-                self.bpl_archive_dir.set('current: {}'.format(d))
-            user_data['paths'] = paths
+                paths["bpl_archive_dir"] = d
+                self.bpl_archive_dir.set("current: {}".format(d))
+            user_data["paths"] = paths
             user_data.close()
 
     def observer(self, *args):
-        if self.activeW.get() == 'DefaultDirs':
+        if self.activeW.get() == "DefaultDirs":
             user_data = shelve.open(USER_DATA)
-            paths = user_data['paths']
-            if 'update_dir' in paths:
-                self.update_dir.set('current: {}'.format(paths['update_dir']))
+            paths = user_data["paths"]
+            if "update_dir" in paths:
+                self.update_dir.set("current: {}".format(paths["update_dir"]))
             else:
-                self.update_dir.set('current: NONE')
-            if 'nyp_archive_dir' in paths:
-                self.nyp_archive_dir.set('current: {}'.format(
-                    paths['nyp_archive_dir']))
+                self.update_dir.set("current: NONE")
+            if "nyp_archive_dir" in paths:
+                self.nyp_archive_dir.set("current: {}".format(paths["nyp_archive_dir"]))
             else:
-                self.nyp_archive_dir.set('current: NONE')
-            if 'bpl_archive_dir' in paths:
-                self.bpl_archive_dir.set('current: {}'.format(
-                    paths['bpl_archive_dir']))
+                self.nyp_archive_dir.set("current: NONE")
+            if "bpl_archive_dir" in paths:
+                self.bpl_archive_dir.set("current: {}".format(paths["bpl_archive_dir"]))
             else:
-                self.bpl_archive_dir.set('current: NONE')
+                self.bpl_archive_dir.set("current: NONE")
             user_data.close()
 
 
@@ -2056,20 +1869,19 @@ class GooAPI(tk.Frame):
 
     def __init__(self, parent, controller, **app_data):
         self.parent = parent
-        tk.Frame.__init__(self, parent, background='white')
+        tk.Frame.__init__(self, parent, background="white")
         self.controller = controller
-        self.activeW = app_data['activeW']
-        self.activeW.trace('w', self.observer)
+        self.activeW = app_data["activeW"]
+        self.activeW.trace("w", self.observer)
 
         self.creds = None
         self.folder_ids = {}
         self.key = tk.StringVar()
-        self.status = ''
+        self.status = ""
 
         # settings frame
-        self.baseFrm = ttk.LabelFrame(self, text='Google API settings')
-        self.baseFrm.grid(
-            row=1, column=1, rowspan=6, sticky='snew')
+        self.baseFrm = ttk.LabelFrame(self, text="Google API settings")
+        self.baseFrm.grid(row=1, column=1, rowspan=6, sticky="snew")
         self.baseFrm.rowconfigure(0, minsize=20)
         self.baseFrm.rowconfigure(2, minsize=5)
         self.baseFrm.rowconfigure(4, minsize=5)
@@ -2080,53 +1892,52 @@ class GooAPI(tk.Frame):
         self.baseFrm.columnconfigure(4, minsize=10)
 
         self.linkBtn = ttk.Button(
-            self.baseFrm, text='link G-Drive',
-            cursor='hand2',
+            self.baseFrm,
+            text="link G-Drive",
+            cursor="hand2",
             width=15,
-            command=self.link_GSuite)
-        self.linkBtn.grid(
-            row=1, column=1, sticky='sew')
+            command=self.link_GSuite,
+        )
+        self.linkBtn.grid(row=1, column=1, sticky="sew")
 
         self.testBtn = ttk.Button(
-            self.baseFrm, text='test',
-            cursor='hand2',
+            self.baseFrm,
+            text="test",
+            cursor="hand2",
             width=15,
-            command=self.test_link_to_GSuite)
-        self.testBtn.grid(
-            row=3, column=1, sticky='sew')
+            command=self.test_link_to_GSuite,
+        )
+        self.testBtn.grid(row=3, column=1, sticky="sew")
 
         self.unlinkBtn = ttk.Button(
-            self.baseFrm, text='unlink G-Drive',
-            cursor='hand2',
+            self.baseFrm,
+            text="unlink G-Drive",
+            cursor="hand2",
             width=15,
-            command=self.unlink_GSuite)
-        self.unlinkBtn.grid(
-            row=5, column=1, sticky='sew')
+            command=self.unlink_GSuite,
+        )
+        self.unlinkBtn.grid(row=5, column=1, sticky="sew")
 
         self.helpBtn = ttk.Button(
-            self.baseFrm, text='help',
-            cursor='hand2',
-            width=15,
-            command=self.help)
-        self.helpBtn.grid(
-            row=7, column=1, sticky='sew')
+            self.baseFrm, text="help", cursor="hand2", width=15, command=self.help
+        )
+        self.helpBtn.grid(row=7, column=1, sticky="sew")
 
         self.closeBtn = ttk.Button(
-            self.baseFrm, text='close',
-            cursor='hand2',
+            self.baseFrm,
+            text="close",
+            cursor="hand2",
             width=15,
-            command=lambda: controller.show_frame('Main'))
-        self.closeBtn.grid(
-            row=9, column=1, sticky='sew')
+            command=lambda: controller.show_frame("Main"),
+        )
+        self.closeBtn.grid(row=9, column=1, sticky="sew")
 
         self.linkDetailsTxt = tk.Text(
-            self.baseFrm,
-            wrap=tk.WORD,
-            width=72,
-            state=tk.DISABLED,
-            borderwidth=0)
+            self.baseFrm, wrap=tk.WORD, width=72, state=tk.DISABLED, borderwidth=0
+        )
         self.linkDetailsTxt.grid(
-            row=1, column=3, rowspan=8, sticky='ne', padx=10, pady=5)
+            row=1, column=3, rowspan=8, sticky="ne", padx=10, pady=5
+        )
 
     def link_GSuite(self):
         # look up update folder and determine path to
@@ -2135,12 +1946,17 @@ class GooAPI(tk.Frame):
         if self.creds:
             if not os.path.isfile(self.creds):
                 overload_logger.error(
-                    'goo_credentials.bin not found at {}'.format(
-                        os.path.split(self.creds)[0]))
-                m = 'Google credentials at {}\n' \
-                    'appear to be missing. Please report the problem.'.format(
-                        os.path.split(self.creds)[0])
-                tkMessageBox.showerror('Settings Error', m)
+                    "goo_credentials.bin not found at {}".format(
+                        os.path.split(self.creds)[0]
+                    )
+                )
+                m = (
+                    "Google credentials at {}\n"
+                    "appear to be missing. Please report the problem.".format(
+                        os.path.split(self.creds)[0]
+                    )
+                )
+                tkMessageBox.showerror("Settings Error", m)
             else:
                 # ask for decryption key, decrypt creds and
                 # store in Windows vault
@@ -2148,32 +1964,37 @@ class GooAPI(tk.Frame):
                 self.wait_window(self.top)
         else:
             overload_logger.error(
-                'User settings error. Missing "Overload Creds" directory')
-            m = 'Unable to locate "Overload Creds" folder with ' \
-                '"goo_credentials.bin" file on the shared drive. \n' \
-                'Specify correct upgrade folder at  \n'\
-                'Settings>Default Directories>Upgrade Folder and try again.'
-            tkMessageBox.showerror('Settings Error', m)
+                'User settings error. Missing "Overload Creds" directory'
+            )
+            m = (
+                'Unable to locate "Overload Creds" folder with '
+                '"goo_credentials.bin" file on the shared drive. \n'
+                "Specify correct upgrade folder at  \n"
+                "Settings>Default Directories>Upgrade Folder and try again."
+            )
+            tkMessageBox.showerror("Settings Error", m)
 
         # verify and store in user_data g-drive folder ids
         if not credentials.store_goo_folder_ids(USER_DATA, GOO_FOLDERS):
             overload_logger.error(
-                'User settings error. '
-                'Unable to located goo_folders.json file.')
-            m = 'Unable to locate "goo_folder.json" file on the shared ' \
-                'drive.\nSpecify correct upgrade folder at \n' \
-                'Settings>Default Directories>Upgrade Folder and try again.'
-            tkMessageBox.showerror('Settings Error', m)
+                "User settings error. " "Unable to located goo_folders.json file."
+            )
+            m = (
+                'Unable to locate "goo_folder.json" file on the shared '
+                "drive.\nSpecify correct upgrade folder at \n"
+                "Settings>Default Directories>Upgrade Folder and try again."
+            )
+            tkMessageBox.showerror("Settings Error", m)
 
         self.test_link_to_GSuite()
 
     def ask_decryption_key(self):
-        self.top = tk.Toplevel(self, background='white')
-        self.top.iconbitmap('./icons/key.ico')
-        self.top.title('Decryption Key')
+        self.top = tk.Toplevel(self, background="white")
+        self.top.iconbitmap("./icons/key.ico")
+        self.top.title("Decryption Key")
 
         # reset key
-        self.key.set('')
+        self.key.set("")
 
         # layout
         self.top.columnconfigure(0, minsize=10)
@@ -2184,57 +2005,46 @@ class GooAPI(tk.Frame):
         self.top.rowconfigure(4, minsize=5)
         self.top.rowconfigure(6, minsize=10)
 
-        ttk.Label(
-            self.top,
-            text='please provide decryption key:').grid(
-                row=1, column=1, columnspan=3, sticky='nw', padx=10)
+        ttk.Label(self.top, text="please provide decryption key:").grid(
+            row=1, column=1, columnspan=3, sticky="nw", padx=10
+        )
 
-        self.keyEnt = tk.Entry(
-            self.top, textvariable=self.key, show='*')
-        self.keyEnt.grid(
-            row=3, column=1, columnspan=3, sticky='snew', padx=10)
+        self.keyEnt = tk.Entry(self.top, textvariable=self.key, show="*")
+        self.keyEnt.grid(row=3, column=1, columnspan=3, sticky="snew", padx=10)
 
         self.decryptBtn = ttk.Button(
-            self.top,
-            text='decrypt',
-            command=self.decrypt_creds)
-        self.decryptBtn.grid(
-            row=5, column=1, sticky='sew', padx=10, pady=10)
+            self.top, text="decrypt", command=self.decrypt_creds
+        )
+        self.decryptBtn.grid(row=5, column=1, sticky="sew", padx=10, pady=10)
 
-        self.closeBtn = ttk.Button(
-            self.top,
-            text='close',
-            command=self.top.destroy)
-        self.closeBtn.grid(
-            row=5, column=3, sticky='sew', padx=10, pady=10)
+        self.closeBtn = ttk.Button(self.top, text="close", command=self.top.destroy)
+        self.closeBtn.grid(row=5, column=3, sticky="sew", padx=10, pady=10)
 
     def decrypt_creds(self):
         key = self.key.get().strip()
         try:
             decrypted_creds = credentials.decrypt_file_data(key, self.creds)
         except OverloadError as e:
-            overload_logger.error('Decryption error: {}'.format(e))
-            m = 'Decryption error: {}'.format(e)
-            tkMessageBox.showerror('Decryption error', m, parent=self.top)
+            overload_logger.error("Decryption error: {}".format(e))
+            m = "Decryption error: {}".format(e)
+            tkMessageBox.showerror("Decryption error", m, parent=self.top)
         else:
             # store temp json file
-            cred_fh = os.path.join(TEMP_DIR, 'credentials.json')
-            with open(cred_fh, 'w') as file:
+            cred_fh = os.path.join(TEMP_DIR, "credentials.json")
+            with open(cred_fh, "w") as file:
                 json.dump(json.loads(decrypted_creds), file)
 
             # insert credentials into Windows Vault
             if goo.store_access_token(
-                    GAPP, GUSER,
-                    cred_fh,
-                    [SHEET_SCOPE, FDRIVE_SCOPE]):
+                GAPP, GUSER, cred_fh, [SHEET_SCOPE, FDRIVE_SCOPE]
+            ):
 
                 # browser will open to complete the authorization
                 # close the widget
                 self.top.destroy()
             else:
                 self.top.destroy()
-                tkMessageBox.showerror(
-                    'Google Drive', 'Unable to link Google Drive.')
+                tkMessageBox.showerror("Google Drive", "Unable to link Google Drive.")
 
             # clean-up
             # delete decoded creds file
@@ -2242,8 +2052,8 @@ class GooAPI(tk.Frame):
                 os.remove(cred_fh)
             except WindowsError as e:
                 overload_logger.error(
-                    'Unable to delete temp creds from {}. Error: {}'.format(
-                        TEMP_DIR, e))
+                    "Unable to delete temp creds from {}. Error: {}".format(TEMP_DIR, e)
+                )
 
     def unlink_GSuite(self):
         # remove credentials from credentials manager
@@ -2252,7 +2062,7 @@ class GooAPI(tk.Frame):
         # remove folder ids from user_data
         try:
             user_data = shelve.open(USER_DATA, writeback=True)
-            user_data.pop('gdrive', None)
+            user_data.pop("gdrive", None)
         except KeyError:
             pass
         finally:
@@ -2262,63 +2072,62 @@ class GooAPI(tk.Frame):
         self.test_link_to_GSuite()
 
     def test_link_to_GSuite(self):
-        self.status = ''
+        self.status = ""
         if not credentials.get_from_vault(GAPP, GUSER):
-            self.status = '\tMissing Google API credentials. ' \
-                'Unable to connect to the Google Drive\n'
+            self.status = (
+                "\tMissing Google API credentials. "
+                "Unable to connect to the Google Drive\n"
+            )
         else:
-            self.status = '\tGoogle API credentials stored in ' \
-                'Windows Credential Manager.\n'
+            self.status = (
+                "\tGoogle API credentials stored in " "Windows Credential Manager.\n"
+            )
 
         user_data = shelve.open(USER_DATA)
         try:
-            self.status = self.status + \
-                '\tNYPL Google Drive folder id: {}\n'.format(
-                    user_data['gdrive']['nypl_folder_id'])
+            self.status = self.status + "\tNYPL Google Drive folder id: {}\n".format(
+                user_data["gdrive"]["nypl_folder_id"]
+            )
         except KeyError:
-            self.status = self.status + \
-                '\tNYPL Google Drive folder id: missing\n'
+            self.status = self.status + "\tNYPL Google Drive folder id: missing\n"
         try:
-            self.status = self.status + \
-                '\tBPL Google Drive folder id: {}\n'.format(
-                    user_data['gdrive']['bpl_folder_id'])
+            self.status = self.status + "\tBPL Google Drive folder id: {}\n".format(
+                user_data["gdrive"]["bpl_folder_id"]
+            )
         except KeyError:
-            self.status = self.status + \
-                '\tBPL Google Drive folder id: missing\n'
+            self.status = self.status + "\tBPL Google Drive folder id: missing\n"
         user_data.close()
 
         self.update_status()
 
     def update_status(self):
-        self.status = 'Status:\n' + self.status
-        self.linkDetailsTxt['state'] = tk.NORMAL
+        self.status = "Status:\n" + self.status
+        self.linkDetailsTxt["state"] = tk.NORMAL
         self.linkDetailsTxt.delete(1.0, tk.END)
         self.linkDetailsTxt.insert(tk.END, self.status)
-        self.linkDetailsTxt['state'] = tk.DISABLED
+        self.linkDetailsTxt["state"] = tk.DISABLED
 
     def help(self):
-        text = overload_help.open_help(
-            'goo_help.txt')
-        help_popup = tk.Toplevel(background='white')
-        help_popup.iconbitmap('./icons/help.ico')
+        text = overload_help.open_help("goo_help.txt")
+        help_popup = tk.Toplevel(background="white")
+        help_popup.iconbitmap("./icons/help.ico")
         yscrollbar = tk.Scrollbar(help_popup, orient=tk.VERTICAL)
-        yscrollbar.grid(
-            row=0, column=1, rowspan=10, sticky='nsw', padx=2)
+        yscrollbar.grid(row=0, column=1, rowspan=10, sticky="nsw", padx=2)
         helpTxt = tk.Text(
             help_popup,
             wrap=tk.WORD,
-            background='white',
+            background="white",
             relief=tk.FLAT,
-            yscrollcommand=yscrollbar.set)
-        helpTxt.grid(
-            row=0, column=0, sticky='snew', padx=10, pady=10)
+            yscrollcommand=yscrollbar.set,
+        )
+        helpTxt.grid(row=0, column=0, sticky="snew", padx=10, pady=10)
         yscrollbar.config(command=helpTxt.yview)
         for line in text:
             helpTxt.insert(tk.END, line)
-        helpTxt['state'] = tk.DISABLED
+        helpTxt["state"] = tk.DISABLED
 
     def observer(self, *args):
-        if self.activeW.get() == 'GooAPI':
+        if self.activeW.get() == "GooAPI":
             self.test_link_to_GSuite()
 
 
@@ -2329,8 +2138,8 @@ class About(tk.Frame):
         self.parent = parent
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.activeW = user_data['activeW']
-        self.activeW.trace('w', self.observer)
+        self.activeW = user_data["activeW"]
+        self.activeW.trace("w", self.observer)
 
         self.rowconfigure(0, minsize=20)
         self.rowconfigure(3, minsize=20)
@@ -2339,41 +2148,38 @@ class About(tk.Frame):
         self.columnconfigure(10, minsize=20)
 
         self.closeBtn = ttk.Button(
-            self, text='close',
+            self,
+            text="close",
             width=15,
-            cursor='hand2',
-            command=lambda: controller.show_frame('Main'))
-        self.closeBtn.grid(
-            row=4, column=0, sticky='sw')
+            cursor="hand2",
+            command=lambda: controller.show_frame("Main"),
+        )
+        self.closeBtn.grid(row=4, column=0, sticky="sw")
 
     def display_info(self, info, credits):
         # app info
 
-        self.utilsFrm = ttk.LabelFrame(self, text='about app:')
-        self.utilsFrm.grid(
-            row=1, column=0, sticky='snew')
-        ttk.Label(self.utilsFrm, text=info).grid(
-            row=0, column=0, sticky='snew')
+        self.utilsFrm = ttk.LabelFrame(self, text="about app:")
+        self.utilsFrm.grid(row=1, column=0, sticky="snew")
+        ttk.Label(self.utilsFrm, text=info).grid(row=0, column=0, sticky="snew")
 
-        self.aboutFrm = ttk.LabelFrame(self, text='credits:')
-        self.aboutFrm.grid(
-            row=2, column=0, sticky='snew')
-        ttk.Label(self.aboutFrm, text=credits).grid(
-            row=0, column=0, sticky='snew')
+        self.aboutFrm = ttk.LabelFrame(self, text="credits:")
+        self.aboutFrm.grid(row=2, column=0, sticky="snew")
+        ttk.Label(self.aboutFrm, text=credits).grid(row=0, column=0, sticky="snew")
 
     def observer(self, *args):
-        if self.activeW.get() == 'About':
-            info = ''
-            with open('version.txt') as fh:
+        if self.activeW.get() == "About":
+            info = ""
+            with open("version.txt") as fh:
                 for line in fh:
                     info += line
             if os.path.isfile(PATCHING_RECORD):
-                with open(PATCHING_RECORD, 'r') as fh:
-                    info += '\ninstalled patches:\n'
+                with open(PATCHING_RECORD, "r") as fh:
+                    info += "\ninstalled patches:\n"
                     for line in fh:
-                        info += '  {}'.format(line)
-            credits = ''
-            with open('./help/icon_credits.txt') as fh:
+                        info += "  {}".format(line)
+            credits = ""
+            with open("./help/icon_credits.txt") as fh:
                 for line in fh:
                     credits += line
             self.display_info(info, credits)
@@ -2389,18 +2195,18 @@ if __name__ == "__main__":
 
     # configure local settings
     user_data = shelve.open(USER_DATA)
-    if 'paths' not in user_data:
-        user_data['paths'] = {}
+    if "paths" not in user_data:
+        user_data["paths"] = {}
     user_data.close()
 
     about = {}
-    with open('__version__.py') as f:
+    with open("__version__.py") as f:
         exec(f.read(), about)
-    version = about['__version__']
+    version = about["__version__"]
 
     # set up app logger
     logging.config.dictConfig(DEV_LOGGING)
-    logger = logging.getLogger('overload')
+    logger = logging.getLogger("overload")
     overload_logger = LogglyAdapter(logger, None)
 
     # set the backend for credentials
@@ -2409,18 +2215,17 @@ if __name__ == "__main__":
     # launch application
     app = MainApplication()
     cur_manager = BusyManager(app)
-    app.iconbitmap('./icons/SledgeHammer.ico')
-    app.title('Overload version {}'.format(version))
+    app.iconbitmap("./icons/SledgeHammer.ico")
+    app.title("Overload version {}".format(version))
     s = ttk.Style()
-    s.theme_use('clam')
-    s.configure('.', font=('Helvetica', 12),
-                background='white')
-    s.configure('TFrame', background='white')
-    s.map('TButton', background=[('active', 'white')])
-    s.configure('Flat.TEntry', borderwidth=0)
-    s.configure('Bold.TLabel', font=('Helvetica', 12, 'bold'))
-    s.configure('Small.TLabel', font=('Helvetica', 8))
-    s.configure('Medium.Treeview', font=('Helvetica', 9))
+    s.theme_use("clam")
+    s.configure(".", font=("Helvetica", 12), background="white")
+    s.configure("TFrame", background="white")
+    s.map("TButton", background=[("active", "white")])
+    s.configure("Flat.TEntry", borderwidth=0)
+    s.configure("Bold.TLabel", font=("Helvetica", 12, "bold"))
+    s.configure("Small.TLabel", font=("Helvetica", 8))
+    s.configure("Medium.Treeview", font=("Helvetica", 9))
 
     updates(manual=False)
 
