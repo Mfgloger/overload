@@ -1,9 +1,7 @@
 import requests
-import json
 
 
 from __version__ import __version__, __title__
-from accesstoken import WorldcatAccessToken
 from bibs.crosswalks import string2xml
 from bibs.xml_bibs import ONS
 
