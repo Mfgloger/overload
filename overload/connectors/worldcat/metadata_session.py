@@ -12,7 +12,7 @@ class MetadataSession(WorldcatSession):
     def __init__(self, credentials=None):
         WorldcatSession.__init__(self, credentials)
 
-        if type(credentials).__name__ != "WorldcatAccessToken":
+        if credentials.__class__.__name__ != "WorldcatAccessToken":
             raise TypeError("Invalid token object passed in the argument.")
 
         if credentials.token_str is None:
