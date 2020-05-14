@@ -75,7 +75,7 @@ class SearchSession(WorldcatSession):
 
         if "srw." not in query:
             raise ValueError("Seach query syntax error.")
-        query = query.replace("(", "%28").replace(")", "%29")
+        query = query.strip().replace("(", "%28").replace(")", "%29").replace(" ", "+")
         return query
 
     def _sru_query_url(self, query):
@@ -238,10 +238,10 @@ class SearchSession(WorldcatSession):
         self,
         query=None,
         start_record=1,
-        maximum_records=10,
-        sort_keys=[("relevance", "descending")],
+        maximum_records=5,
+        sort_keys=[("library_count", "descending"), ("score", "descending")],
         frbr_grouping="off",
-        service_level="default",
+        service_level="full",
         hooks=None,
     ):
         """

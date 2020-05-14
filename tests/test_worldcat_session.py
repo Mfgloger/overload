@@ -37,6 +37,9 @@ class TestConstructSruQuery(unittest.TestCase):
             construct_sru_query("1234", keyword_type="LCCN"), 'srw.dn = "1234"'
         )
 
+    def test_mat_type_any(self):
+        self.assertEqual(construct_sru_query("foo", mat_type="any"), "foo")
+
     def test_mat_type_print(self):
         self.assertEqual(
             construct_sru_query("foo", mat_type="print"), 'foo AND srw.mt = "bks"'
@@ -56,6 +59,9 @@ class TestConstructSruQuery(unittest.TestCase):
         self.assertEqual(
             construct_sru_query("foo", mat_type="bluray"), 'foo AND srw.mt = "bta"'
         )
+
+    def test_cat_source_any(self):
+        self.assertEqual(construct_sru_query("foo", cat_source="any"), "foo")
 
     def test_cat_source_dlc(self):
         self.assertEqual(

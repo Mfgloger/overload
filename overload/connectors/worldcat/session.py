@@ -47,7 +47,7 @@ def construct_sru_query(keyword, keyword_type=None, mat_type=None, cat_source=No
     elif keyword_type == "LCCN":
         query_elems.append('srw.dn = "{}"'.format(keyword))
 
-    if mat_type is None:
+    if mat_type is None or mat_type == "any":
         pass
     elif mat_type == "print":
         query_elems.append('srw.mt = "bks"')
@@ -58,7 +58,7 @@ def construct_sru_query(keyword, keyword_type=None, mat_type=None, cat_source=No
     elif mat_type == "bluray":
         query_elems.append('srw.mt = "bta"')
 
-    if cat_source is None:
+    if cat_source is None or cat_source == "any":
         pass
     elif cat_source == "DLC":
         query_elems.append('srw.pc = "dlc"')
