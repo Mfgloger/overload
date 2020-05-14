@@ -18,8 +18,8 @@ class WorldcatAccessToken:
 
     Args:
         oauth_server: str,  OCLC authorization server
-        wskey: str,         OCLC API key
-        wssecret: str,      OCLC API secret
+        key: str,         OCLC API key
+        secret: str,      OCLC API secret
         option: dict,       valid options:
                             - principal_id
                             - principla_idns
@@ -86,7 +86,6 @@ class WorldcatAccessToken:
         ]
 
         if self.agent is None:
-            # default bookops-worldcat header
             self.agent = "{}{}".format(__title__, __version__)
         else:
             if type(self.agent) is not str:
