@@ -1,8 +1,8 @@
 import os
 import sys
 
-p = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, p + '\\' + p.split('\\')[-1])
+p = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, p + "\\" + p.split("\\")[-1])
 sys.path.insert(0, p)
 
 
@@ -11,12 +11,15 @@ from overload.connectors.sierra_z3950 import z3950_query
 from overload.connectors.platform import AuthorizeAccess, PlatformSession
 from overload.connectors import goo
 from overload.connectors.goo_settings.access_names import GAPP, GUSER
+from overload.connectors.worldcat.accesstoken import WorldcatAccessToken
+from overload.connectors.worldcat.session import construct_sru_query
 from overload import credentials
 from overload.utils import *
-from overload.bibs import (bibs, crosswalks, patches, dedup, parsers,
-                           sierra_dicts)
-from overload.bibs.nypl_callnum import (remove_special_characters,
-                                        create_nypl_fiction_callnum)
+from overload.bibs import bibs, crosswalks, patches, dedup, parsers, sierra_dicts
+from overload.bibs.nypl_callnum import (
+    remove_special_characters,
+    create_nypl_fiction_callnum,
+)
 from overload.pvf import vendors
 from overload.pvf.analyzer import PVRReport, PVR_NYPLReport
 from overload.pvf import reports
