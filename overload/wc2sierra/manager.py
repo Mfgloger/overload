@@ -28,9 +28,11 @@ from bibs.xml_bibs import (
     get_tag_300a,
     results2record_list,
 )
+from connectors.worldcat.accesstoken import WorldcatAccessToken
 from connectors.worldcat.search_session import SearchSession
 from connectors.worldcat.metadata_session import MetadataSession
 from connectors.worldcat.session import (
+    construct_sru_query,
     is_positive_response,
     has_records,
     extract_record_from_response,
@@ -102,8 +104,24 @@ def get_credentials(api):
     return evaluate_worldcat_creds(creds)
 
 
+def get_token(creds):
+    token = WorldcatAccessToken(
+        oauth_server=creds["oauth_server"],
+        key=creds["key"],
+        secret=creds["secret"],
+        options={
+            "scope": creds["scope"],
+            "principal_id": creds["principal_id"],
+            "principal_idns": creds["principal_idns"],
+        },
+    )
+
+    return token
+
+
 def request_record(session, oclcNo):
     if oclcNo:
+        oclcNo = str(oclcNo)
         res = session.get_record(oclcNo)
         module_logger.info("Metadata API request: {}".format(res.url))
         if is_positive_response(res):
@@ -209,6 +227,11 @@ def launch_process(
         id_type: str, 'ISBN', 'UPC', 'ISSN', 'LCCN', 'OCLC #'
         api: str, name of api to be used for queries
     """
+
+    if mat_type == "":
+        mat_type = None
+    if cat_source == "":
+        cat_source = None
 
     module_logger.debug(
         "Launching W2S process. "
@@ -341,6 +364,7 @@ def launch_process(
         found_counter = 0
         not_found_counter = 0
         creds = get_credentials(api)
+        wskey = creds["key"]
         db_session.commit()
 
         # query Worldcat
@@ -348,12 +372,18 @@ def launch_process(
         # reset progbar2
         progbar2["value"] = 0
         metas = retrieve_records(db_session, WCSourceMeta, wcsbid=batch_id)
-        with SearchSession(creds) as session:
+        with SearchSession(credentials=wskey) as session:
             for m in metas:
                 module_logger.debug(m.meta)
                 hit = False
                 if m.meta.t001:
-                    res = session.cql_query(m.meta.t001, "OCLC #", mat_type, cat_source)
+                    query = construct_sru_query(
+                        m.meta.t001,
+                        keyword_type="OCLC #",
+                        mat_type=mat_type,
+                        cat_source=cat_source,
+                    )
+                    res = session.sru_query(query=query)
                     module_logger.debug("OCLC # request: {}".format(res.url))
 
                     hit = interpret_search_response(res, db_session, m.wcsmid)
@@ -362,7 +392,13 @@ def launch_process(
                         found_counter += 1
 
                 if m.meta.t010 and not hit:
-                    res = session.cql_query(m.meta.t010, "LCCN", mat_type, cat_source)
+                    query = construct_sru_query(
+                        m.meta.t010,
+                        keyword_type="LCCN",
+                        mat_type=mat_type,
+                        cat_source=cat_source,
+                    )
+                    res = session.sru_query(query=query)
                     module_logger.debug("LCCN request: {}".format(res.url))
 
                     hit = interpret_search_response(res, db_session, m.wcsmid)
@@ -373,7 +409,13 @@ def launch_process(
                 if m.meta.t020 and not hit:
                     # will iterate over all ISBNs if no hits
                     for isbn in m.meta.t020:
-                        res = session.cql_query(isbn, "ISBN", mat_type, cat_source)
+                        query = construct_sru_query(
+                            isbn,
+                            keyword_type="ISBN",
+                            mat_type=mat_type,
+                            cat_source=cat_source,
+                        )
+                        res = session.sru_query(query=query)
                         module_logger.debug("ISBN request: {}".format(res.url))
 
                         hit = interpret_search_response(res, db_session, m.wcsmid)
@@ -384,8 +426,14 @@ def launch_process(
 
                 if m.meta.t024 and not hit:
                     for upc in m.meta.t024:
-                        res = session.cql_query(upc, "UPC", mat_type, cat_source)
-                        module_logger.debug("ISBN request: {}".format(res.url))
+                        query = construct_sru_query(
+                            upc,
+                            keyword_type="UPC",
+                            mat_type=mat_type,
+                            cat_source=cat_source,
+                        )
+                        res = session.sru_query(query=query)
+                        module_logger.debug("UPC request: {}".format(res.url))
 
                         hit = interpret_search_response(res, db_session, m.wcsmid)
 
@@ -464,7 +512,11 @@ def launch_process(
         # reset progbar2
         progbar2["value"] = 0
 
-        with MetadataSession(creds) as session:
+        # obtain access token
+        token = get_token(creds)
+
+        # open Metadata API session
+        with MetadataSession(credentials=token) as session:
             metas = retrieve_related(
                 db_session, WCSourceMeta, "wchits", wcsbid=batch_id
             )
@@ -675,8 +727,9 @@ def set_oclc_holdings(dst_fh):
         # update holdings here, max 50 numbers at a time
         batch_rec = retrieve_record(db_session, WCSourceBatch)
         creds = get_credentials(batch_rec.api)
-        with MetadataSession(creds) as session:
-            response = session.batch_set_holdings(oclc_numbers)
+        token = get_token(creds)
+        with MetadataSession(credentials=token) as session:
+            response = session.holdings_set_batch(oclc_numbers)
             holdings = holdings_responses(response)
             if holdings:
                 for oclcNo, holding in holdings.items():
