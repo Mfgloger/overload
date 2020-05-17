@@ -12,7 +12,10 @@ from overload.connectors.platform import AuthorizeAccess, PlatformSession
 from overload.connectors import goo
 from overload.connectors.goo_settings.access_names import GAPP, GUSER
 from overload.connectors.worldcat.accesstoken import WorldcatAccessToken
-from overload.connectors.worldcat.session import construct_sru_query
+from overload.connectors.worldcat.metadata_session import (
+    construct_sru_query,
+    holdings_responses,
+)
 from overload import credentials
 from overload.utils import *
 from overload.bibs import bibs, crosswalks, patches, dedup, parsers, sierra_dicts

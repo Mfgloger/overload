@@ -30,13 +30,15 @@ from bibs.xml_bibs import (
 )
 from connectors.worldcat.accesstoken import WorldcatAccessToken
 from connectors.worldcat.search_session import SearchSession
-from connectors.worldcat.metadata_session import MetadataSession
-from connectors.worldcat.session import (
+from connectors.worldcat.metadata_session import (
+    MetadataSession,
     construct_sru_query,
+    holdings_responses,
+)
+from connectors.worldcat.session import (
     is_positive_response,
     has_records,
     extract_record_from_response,
-    holdings_responses,
 )
 from credentials import get_from_vault, evaluate_worldcat_creds
 from criteria import meets_upgrade_criteria, meets_catalog_criteria, meets_user_criteria
@@ -338,6 +340,17 @@ def launch_process(
                     #         system=system,
                     #         dstLibrary=library,
                     #         t024=[parse_upc(row[0])])
+
+                elif id_type == "OCLC #":
+                    for row in reader:
+                        meta = BibOrderMeta(
+                            system=system, dstLibrary=library, t001=row[0]
+                        )
+                        insert_or_ignore(
+                            db_session, WCSourceMeta, wcsbid=batch_id, meta=meta
+                        )
+                        update_progbar(progbar1)
+                        update_progbar(progbar2)
                 else:
                     raise OverloadError("Not implemented.")
 
@@ -711,7 +724,10 @@ def create_marc_file(dst_fh):
                 result = "pass"
             else:
                 result = "reject"
-            row = [r.wchits.wchid, result, r.meta.title, r.meta.t020[0]]
+            try:
+                row = [r.wchits.wchid, result, r.meta.title, r.meta.t020[0]]
+            except IndexError:
+                row = [r.wchits.wchid, result, r.meta.title, None]
             save2csv(dst_fh, row)
 
 
@@ -722,15 +738,15 @@ def set_oclc_holdings(dst_fh):
         recs = retrieve_related(db_session, WCSourceMeta, "wchits", selected=True)
         for r in recs:
             if r.wchits.match_oclcNo:
-                oclc_numbers.append(r.wchits.match_oclcNo)
+                oclc_numbers.append(str(r.wchits.match_oclcNo))
 
-        # update holdings here, max 50 numbers at a time
+        # update holdings
         batch_rec = retrieve_record(db_session, WCSourceBatch)
         creds = get_credentials(batch_rec.api)
         token = get_token(creds)
         with MetadataSession(credentials=token) as session:
-            response = session.holdings_set_batch(oclc_numbers)
-            holdings = holdings_responses(response)
+            responses = session.holdings_set_batch(oclc_numbers)
+            holdings = holdings_responses(responses)
             if holdings:
                 for oclcNo, holding in holdings.items():
                     rec = retrieve_record(db_session, WCHit, match_oclcNo=oclcNo)
