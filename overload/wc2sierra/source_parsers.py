@@ -10,27 +10,27 @@ def sierra_export_data(source_fh, system, dstLibrary):
         meta, single_order: tuple, (BibOrderMeta obj, single_order)
     """
     with open(source_fh) as source:
-        reader = csv.reader(source, delimiter='~', quoting=csv.QUOTE_NONE)
+        reader = csv.reader(source, delimiter="~", quoting=csv.QUOTE_NONE)
         # skip header
         reader.next()
         for row in reader:
             kwargs = dict(system=system, dstLibrary=dstLibrary)
             if row[0].strip():
-                kwargs['t020'] = row[0].split('^')
-            kwargs['sierraId'] = row[1][1:-1]
+                kwargs["t020"] = row[0].split("^")
+            kwargs["sierraId"] = row[1][1:-1]
             if row[2].strip():
-                kwargs['t005'] = row[2]
+                kwargs["t005"] = row[2]
             if row[3].strip():
-                kwargs['t010'] = row[3]
+                kwargs["t010"] = row[3]
             if row[4].strip():
-                kwargs['t024'] = row[4].split('^')
+                kwargs["t024"] = row[4].split("^")
             if row[5].strip():
-                ids = row[5].split('^')
+                ids = row[5].split("^")
                 for i in ids:
-                    if '(OCoLC)' in i:
-                        kwargs['t001'] = i.replace('(OCoLC)', '').strip()
+                    if "(OCoLC)" in i:
+                        kwargs["t001"] = i.replace("(OCoLC)", "").strip()
                         break
-            kwargs['title'] = row[6]
+            kwargs["title"] = row[6]
 
             # determine how many orders in row
             # and create a list of tuples for each order
@@ -49,24 +49,34 @@ def sierra_export_data(source_fh, system, dstLibrary):
                 form = ords_data[o + (7 * ordlen)]
                 vendor = ords_data[o + (8 * ordlen)]
                 status = ords_data[o + (9 * ordlen)]
-                ords.append((
-                    oid, venNote, note, intNote,
-                    code2, code4, locs, form, vendor,
-                    status))
+                ords.append(
+                    (
+                        oid,
+                        venNote,
+                        note,
+                        intNote,
+                        code2,
+                        code4,
+                        locs,
+                        form,
+                        vendor,
+                        status,
+                    )
+                )
 
             # oldest to latest order from Sierra, interested only in newest
             for o in reversed(ords):
                 # check if correct status status
-                if o[7] != 'z':
-                    kwargs['oid'] = o[0]
-                    kwargs['venNote'] = o[1]
-                    kwargs['note'] = o[2]
-                    kwargs['intNote'] = o[3]
-                    kwargs['code2'] = o[4]
-                    kwargs['code4'] = o[5]
-                    kwargs['locs'] = o[6]
-                    kwargs['oFormat'] = o[7]
-                    kwargs['vendor'] = o[8]
+                if o[7] not in ("1", "2", "s", "z"):
+                    kwargs["oid"] = o[0]
+                    kwargs["venNote"] = o[1]
+                    kwargs["note"] = o[2]
+                    kwargs["intNote"] = o[3]
+                    kwargs["code2"] = o[4]
+                    kwargs["code4"] = o[5]
+                    kwargs["locs"] = o[6]
+                    kwargs["oFormat"] = o[7]
+                    kwargs["vendor"] = o[8]
                     break
             meta = BibOrderMeta(**kwargs)
 
