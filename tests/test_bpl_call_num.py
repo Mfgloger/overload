@@ -14,11 +14,18 @@ class TestCreateBPLFictionCallNum(unittest.TestCase):
         self.tag_008 = "961120s1988    nyu           000 1 eng d"
         self.tag_300a = "1 volume (various pagings)"
         self.cuttering_fields = {"100": "Smith, John", "245": "Test title"}
-        self.order_data = bibs.BibOrderMeta(system="NYPL", dstLibrary="branches")
+        self.order_data = bibs.BibOrderMeta(system="BPL", dstLibrary="branches")
 
     def test_english_adult_fiction(self):
-        pass
+        callnum = create_bpl_fiction_callnum(
+            self.leader_string,
+            self.tag_008,
+            self.tag_300a,
+            self.cuttering_fields,
+            self.order_data,
+        )
+        self.assertEqual(str(callnum), "=099  \\\\$aFIC$aSMITH")
 
 
 if __name__ == "__main__":
-    pass
+    unittest.main()
