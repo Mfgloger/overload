@@ -23,6 +23,7 @@ from overload.bibs.nypl_callnum import (
     remove_special_characters,
     create_nypl_fiction_callnum,
 )
+from overload.bibs.bpl_callnum import create_bpl_fiction_callnum
 from overload.pvf import vendors
 from overload.pvf.analyzer import PVRReport, PVR_NYPLReport
 from overload.pvf import reports

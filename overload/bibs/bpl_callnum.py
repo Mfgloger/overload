@@ -2,14 +2,19 @@
 from pymarc import Field
 
 
-from parsers import (parse_last_name, parse_first_letter,
-                     parse_language_prefix,
-                     is_picture_book, is_juvenile,
-                     get_audience_code)
+from parsers import (
+    parse_last_name,
+    parse_first_letter,
+    parse_language_prefix,
+    is_picture_book,
+    is_juvenile,
+    get_audience_code,
+)
 
 
 def create_bpl_fiction_callnum(
-        leader_string, tag_008, tag_300a, cuttering_fields, order_data):
+    leader_string, tag_008, tag_300a, cuttering_fields, order_data
+):
     """
     creates pymarc Field with NYPL Branch call number
     args:
@@ -28,33 +33,33 @@ def create_bpl_fiction_callnum(
 
     # main entry cutter
     cutter = None
-    if '100' in cuttering_fields:
+    if "100" in cuttering_fields:
         # use last name
-        cutter = parse_last_name(cuttering_fields['100'])
-    elif '110' in cuttering_fields:
-        cutter = parse_first_letter(cuttering_fields['110'])
-    elif '111' in cuttering_fields:
-        cutter = parse_first_letter(cuttering_fields['111'])
+        cutter = parse_last_name(cuttering_fields["100"])
+    elif "110" in cuttering_fields:
+        cutter = parse_first_letter(cuttering_fields["110"])
+    elif "111" in cuttering_fields:
+        cutter = parse_first_letter(cuttering_fields["111"])
     else:
-        cutter = parse_first_letter(cuttering_fields['245'])
+        cutter = parse_first_letter(cuttering_fields["245"])
 
     # construct call number field
     subfields = []
     field = None
     if not order_data:
         if lang_prefix:
-            subfields.extend(['a', lang_prefix])
+            subfields.extend(["a", lang_prefix])
         if is_picture_book(audn_code, tag_300a):
-            subfields.extend(['a', 'J-E'])
-            subfields.extend(['a', cutter])
+            subfields.extend(["a", "J-E"])
+            subfields.extend(["a", cutter])
         elif is_juvenile(audn_code):
-            subfields.extend(['a', 'J', 'a', 'FIC', 'a', cutter])
+            subfields.extend(["a", "J", "a", "FIC", "a", cutter])
         else:
-            subfields.extend(['a', 'FIC', 'a', cutter])
+            subfields.extend(["a", "FIC", "a", cutter])
 
-        field = Field(tag='099', indicators=[' ', ' '], subfields=subfields)
+        field = Field(tag="099", indicators=[" ", " "], subfields=subfields)
         return field
     else:
         raise ValueError(
-            'Creation of call numbers for BPL based on order'
-            'data not implemented yet')
+            "Creation of call numbers for BPL based on order" "data not implemented yet"
+        )
