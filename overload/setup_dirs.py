@@ -15,6 +15,7 @@ BATCH_STATS = os.path.join(TEMP_DIR, "batch_stats")
 BATCH_META = os.path.join(TEMP_DIR, "batch_meta")
 GETBIB_REP = os.path.join(TEMP_DIR, "getbib-report.csv")
 W2S_MULTI_ORD = os.path.join(TEMP_DIR, "w2s-multi-orders.csv")
+W2S_SKIPPED_ORD = os.path.join(TEMP_DIR, "w2s-skipped-orders.csv")
 WORLDCAT_CREDS = "Overload Creds/Worldcat"
 GOO_CREDS = "Overload Creds/Google/goo_credentials.bin"
 GOO_FOLDERS = "Overload Creds/Google/goo_folders.json"

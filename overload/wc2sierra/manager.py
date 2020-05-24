@@ -57,7 +57,7 @@ from errors import OverloadError
 from logging_setup import LogglyAdapter
 from source_parsers import sierra_export_data
 from utils import save2csv
-from setup_dirs import W2S_MULTI_ORD
+from setup_dirs import W2S_MULTI_ORD, W2S_SKIPPED_ORD
 
 
 module_logger = LogglyAdapter(logging.getLogger("overload"), None)
@@ -96,6 +96,7 @@ def remove_previous_process_data():
 
     try:
         os.remove(W2S_MULTI_ORD)
+        os.remove(W2S_SKIPPED_ORD)
     except WindowsError:
         pass
 
@@ -357,20 +358,19 @@ def launch_process(
         elif data_source == "Sierra export":
             data = sierra_export_data(source_fh, system, library)
             for meta, single_order in data:
-                if system == "NYPL" and library == "research":
-                    if not single_order:
-                        row = ["b{}a".format(meta.sierraId), meta.title]
-                        save2csv(W2S_MULTI_ORD, row)
-                        progbar1["maximum"] = progbar1["maximum"] - 3
-                    else:
-                        insert_or_ignore(
-                            db_session, WCSourceMeta, wcsbid=batch_id, meta=meta
-                        )
+                if single_order is None:
+                    row = ["b{}a".format(meta.sierraId), meta.title]
+                    save2csv(W2S_SKIPPED_ORD, row)
+                    progbar1["maximum"] = progbar1["maximum"] - 3
+                elif single_order is False:
+                    row = ["b{}a".format(meta.sierraId), meta.title]
+                    save2csv(W2S_MULTI_ORD, row)
+                    progbar1["maximum"] = progbar1["maximum"] - 3
                 else:
                     insert_or_ignore(
                         db_session, WCSourceMeta, wcsbid=batch_id, meta=meta
                     )
-                update_progbar(progbar1)
+                    update_progbar(progbar1)
                 update_progbar(progbar2)
 
         processed_counter = 0

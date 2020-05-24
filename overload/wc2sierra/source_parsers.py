@@ -2,6 +2,97 @@ import csv
 from bibs.bibs import BibOrderMeta
 
 
+def find_order_field(fields, field_position, order_sequence):
+    """applies only to BPL order export"""
+    try:
+        return fields[field_position].split("^")[order_sequence]
+    except IndexError:
+        return ""
+
+
+def parse_BPL_order_export(ords_data):
+    ords_organized = []
+    ordlen = len(ords_data[0].split("^")) + 1
+    for o in range(ordlen):
+        oid = find_order_field(ords_data, 0, o)
+        status = find_order_field(ords_data, 9, o)
+        if not oid or status in ("1", "z"):
+            # return empty if order data is empy string or
+            # order status indicates its cancelled or on hold
+            break
+        else:
+            ord_dict = dict(
+                oid=oid,
+                venNote=find_order_field(ords_data, 1, o),
+                note=find_order_field(ords_data, 2, o),
+                intNote=find_order_field(ords_data, 3, o),
+                code2=find_order_field(ords_data, 4, o),
+                code4=find_order_field(ords_data, 5, o),
+                locs=ords_data[6],  # BPL export combines locations :(
+                oFormat=find_order_field(ords_data, 7, o),
+                vendor=find_order_field(ords_data, 8, o),
+            )
+            ords_organized.append(ord_dict)
+    return ords_organized
+
+
+def parse_NYPL_order_export(ords_data):
+    ords_organized = []
+
+    # NYPL repeated field delimiter for order data is the same as field delimiter for
+    # some reason; method below takes care of that
+    ordlen = len(ords_data) / 10
+    for o in range(ordlen):
+        oid = ords_data[o]
+        status = ords_data[o + (9 * ordlen)]
+        if not oid or status in ("1", "2", "s", "z"):
+            # return empty if order data is empy string or
+            # order status indicates its cancelled or on hold
+            break
+        else:
+            ord_dict = dict(
+                oid=oid,
+                venNote=ords_data[o + ordlen],
+                note=ords_data[2 * ordlen],
+                intNote=ords_data[3 * ordlen],
+                code2=ords_data[o + (4 * ordlen)],
+                code4=ords_data[o + (5 * ordlen)],
+                locs=ords_data[o + (6 * ordlen)],
+                oFormat=ords_data[o + (7 * ordlen)],
+                vendor=ords_data[o + (8 * ordlen)],
+            )
+            ords_organized.append(ord_dict)
+    return ords_organized
+
+
+def parse_order_data(system, ords_segment):
+    """returns dictionary"""
+
+    # NYPL and BPL Sierra exports look differently,
+    # NYPL order fields for multiple orders are not separated by repeated
+    # field delimiter (default ^),
+    if system == "NYPL":
+        ords_data = parse_NYPL_order_export(ords_segment)
+    elif system == "BPL":
+        ords_data = parse_BPL_order_export(ords_segment)
+    else:
+        ords_data = []
+    if len(ords_data) == 0:
+        single_order = None
+    elif len(ords_data) == 1:
+        single_order = True
+    elif len(ords_data) > 1:
+        single_order = False
+
+    # oldest to latest order from Sierra, interested only in newest
+    try:
+        last_order = ords_data[-1]
+    except IndexError:
+        last_order = None
+
+    return single_order, last_order
+
+
 def sierra_export_data(source_fh, system, dstLibrary):
     """
     Exported from Sierra data includes multiple values in each column,
@@ -34,54 +125,11 @@ def sierra_export_data(source_fh, system, dstLibrary):
 
             # determine how many orders in row
             # and create a list of tuples for each order
-            ords_data = row[7:]
-            ordlen = len(ords_data) / 9
-
-            ords = []
-            for o in range(ordlen):
-                oid = ords_data[o]
-                venNote = ords_data[o + ordlen]
-                note = ords_data[2 * ordlen]
-                intNote = ords_data[3 * ordlen]
-                code2 = ords_data[o + (4 * ordlen)]
-                code4 = ords_data[o + (5 * ordlen)]
-                locs = ords_data[o + (6 * ordlen)]
-                form = ords_data[o + (7 * ordlen)]
-                vendor = ords_data[o + (8 * ordlen)]
-                status = ords_data[o + (9 * ordlen)]
-                ords.append(
-                    (
-                        oid,
-                        venNote,
-                        note,
-                        intNote,
-                        code2,
-                        code4,
-                        locs,
-                        form,
-                        vendor,
-                        status,
-                    )
-                )
-
-            # oldest to latest order from Sierra, interested only in newest
-            for o in reversed(ords):
-                # check if correct status status
-                if o[7] not in ("1", "2", "s", "z"):
-                    kwargs["oid"] = o[0]
-                    kwargs["venNote"] = o[1]
-                    kwargs["note"] = o[2]
-                    kwargs["intNote"] = o[3]
-                    kwargs["code2"] = o[4]
-                    kwargs["code4"] = o[5]
-                    kwargs["locs"] = o[6]
-                    kwargs["oFormat"] = o[7]
-                    kwargs["vendor"] = o[8]
-                    break
+            ords_segment = row[7:]
+            single_order, last_order = parse_order_data(system, ords_segment)
+            if last_order is not None:
+                # update BibOrderMeta with order data if present
+                kwargs.update(last_order)
             meta = BibOrderMeta(**kwargs)
-
-            single_order = True
-            if len(ords) > 1:
-                single_order = False
 
             yield (meta, single_order)
