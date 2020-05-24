@@ -29,7 +29,7 @@ REQUIRED = [
     "google-api-python-client==1.7.4",
     "google-auth==1.5.1",
     "google-auth-httplib2==0.0.3",
-    "httplib2==0.11.3",
+    "httplib2==0.18.1",
     "idna==2.6",
     "keyring==15.1.0",
     "loggly-python-handler==1.0.0",
