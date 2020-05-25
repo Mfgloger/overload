@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from pymarc import Record, Field, MARCReader, JSONReader
 
 from context import bibs, parsers
 
@@ -152,11 +151,76 @@ class TestGetLanguageCode(unittest.TestCase):
         self.assertIsNone(parsers.get_language_code(None))
 
 
-class TestParseLangPrefix(unittest.TestCase):
-    """Test parsing tag 008 language code"""
+class TestParseFirstLetter(unittest.TestCase):
+    """Tests parsing of the first letter to be used for a cutter"""
 
-    def test_tag_008_is_none(self):
-        pass
+    def test_empty_string(self):
+        self.assertIsNone(parsers.parse_first_letter(""), None)
+
+    def test_None(self):
+        self.assertIsNone(parsers.parse_first_letter(None), None)
+
+    def test_first_number(self):
+        self.assertEqual(parsers.parse_first_letter("365 days"), None)
+
+    def test_white_space_removed(self):
+        self.assertEqual(parsers.parse_first_letter(" War and Peace"), "W")
+
+    def test_lower_case_changed_to_upper(self):
+        self.assertEqual(parsers.parse_first_letter(" war and Peace"), "W")
+
+    def test_diacritics_replaced(self):
+        self.assertEqual(parsers.parse_first_letter("Łapsze"), "L")
+
+
+class TestParseFirstWord(unittest.TestCase):
+    """Test parsing of the first word to be used for a cutter"""
+
+    def test_empty_string(self):
+        self.assertIsNone(parsers.parse_first_word(""), None)
+
+    def test_None(self):
+        self.assertIsNone(parsers.parse_first_word(None), None)
+
+    def test_first_number(self):
+        self.assertEqual(parsers.parse_first_word("365 days"), None)
+
+    def test_white_space_removed(self):
+        self.assertEqual(parsers.parse_first_word(" War and Peace"), "WAR")
+
+    def test_lower_case_changed_to_upper(self):
+        self.assertEqual(parsers.parse_first_word(" war and Peace"), "WAR")
+
+    def test_diacritics_replaced(self):
+        self.assertEqual(parsers.parse_first_word("Łapsze"), "LAPSZE")
+
+
+class TestParseLastName(unittest.TestCase):
+    """Test parsing of the last name to be used for a cutter"""
+
+    def test_empty_string(self):
+        self.assertIsNone(parsers.parse_last_name(""), None)
+
+    def test_None(self):
+        self.assertIsNone(parsers.parse_last_name(None), None)
+
+    def test_name_with_number(self):
+        self.assertEqual(parsers.parse_last_name("4Chan"), "4CHAN")
+
+    def test_white_space_removed(self):
+        self.assertEqual(parsers.parse_last_name(" Smith, John"), "SMITH")
+
+    def test_diacritics_replaced(self):
+        self.assertEqual(parsers.parse_last_name("Łopuszańska, Bożena"), "LOPUSZANSKA")
+
+    def test_compound_last_name_with_hyphen(self):
+        self.assertEqual(parsers.parse_last_name("Smith-Johns, John"), "SMITH-JOHNS")
+
+    def test_compound_last_name(self):
+        self.assertEqual(parsers.parse_last_name("Smith Johns, John"), "SMITH JOHNS")
+
+    def test_single_name(self):
+        self.assertEqual(parsers.parse_last_name(" Prince. "), "PRINCE")
 
 
 if __name__ == "__main__":
