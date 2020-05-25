@@ -177,6 +177,30 @@ def nypl_oclcNo_field(marcxml):
     return tag_001
 
 
+def sierra_export_reader(source_fh):
+    with open(source_fh, "r") as file:
+        reader = csv.reader(file)
+
+        # skip header
+        header = reader.next()
+
+        # check if Sierra export file has a correct structure
+        if data_source == "Sierra export":
+            if system == "NYPL":
+                if header != NW2SEXPORT_COLS:
+                    raise OverloadError(
+                        "Sierra Export format incorrect.\nPlease refer to help"
+                        "for more info."
+                    )
+            elif system == "BPL":
+                if header != BW2SEXPORT_COLS:
+                    raise OverloadError(
+                        "Sierra Export format incorrect.\nPlease refer to help"
+                        "for more info."
+                    )
+        return reader
+
+
 def launch_process(
     source_fh,
     data_source,
@@ -259,35 +283,16 @@ def launch_process(
 
     remove_previous_process_data()
 
-    # calculate max counter
+    # validate correctness of sierra export
     process_label.set("reading:")
-    with open(source_fh, "r") as file:
-        reader = csv.reader(file)
+    reader = sierra_export_reader(source_fh)
 
-        # skip header
-        header = reader.next()
-
-        # check if Sierra export file has a correct structure
-        if data_source == "Sierra export":
-            if system == "NYPL":
-                if header != NW2SEXPORT_COLS:
-                    raise OverloadError(
-                        "Sierra Export format incorrect.\nPlease refer to help"
-                        "for more info."
-                    )
-            elif system == "BPL":
-                if header != BW2SEXPORT_COLS:
-                    raise OverloadError(
-                        "Sierra Export format incorrect.\nPlease refer to help"
-                        "for more info."
-                    )
-
-        # calculate pogbar max values
-        c = 0
-        for row in reader:
-            c += 1
-        progbar1["maximum"] = c * 5
-        progbar2["maximum"] = c
+    # calculate pogbar max values
+    c = 0
+    for row in reader:
+        c += 1
+    progbar1["maximum"] = c * 5
+    progbar2["maximum"] = c
 
     # keep track of recap call numbers
     if recap_range:
