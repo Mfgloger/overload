@@ -143,6 +143,11 @@ class TestExtractAudienceCode(unittest.TestCase):
         t008 = r"190916p20192018xxu156            vleng d"
         self.assertIsNone(parsers.get_audience_code(leader, t008))
 
+    def test_audn_code_for_print(self):
+        leader = "01451nam  22003973i 4500"
+        t008 = r"961120s1988    nyu    a      000 1 eng d"
+        self.assertEqual(parsers.get_audience_code(leader, t008), "a")
+
 
 class TestGetLanguageCode(unittest.TestCase):
     """Tests extraction of language code from 008 tag"""
