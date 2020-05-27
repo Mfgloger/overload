@@ -156,6 +156,51 @@ class TestGetLanguageCode(unittest.TestCase):
         self.assertIsNone(parsers.get_language_code(None))
 
 
+class TestHasBiographyCode(unittest.TestCase):
+    """Tests if bibliographic record is coded as biography in fixed fields"""
+
+    def test_no_leader(self):
+        self.assertFalse(parsers.has_biography_code(None, None))
+
+    def test_empty_strings(self):
+        self.assertFalse(parsers.has_biography_code("", ""))
+
+    def test_autobiography(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 0aeng d"
+        self.assertTrue(parsers.has_biography_code(leader, tag_008))
+
+    def test_biography(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 0beng d"
+        self.assertTrue(parsers.has_biography_code(leader, tag_008))
+
+    def test_partial_biography(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 0deng d"
+        self.assertTrue(parsers.has_biography_code(leader, tag_008))
+
+
+class TestIsBiography(unittest.TestCase):
+    """Tests if overall bibliographic record qualifies as biography"""
+
+    def test_arguments_None(self):
+        self.assertFalse(parsers.is_biography(None, None, None))
+
+    def test_empty_strings_and_dict(self):
+        self.assertFalse(parsers.is_biography("", "", {}))
+
+    def test_bib_without_600(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 0aeng d"
+        self.assertFalse(parsers.is_biography(leader, tag_008, {"650": "History"}))
+
+    def test_bib_with_600(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 0aeng d"
+        self.assertTrue(parsers.is_biography(leader, tag_008, {"600": "Smith, John"}))
+
+
 class TestParseFirstLetter(unittest.TestCase):
     """Tests parsing of the first letter to be used for a cutter"""
 

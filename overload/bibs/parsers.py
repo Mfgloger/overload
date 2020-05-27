@@ -41,6 +41,21 @@ def get_audience_code(leader_string, tag_008):
         return None
 
 
+def has_biography_code(leader_string, tag_008):
+    try:
+        if leader_string[6] == "a":
+            if tag_008[34] in ("a", "b", "d"):
+                return True
+            else:
+                return False
+        else:
+            False
+    except TypeError:
+        return False
+    except IndexError:
+        return False
+
+
 def get_language_code(tag_008=None):
     """
     extracts language code form control field 008
@@ -112,6 +127,17 @@ def is_fiction(leader_string, tag_008):
         return True
     else:
         return False
+
+
+def is_biography(leader_string, tag_008, subject_fields):
+    if has_biography_code(leader_string, tag_008) and "600" in subject_fields:
+        return True
+    else:
+        return False
+
+
+def is_dewey(leader_string, tag_008):
+    pass
 
 
 def is_juvenile(audn_code):
