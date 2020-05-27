@@ -201,6 +201,41 @@ class TestIsBiography(unittest.TestCase):
         self.assertTrue(parsers.is_biography(leader, tag_008, {"600": "Smith, John"}))
 
 
+class TestIsDewey(unittest.TestCase):
+    """Tests if bibliographic record qualifies as non-fic"""
+
+    def test_arguments_None(self):
+        self.assertFalse(parsers.is_dewey(None, None))
+
+    def test_empty_strings(self):
+        self.assertFalse(parsers.is_dewey("", ""))
+
+    def test_tag_008_code_0(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 0 eng d"
+        self.assertTrue(parsers.is_dewey(leader, tag_008))
+
+    def test_tag_008_code_d(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 d eng d"
+        self.assertTrue(parsers.is_dewey(leader, tag_008))
+
+    def test_tag_008_code_e(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 e eng d"
+        self.assertTrue(parsers.is_dewey(leader, tag_008))
+
+    def test_tag_008_code_h(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 h eng d"
+        self.assertTrue(parsers.is_dewey(leader, tag_008))
+
+    def test_tag_008_code_i(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = "961120s1988    nyu    a      000 i eng d"
+        self.assertTrue(parsers.is_dewey(leader, tag_008))
+
+
 class TestParseFirstLetter(unittest.TestCase):
     """Tests parsing of the first letter to be used for a cutter"""
 

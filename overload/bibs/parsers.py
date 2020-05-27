@@ -137,7 +137,15 @@ def is_biography(leader_string, tag_008, subject_fields):
 
 
 def is_dewey(leader_string, tag_008):
-    pass
+    try:
+        if leader_string[6] == "a" and tag_008[33] in ("0", "d", "e", "h", "i"):
+            return True
+        else:
+            return False
+    except TypeError:
+        return False
+    except IndexError:
+        return False
 
 
 def is_juvenile(audn_code):
