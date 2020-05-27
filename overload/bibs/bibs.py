@@ -801,7 +801,7 @@ class BibOrderMeta:
         self.locs = locs
         self.oFormat = oFormat
         self.vendor = vendor
-        # self.contentType = None
+        self.ord_conflicts = False
         self.callType = None
         self.callLabel = None
         self.wlPrefix = self._has_world_language_prefix()
@@ -811,8 +811,9 @@ class BibOrderMeta:
 
         self._normalize_data()
         self._determine_audience()
-        self.fiction_location = self._has_fiction_location_code()
-        self._determine_callNumber()
+        self._determine_callLabel()
+        self._determine_callNumber_type()
+        self._determine_ord_conflicts()
 
     def _normalize_data(self):
         try:
@@ -903,53 +904,28 @@ class BibOrderMeta:
                 self.audnType = None
 
         elif self.system == "BPL":
-            pass
+            # no need for special rules for BPL
+            self.audnType = loc_audn
         else:
             raise ValueError
 
-    def _has_fiction_location_code(self):
-        """
-        checks only first location and assumes the rest is the same
-        """
-        if self.system == "NYPL":
-            try:
-                if self.locs[4] in ("a", "f", "i", "y", "l"):
-                    return True
-                else:
-                    return False
-            except IndexError:
-                return None
-            except TypeError:
-                return None
-        elif self.system == "BPL":
-            try:
-                if self.locs[3:5] in ("fc", "sf", "my", "sh", "je"):
-                    return True
-                else:
-                    return False
-            except IndexError:
-                return None
-            except TypeError:
-                return None
-        else:
-            raise ValueError
-
-    def _determine_callNumber(self):
+    def _determine_callNumber_type(self):
         """
         only easy, picture books, fiction, and genres for NYPL
         """
         try:
             if self.system == "NYPL":
-                if self.fiction_location is True:
-                    if self.locs[4] == "i":
-                        self.callType = "pic"
-                    elif self.locs[4] == "a":
-                        self.callType = "eas"
-                    elif self.locs[4] in ("f", "y"):
-                        self.callType = "fic"
-                    elif self.locs[4] == "l":
-                        self.callType = "und"  # undetermined for world lang
+                if self.locs[4] == "i":
+                    self.callType = "pic"
+                elif self.locs[4] == "a":
+                    self.callType = "eas"
+                elif self.locs[4] in ("f", "y"):
+                    self.callType = "fic"
+                elif self.locs[4] == "l":
+                    self.callType = "und"  # undetermined for world lang
 
+                # specific genres
+                if self.callType == "fic":
                     if self.venNote in ("m", "e,m", "n,m", "t,m"):
                         self.callType = "mys"  # MYSTERY
                     elif self.venNote in ("r", "e,r", "n,r", "t,r"):
@@ -961,88 +937,141 @@ class BibOrderMeta:
                     elif self.venNote in ("u", "e,u", "n,u", "t,u"):
                         self.callType = "urb"  # URBAN
 
-                if self.venNote in ("t", "t,m", "t,r", "t,s", "t,w", "t,u"):
-                    self.callLabel = "lgp"  # large print
-                elif "hol" in self.venNote:
-                    # note HOLIDAY label takes precedence over YR when applied
-                    # together; must go first
-                    self.callLabel = "hol"  # holiday
-                elif "yr" in self.venNote:
-                    self.callLabel = "yrd"  # young reader
-                elif self.venNote == "l":
-                    self.callLabel = "cla"  # classics
-                elif self.venNote == "g":
-                    self.callLabel = "gra"  # graphic novel
-                elif self.venNote == "bil":
-                    self.callLabel = "bil"  # bilingual
-
             if self.system == "BPL":
-                if self.fiction_location is True:
-                    if self.locs[4:5] == "je":
-                        self.callType = "pic"
-                    else:
-                        self.callType = "fic"
-                elif self.fiction_location is False:
-                    if self.locs[4:5] == "nf":
-                        self.callType = "dew"
-                    elif self.locs[4:5] == "bi":
-                        self.callType == "bio"
+
+                if self.locs[3:5] in ("je", "er"):
+                    self.callType = "pic"
+                elif self.locs[3:5] in ("fc", "my", "sf", "sh"):
+                    self.callType = "fic"
+                elif self.locs[3:5] == "bi":
+                    self.callType = "bio"
+                elif self.locs[3:5] in ("nf", "ej"):
+                    self.callType = "dew"
+                elif self.locs[3:5] in ("nb", "lp", "rf", "wl", "as", "  "):
+                    self.callType = "neu"  # neutral, use other elements to determine
                 else:
                     pass
 
-                if self.venNote == "l":
-                    self.callLabel = "lgp"  # large print
-                elif self.venNote == "bio":
-                    self.callLabel = "bio"  # biography
-                elif self.venNote == "m":
-                    self.callLabel = "mys"  # mystery
-                elif self.venNote == "s":
-                    self.callLabel = "sfn"  # science fiction
-                elif self.venNote == "y":
-                    self.callLabel = "sho"  # short stories
-                elif self.venNote == "lit;fic":
-                    self.callLabel = "lfc"  # literacy fiction
-                elif self.venNote == "lit;non":
-                    self.callLabel = "lnf"  # literacy non-fic
-                elif self.venNote == "ref":
-                    self.callLabel = "ref"  # reference
-                elif self.venNote == "v":
-                    self.callLabel = "edu"  # edu/career
-                elif self.venNote == "soa":
-                    self.callLabel = "soa"  # SOA
-                elif self.venNote == "g":
-                    self.callLabel = "gra"  # graphic novel
-                elif self.venNote == "r":
-                    self.callLabel = "rom"  # romance
-                elif self.venNote == "bil":
-                    self.callLabel = "bil"  # bilingual
-                elif self.venNote == "a":
-                    self.callLabel = "asn"  # assigment
-                elif self.venNote == "a":
-                    self.callLabel = "afc"  # assignent fic
-                elif self.venNote == "anon":
-                    self.callLabel = "anf"  # assignment non-fic
-                elif self.venNote == "auto":
-                    self.callLabel = "abi"  # autobiography
-                elif self.venNote == "q":
-                    self.callLabel = "ser"  # series
-                elif self.venNote == "pic":
-                    self.callLabel = "pic"  # picture book
-                elif self.venNote == "b":
-                    self.callLabel = "boa"  # board book
-                elif self.venNote == "c":
-                    self.callLabel = "con"  # concept book
-                elif self.venNote == "f;pic":
-                    self.callLabel = "fol"  # folk/fairy tale
-                elif self.venNote == "early":
-                    self.callLabel = "eas"  # early reader
-                elif self.venNote == "bil;pic":
-                    self.callLabel = "bpi"  # bilingual picture
-                elif self.venNote == "k":
-                    self.callLabel = "bri"  # bridge
+                # if neutral callType pick venNote & callLabel
+                if self.callType == "neu":
+                    if self.callLabel == "lfc":
+                        self.callType = "fic"
 
         except TypeError:
             pass
+
+    def _determine_ord_conflicts(self):
+        if self.system == "BPL":
+            if self.callType == "pic":
+                if self.callLabel not in (None, "pic", "boa", "con", "eas", "bpi"):
+                    self.ord_conflicts = True
+            elif self.callType == "fic":
+                if self.callLabel not in (
+                    None,
+                    "fic",
+                    "mys",
+                    "sfn",
+                    "sho",
+                    "lfc",
+                    "gra",
+                    "rom",
+                    "afc",
+                    "bri",
+                    "ser",
+                ):
+                    self.ord_conflicts = True
+            elif self.callType == "bio":
+                if self.callLabel not in (
+                    None,
+                    "bio",
+                    "abi",
+                    "lpg",
+                    "lnf",
+                    "soa",
+                    "anf",
+                ):
+                    self.ord_conflicts = True
+            elif self.callType == "dew":
+                if self.callLabel not in (
+                    None,
+                    "lgp",
+                    "lnf",
+                    "ref",
+                    "edu",
+                    "soa",
+                    "anf",
+                    "fol",
+                ):
+                    self.ord_conflicts = True
+
+    def _determine_callLabel(self):
+        if self.system == "BPL":
+            if self.venNote == "l":
+                self.callLabel = "lgp"  # large print
+            elif self.venNote == "bio":
+                self.callLabel = "bio"  # biography
+            elif self.venNote == "m":
+                self.callLabel = "mys"  # mystery
+            elif self.venNote == "s":
+                self.callLabel = "sfn"  # science fiction
+            elif self.venNote == "y":
+                self.callLabel = "sho"  # short stories
+            elif self.venNote == "lit;fic":
+                self.callLabel = "lfc"  # literacy fiction
+            elif self.venNote == "lit;non":
+                self.callLabel = "lnf"  # literacy non-fic
+            elif self.venNote == "ref":
+                self.callLabel = "ref"  # reference
+            elif self.venNote == "v":
+                self.callLabel = "edu"  # edu/career
+            elif self.venNote == "soa":
+                self.callLabel = "soa"  # SOA
+            elif self.venNote == "g":
+                self.callLabel = "gra"  # graphic novel
+            elif self.venNote == "r":
+                self.callLabel = "rom"  # romance
+            elif self.venNote == "bil":
+                self.callLabel = "bil"  # bilingual
+            elif self.venNote == "a":
+                self.callLabel = "asn"  # assigment
+            elif self.venNote == "a":
+                self.callLabel = "afc"  # assignent fic
+            elif self.venNote == "anon":
+                self.callLabel = "anf"  # assignment non-fic
+            elif self.venNote == "auto":
+                self.callLabel = "abi"  # autobiography
+            elif self.venNote == "q":
+                self.callLabel = "ser"  # series
+            elif self.venNote == "pic":
+                self.callLabel = "pic"  # picture book
+            elif self.venNote == "b":
+                self.callLabel = "boa"  # board book
+            elif self.venNote == "c":
+                self.callLabel = "con"  # concept book
+            elif self.venNote == "f;pic":
+                self.callLabel = "fol"  # folk/fairy tale
+            elif self.venNote == "early":
+                self.callLabel = "eas"  # early reader
+            elif self.venNote == "bil;pic":
+                self.callLabel = "bpi"  # bilingual picture
+            elif self.venNote == "k":
+                self.callLabel = "bri"  # bridge
+
+        elif self.system == "NYPL":
+            if self.venNote in ("t", "t,m", "t,r", "t,s", "t,w", "t,u"):
+                self.callLabel = "lgp"  # large print
+            elif "hol" in self.venNote:
+                # note HOLIDAY label takes precedence over YR when applied
+                # together; must go first
+                self.callLabel = "hol"  # holiday
+            elif "yr" in self.venNote:
+                self.callLabel = "yrd"  # young reader
+            elif self.venNote == "l":
+                self.callLabel = "cla"  # classics
+            elif self.venNote == "g":
+                self.callLabel = "gra"  # graphic novel
+            elif self.venNote == "bil":
+                self.callLabel = "bil"  # bilingual
 
     def __repr__(self):
         return (
@@ -1051,7 +1080,7 @@ class BibOrderMeta:
             "t024='%s', title='%s', locs='%s', venNote='%s', note='%s', "
             "intNote='%s', code2='%s', code4='%s', oFormat='%s', "
             "vendor='%s', callLabel='%s', callType='%s', audnType='%s', "
-            "fic_loc='%s', wlPrefix='%s')>"
+            "wlPrefix='%s')>"
             % (
                 self.system,
                 self.dstLibrary,
@@ -1074,7 +1103,6 @@ class BibOrderMeta:
                 self.callLabel,
                 self.callType,
                 self.audnType,
-                self.fiction_location,
                 self.wlPrefix,
             )
         )
