@@ -8,6 +8,9 @@ from context import (
     create_bpl_callnum,
     determine_cutter,
     determine_biographee_name,
+    has_division_conflict,
+    is_adult_division,
+    valid_audience,
 )
 
 
@@ -75,6 +78,241 @@ class TestDetermineBiographeeName(unittest.TestCase):
         self.assertEqual(
             determine_biographee_name({"600": "Trębońska, Zdzisława"}), "TREBONSKA"
         )
+
+
+class TestIsAdultDivision(unittest.TestCase):
+    """Tests if any of the locations is Central adult division"""
+
+    def test_None(self):
+        self.assertFalse(is_adult_division(None))
+
+    def test_empty_string(self):
+        self.assertFalse(is_adult_division(""))
+
+    def test_02(self):
+        self.assertFalse(is_adult_division("02jje^41jje"))
+
+    def test_03(self):
+        self.assertTrue(is_adult_division("03yfc^41afc"))
+
+    def test_04(self):
+        self.assertTrue(is_adult_division("04anf"))
+
+    def test_11(self):
+        self.assertTrue(is_adult_division("11anf"))
+
+    def test_12(self):
+        self.assertTrue(is_adult_division("12adv"))
+
+    def test_13(self):
+        self.assertTrue(is_adult_division("14abi"))
+
+    def test_14(self):
+        self.assertTrue(is_adult_division("14afc"))
+
+    def test_16(self):
+        self.assertTrue(is_adult_division("16anf"))
+
+    def test_branches(self):
+        self.assertFalse(is_adult_division("41jfc^45jfc^50jfc"))
+
+
+class TestHasDivisionConflict(unittest.TestCase):
+    """Test if Dewey classmark has Central Lib. division conflict"""
+
+    def test_classmark_and_location_None(self):
+        self.assertTrue(has_division_conflict(None, None, None))
+
+    def test_location_None(self):
+        self.assertFalse(has_division_conflict("947", None, None))
+
+    def test_juv_audn_but_adult_division(self):
+        self.assertTrue(has_division_conflict("947", "j", "13anf"))
+
+    def test_juv_audn_and_juv_division(self):
+        self.assertFalse(has_division_conflict("947", "j", "02jnf"))
+
+    def test_adult_adun_and_juv_division(self):
+        self.assertTrue(has_division_conflict("947", "a", "02jnf"))
+
+    def test_adult_adun_and_adult_division(self):
+        self.assertFalse(has_division_conflict("947", "a", "13anf"))
+
+    def test_11(self):
+        # not processed
+        self.assertTrue(has_division_conflict("947", None, "11anf"))
+
+    def test_13_religion(self):
+        self.assertFalse(has_division_conflict("201.092", None, "13anb^41anf"))
+
+    def test_13_history(self):
+        self.assertFalse(has_division_conflict("947", None, "13anf"))
+
+    def test_13_invalid_range(self):
+        self.assertTrue(has_division_conflict("364.51", None, "13anf"))
+
+    def test_14_000(self):
+        self.assertTrue(has_division_conflict("000", None, "14anf"))
+
+    def test_14_001(self):
+        self.assertFalse(has_division_conflict("001", None, "14anf"))
+
+    def test_14_002(self):
+        self.assertFalse(has_division_conflict("002", None, "14anf"))
+
+    def test_14_003(self):
+        self.assertFalse(has_division_conflict("003", None, "14anf"))
+
+    def test_14_004(self):
+        self.assertTrue(has_division_conflict("004", None, "14anf"))
+
+    def test_14_005(self):
+        self.assertTrue(has_division_conflict("005", None, "14anf"))
+
+    def test_14_006(self):
+        self.assertTrue(has_division_conflict("006", None, "14anf"))
+
+    def test_14_007(self):
+        self.assertTrue(has_division_conflict("007", None, "14anf"))
+
+    def test_14_008(self):
+        self.assertTrue(has_division_conflict("008", None, "14anf"))
+
+    def test_14_009(self):
+        self.assertTrue(has_division_conflict("009", None, "14anf"))
+
+    def test_14_010(self):
+        self.assertFalse(has_division_conflict("010", None, "14anf"))
+
+    def test_14_020(self):
+        self.assertFalse(has_division_conflict("025", None, "14anf"))
+
+    def test_14_030(self):
+        self.assertFalse(has_division_conflict("030", None, "14anf"))
+
+    def test_14_040(self):
+        self.assertTrue(has_division_conflict("040", None, "14anf"))
+
+    def test_14_050(self):
+        self.assertFalse(has_division_conflict("050", None, "14anf"))
+
+    def test_14_060(self):
+        self.assertFalse(has_division_conflict("060", None, "14anf"))
+
+    def test_14_070(self):
+        self.assertFalse(has_division_conflict("070", None, "14anf"))
+
+    def test_14_080(self):
+        self.assertFalse(has_division_conflict("080", None, "14anf"))
+
+    def test_14_090(self):
+        self.assertFalse(has_division_conflict("090", None, "14anf"))
+
+    def test_14_1xx(self):
+        self.assertTrue(has_division_conflict("100", None, "14anf"))
+
+    def test_14_2xx(self):
+        self.assertTrue(has_division_conflict("200", None, "14anf"))
+
+    def test_14_4xx(self):
+        self.assertFalse(has_division_conflict("400", None, "14anf"))
+
+    def test_14_5xx(self):
+        self.assertTrue(has_division_conflict("500", None, "14anf"))
+
+    def test_14_6xx(self):
+        self.assertTrue(has_division_conflict("600", None, "14anf"))
+
+    def test_14_7xx(self):
+        self.assertTrue(has_division_conflict("700", None, "14anf"))
+
+    def test_14_8xx(self):
+        # during the initial stage do not process 8xx
+        self.assertTrue(has_division_conflict("800", None, "14anf"))
+
+    def test_14_9xx(self):
+        self.assertTrue(has_division_conflict("900", None, "14anf"))
+
+    def test_16_000(self):
+        self.assertTrue(has_division_conflict("000", None, "16anf"))
+
+    def test_16_001(self):
+        self.assertTrue(has_division_conflict("001", None, "16anf"))
+
+    def test_16_004(self):
+        self.assertFalse(has_division_conflict("004", None, "16anf"))
+
+    def test_16_005(self):
+        self.assertFalse(has_division_conflict("005", None, "16anf"))
+
+    def test_16_006(self):
+        self.assertFalse(has_division_conflict("006", None, "16anf"))
+
+    def test_16_010(self):
+        self.assertTrue(has_division_conflict("010", None, "16anf"))
+
+    def test_16_1xx(self):
+        self.assertFalse(has_division_conflict("100", None, "16anf"))
+
+    def test_16_2xx(self):
+        self.assertTrue(has_division_conflict("200", None, "16anf"))
+
+    def test_16_3xx(self):
+        self.assertFalse(has_division_conflict("300", None, "16anf"))
+
+    def test_16_4xx(self):
+        self.assertTrue(has_division_conflict("400", None, "16anf"))
+
+    def test_16_5xx(self):
+        self.assertFalse(has_division_conflict("500", None, "16anf"))
+
+    def test_16_6xx(self):
+        self.assertFalse(has_division_conflict("600", None, "16anf"))
+
+    def test_16_7xx(self):
+        self.assertTrue(has_division_conflict("700", None, "16anf"))
+
+    def test_16_8xx(self):
+        self.assertTrue(has_division_conflict("800", None, "16anf"))
+
+    def test_16_9xx(self):
+        self.assertTrue(has_division_conflict("900", None, "16anf"))
+
+
+class TestValidAudience(unittest.TestCase):
+    """Tests conflicts between bib and order audience codes"""
+
+    def test_None(self):
+        self.assertIsNone(valid_audience(None, None, None))
+
+    def test_bib_code_None(self):
+        leader = "00000cam a2200000Ia 4500"
+        self.assertEqual(valid_audience(leader, None, "a"), "a")
+
+    def test_order_None(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu           000 i eng d"
+        self.assertEqual(valid_audience(leader, tag_008, None), "a")
+
+    def test_conflict(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu           000 i eng d"
+        self.assertFalse(valid_audience(leader, tag_008, "j"))
+
+    def test_adult_vs_young_adult(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu           000 1 eng d"
+        self.assertEqual(valid_audience(leader, tag_008, "y"), "a")
+
+    def test_juvenile_no_conflict(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    a      000 1 eng d"
+        self.assertEqual(valid_audience(leader, tag_008, "j"), "j")
+
+    def test_ya_bib_and_adult_order(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    d      000 1 eng d"
+        self.assertFalse(valid_audience(leader, tag_008, "a"))
 
 
 class TestCreateBPLFictionCallNum(unittest.TestCase):
@@ -306,6 +544,25 @@ class TestBPLBiographyCallNumber(unittest.TestCase):
             order_data,
         )
         self.assertEqual(str(callnum), "=099  \\\\$aPOL$aB$aZEGLARZ$aL")
+
+    def test_english_adult_dewey_no_division_conflicts_diacritics(self):
+        self.tag_008 = "961120s1988    nyu           000 0 pol d"
+        tag_082 = "947.53/092"
+        cuttering_fields = {"100": "Łąd, Zdzichu", "245": "Ówczesny twór"}
+        subject_fields = {"600": "Żeglarz, Mietek"}
+        order_data = bibs.BibOrderMeta(
+            system="BPL", dstLibrary="branches", locs="41awl"
+        )
+        callnum = create_bpl_callnum(
+            self.leader_string,
+            self.tag_008,
+            tag_082,
+            self.tag_300a,
+            cuttering_fields,
+            subject_fields,
+            order_data,
+        )
+        self.assertEqual(str(callnum), "=099  \\\\$aPOL$a947.5309$aL")
 
 
 if __name__ == "__main__":
