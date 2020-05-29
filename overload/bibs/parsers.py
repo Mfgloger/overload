@@ -41,21 +41,6 @@ def get_audience_code(leader_string, tag_008):
         return None
 
 
-def has_biography_code(leader_string, tag_008):
-    try:
-        if leader_string[6] == "a":
-            if tag_008[34] in ("a", "b", "d"):
-                return True
-            else:
-                return False
-        else:
-            False
-    except TypeError:
-        return False
-    except IndexError:
-        return False
-
-
 def get_language_code(tag_008=None):
     """
     extracts language code form control field 008
@@ -78,6 +63,21 @@ def get_literary_form(leader_string, tag_008):
         return tag_008[33]
     else:
         return
+
+
+def has_biography_code(leader_string, tag_008):
+    try:
+        if leader_string[6] == "a":
+            if tag_008[34] in ("a", "b", "d"):
+                return True
+            else:
+                return False
+        else:
+            False
+    except TypeError:
+        return False
+    except IndexError:
+        return False
 
 
 def is_short(tag_300a):
@@ -153,6 +153,46 @@ def is_juvenile(audn_code):
         return True
     else:
         return False
+
+
+def map_bib_audience_code(leader_string, tag_008):
+    bib_code = get_audience_code(leader_string, tag_008)
+    if bib_code is None:
+        return None
+    else:
+        if bib_code in (" ", "e", "f", "g"):
+            return "a"
+        elif bib_code == "d":
+            return "y"
+        elif bib_code in ("a", "b", "c", "j"):
+            return "j"
+        else:
+            return None
+
+
+def parse_dewey(tag_082):
+    """
+    args:
+        tag_082: str, only subfield $a of the tag
+    """
+    try:
+        classmark = tag_082.strip().replace("/", "")
+        if "." in classmark:
+            classmark = classmark[:8]
+        else:
+            if len(classmark) != 3:
+                return None
+            else:
+                classmark = classmark
+
+        while classmark[-1] == "0":
+            classmark = classmark[0:-1]
+
+        return classmark
+    except AttributeError:
+        return None
+    except IndexError:
+        return None
 
 
 def parse_first_letter(field_string):

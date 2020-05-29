@@ -236,6 +236,95 @@ class TestIsDewey(unittest.TestCase):
         self.assertTrue(parsers.is_dewey(leader, tag_008))
 
 
+class TestMapBibAudienceCode(unittest.TestCase):
+    """Test mapping marc21 audience codes to Sierra audinece codes"""
+
+    def test_None(self):
+        self.assertIsNone(parsers.map_bib_audience_code(None, None))
+
+    def test_no_tag_008(self):
+        leader = "00000cam a2200000Ia 4500"
+        self.assertIsNone(parsers.map_bib_audience_code(leader, None))
+
+    def test_adult_code_empty(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu           000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "a")
+
+    def test_adult_code_e(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    e      000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "a")
+
+    def test_adult_code_f(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    f      000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "a")
+
+    def test_adult_code_g(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    g      000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "a")
+
+    def test_young_adult(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    d      000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "y")
+
+    def test_juvenile_code_j(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    j      000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "j")
+
+    def test_juvenile_code_a(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    a      000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "j")
+
+    def test_juvenile_code_b(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    b      000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "j")
+
+    def test_juvenile_code_c(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    c      000 i eng d"
+        self.assertEqual(parsers.map_bib_audience_code(leader, tag_008), "j")
+
+    def test_invalid_code(self):
+        leader = "00000cam a2200000Ia 4500"
+        tag_008 = tag_008 = "961120s1988    nyu    x      000 i eng d"
+        self.assertIsNone(parsers.map_bib_audience_code(leader, tag_008))
+
+
+class TestParseDewey(unittest.TestCase):
+    """Tests parsing of dewey classifiction"""
+
+    def test_None(self):
+        self.assertIsNone(parsers.parse_dewey(None))
+
+    def test_empty_string(self):
+        self.assertIsNone(parsers.parse_dewey(""))
+
+    def test_invalid_dewey(self):
+        self.assertIsNone(parsers.parse_dewey("9478767"))
+
+    def test_valide_3_digit_dewey(self):
+        self.assertEqual(parsers.parse_dewey("947"), "947")
+
+    def test_valid_4_digits_after_period(self):
+        self.assertEqual(parsers.parse_dewey("973.5434"), "973.5434")
+
+    def test_shortening_deweye(self):
+        self.assertEqual(parsers.parse_dewey("016.782421660922"), "016.7824")
+
+    def test_slash_marks_removed(self):
+        self.assertEqual(parsers.parse_dewey("345.73/0772"), "345.7307")
+
+    def test_trailing_zeros_removed(self):
+        self.assertEqual(parsers.parse_dewey("345.5/700/924"), "345.57")
+
+
 class TestParseFirstLetter(unittest.TestCase):
     """Tests parsing of the first letter to be used for a cutter"""
 
