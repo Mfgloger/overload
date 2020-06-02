@@ -1456,7 +1456,7 @@ class WorldcatAPIs(tk.Frame):
             apis = user_data["WorldcatAPIs"]
             r = 0
             for name in apis["NYPL"]:
-                self.create_individual_api_info(self.napiFrm, name, r)
+                self.create_individual_api_info(self.napisFrm, name, r)
                 r += 2
             r = 0
             for name in apis["BPL"]:
