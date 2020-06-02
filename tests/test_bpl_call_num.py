@@ -545,7 +545,7 @@ class TestBPLBiographyCallNumber(unittest.TestCase):
         )
         self.assertEqual(str(callnum), "=099  \\\\$aPOL$aB$aZEGLARZ$aL")
 
-    def test_english_adult_dewey_no_division_conflicts_diacritics(self):
+    def test_wl_adult_dewey_no_division_conflicts_diacritics(self):
         self.tag_008 = "961120s1988    nyu           000 0 pol d"
         tag_082 = "947.53/092"
         cuttering_fields = {"100": "Łąd, Zdzichu", "245": "Ówczesny twór"}
@@ -563,6 +563,63 @@ class TestBPLBiographyCallNumber(unittest.TestCase):
             order_data,
         )
         self.assertEqual(str(callnum), "=099  \\\\$aPOL$a947.5309$aL")
+
+    def test_wl_juvenile_adult_dewey_no_division_conflicts_diacritics(self):
+        self.tag_008 = "961120s1988    nyu    j      000 0 pol d"
+        tag_082 = "947.53/092"
+        cuttering_fields = {"100": "Łąd, Zdzichu", "245": "Ówczesny twór"}
+        subject_fields = {}
+        order_data = bibs.BibOrderMeta(
+            system="BPL", dstLibrary="branches", locs="41jwl"
+        )
+        callnum = create_bpl_callnum(
+            self.leader_string,
+            self.tag_008,
+            tag_082,
+            self.tag_300a,
+            cuttering_fields,
+            subject_fields,
+            order_data,
+        )
+        self.assertEqual(str(callnum), "=099  \\\\$aPOL$aJ$a947.5309$aL")
+
+    def test_long_dewey(self):
+        self.tag_008 = "961120s1988    nyu           000 0 eng d"
+        tag_082 = "947.53/008/092"
+        cuttering_fields = {"100": "Smith, John", "245": "Foo"}
+        subject_fields = {}
+        order_data = bibs.BibOrderMeta(
+            system="BPL", dstLibrary="branches", locs="13anf"
+        )
+        callnum = create_bpl_callnum(
+            self.leader_string,
+            self.tag_008,
+            tag_082,
+            self.tag_300a,
+            cuttering_fields,
+            subject_fields,
+            order_data,
+        )
+        self.assertEqual(str(callnum), "=099  \\\\$a947.53$aS")
+
+    def test_division_conflict(self):
+        self.tag_008 = "961120s1988    nyu           000 0 eng d"
+        tag_082 = "947.53/008/092"
+        cuttering_fields = {"100": "Smith, John", "245": "Foo"}
+        subject_fields = {}
+        order_data = bibs.BibOrderMeta(
+            system="BPL", dstLibrary="branches", locs="16anf"
+        )
+        callnum = create_bpl_callnum(
+            self.leader_string,
+            self.tag_008,
+            tag_082,
+            self.tag_300a,
+            cuttering_fields,
+            subject_fields,
+            order_data,
+        )
+        self.assertIsNone(callnum)
 
 
 if __name__ == "__main__":
