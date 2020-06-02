@@ -64,7 +64,13 @@ class WorldcatAccessToken:
     """
 
     def __init__(
-        self, oauth_server=None, key=None, secret=None, options=None, agent=None
+        self,
+        oauth_server=None,
+        key=None,
+        secret=None,
+        options=None,
+        agent=None,
+        hooks=None,
     ):
         """Constructor."""
 
@@ -84,9 +90,10 @@ class WorldcatAccessToken:
             "principal_idns",
             "scope",
         ]
+        self.hooks = hooks
 
         if self.agent is None:
-            self.agent = "{}{}".format(__title__, __version__)
+            self.agent = "{}/{}".format(__title__, __version__)
         else:
             if type(self.agent) is not str:
                 raise TypeError("Argument agent must be a string.")
@@ -167,6 +174,7 @@ class WorldcatAccessToken:
                 headers=headers,
                 params=payload,
                 timeout=self.timeout,
+                hooks=self.hooks,
             )
             return response
         except requests.exceptions.Timeout:
