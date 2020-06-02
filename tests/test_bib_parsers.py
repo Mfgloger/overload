@@ -156,6 +156,22 @@ class TestGetLanguageCode(unittest.TestCase):
         self.assertIsNone(parsers.get_language_code(None))
 
 
+class TestIsShort(unittest.TestCase):
+    """Test if book is short"""
+
+    def test_None(self):
+        self.assertFalse(parsers.is_short(None))
+
+    def test_true_short(self):
+        self.assertTrue(parsers.is_short("26 pages"))
+
+    def test_unpaged(self):
+        self.assertTrue(parsers.is_short("1 volume (unpaged)"))
+
+    def test_longer_works(self):
+        self.assertFalse(parsers.is_short("80 pages"))
+
+
 class TestHasBiographyCode(unittest.TestCase):
     """Tests if bibliographic record is coded as biography in fixed fields"""
 
