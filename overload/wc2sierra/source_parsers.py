@@ -48,7 +48,7 @@ def parse_NYPL_order_export(ords_data):
         if not oid or status in ("1", "2", "s", "z"):
             # return empty if order data is empy string or
             # order status indicates its cancelled or on hold
-            break
+            pass
         else:
             ord_dict = dict(
                 oid=oid,
