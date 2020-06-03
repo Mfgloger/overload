@@ -13,9 +13,9 @@ from bibs.bibs import (
 )
 from bibs.parsers import parse_isbn, remove_oclcNo_prefix
 from bibs.crosswalks import string2xml, marcxml2array
-from bibs.bpl_callnum import create_bpl_fiction_callnum
+from bibs.bpl_callnum import create_bpl_callnum
 from bibs.nypl_callnum import (
-    create_nypl_fiction_callnum,
+    create_nypl_callnum,
     create_nypl_recap_callnum,
     create_nypl_recap_item,
 )
@@ -23,7 +23,9 @@ from bibs.sierra_dicts import NW2SEXPORT_COLS, BW2SEXPORT_COLS, NBIB_DEFAULT_LOC
 from bibs.xml_bibs import (
     get_oclcNo,
     get_cuttering_fields,
+    get_subject_fields,
     get_tag_008,
+    get_tag_082,
     get_record_leader,
     get_tag_300a,
     results2record_list,
@@ -108,6 +110,9 @@ def get_credentials(api):
 
 
 def get_token(creds):
+    module_logger.debug(
+        "Requesting Worldcat access token using {} creds".format(creds["name"])
+    )
     token = WorldcatAccessToken(
         oauth_server=creds["oauth_server"],
         key=creds["key"],
@@ -145,10 +150,18 @@ def create_local_fields(marcxml, system, library, order_data=None, recap_no=None
     cuttering_opts = get_cuttering_fields(marcxml)
     tag_008 = get_tag_008(marcxml)
     tag_300a = get_tag_300a(marcxml)
+    tag_082 = get_tag_082(marcxml)
+    subject_fields = get_subject_fields(marcxml)
 
     if system == "NYPL" and library == "branches":
-        callNum = create_nypl_fiction_callnum(
-            leader_string, tag_008, tag_300a, cuttering_opts, order_data
+        callNum = create_nypl_callnum(
+            leader_string,
+            tag_008,
+            tag_082,
+            tag_300a,
+            cuttering_opts,
+            subject_fields,
+            order_data,
         )
         local_fields.append(callNum)
     elif system == "NYPL" and library == "research":
@@ -158,8 +171,14 @@ def create_local_fields(marcxml, system, library, order_data=None, recap_no=None
         module_logger.debug("Created itemField: {}".format(str(itemField)))
         local_fields.append(itemField)
     elif system == "BPL":
-        callNum = create_bpl_fiction_callnum(
-            leader_string, tag_008, tag_300a, cuttering_opts, order_data
+        callNum = create_bpl_callnum(
+            leader_string,
+            tag_008,
+            tag_082,
+            tag_300a,
+            cuttering_opts,
+            subject_fields,
+            order_data,
         )
         local_fields.append(callNum)
     else:
@@ -177,7 +196,16 @@ def nypl_oclcNo_field(marcxml):
     return tag_001
 
 
-def sierra_export_reader(source_fh):
+def estimate_progbars_max(reader, progbar1, progbar2):
+    # calculate pogbar max values
+    c = 0
+    for row in reader:
+        c += 1
+    progbar1["maximum"] = c * 5
+    progbar2["maximum"] = c
+
+
+def sierra_export_reader(source_fh, system, progbar1, progbar2):
     with open(source_fh, "r") as file:
         reader = csv.reader(file)
 
@@ -185,20 +213,25 @@ def sierra_export_reader(source_fh):
         header = reader.next()
 
         # check if Sierra export file has a correct structure
-        if data_source == "Sierra export":
-            if system == "NYPL":
-                if header != NW2SEXPORT_COLS:
-                    raise OverloadError(
-                        "Sierra Export format incorrect.\nPlease refer to help"
-                        "for more info."
-                    )
-            elif system == "BPL":
-                if header != BW2SEXPORT_COLS:
-                    raise OverloadError(
-                        "Sierra Export format incorrect.\nPlease refer to help"
-                        "for more info."
-                    )
-        return reader
+        if system == "NYPL":
+            if header != NW2SEXPORT_COLS:
+                raise OverloadError(
+                    "Sierra Export format incorrect.\nPlease refer to help"
+                    "for more info."
+                )
+        elif system == "BPL":
+            if header != BW2SEXPORT_COLS:
+                raise OverloadError(
+                    "Sierra Export format incorrect.\nPlease refer to help"
+                    "for more info."
+                )
+        estimate_progbars_max(reader, progbar1, progbar2)
+
+
+def id_list_reader(source_fh, progbar1, progbar2):
+    with open(source_fh, "r") as file:
+        reader = csv.reader(file)
+        estimate_progbars_max(reader, progbar1, progbar2)
 
 
 def launch_process(
@@ -285,14 +318,11 @@ def launch_process(
 
     # validate correctness of sierra export
     process_label.set("reading:")
-    reader = sierra_export_reader(source_fh)
 
-    # calculate pogbar max values
-    c = 0
-    for row in reader:
-        c += 1
-    progbar1["maximum"] = c * 5
-    progbar2["maximum"] = c
+    if data_source == "Sierra export":
+        sierra_export_reader(source_fh, system, progbar1, progbar2)
+    elif data_source == "IDs list":
+        id_list_reader(source_fh, progbar1, progbar2)
 
     # keep track of recap call numbers
     if recap_range:
@@ -532,6 +562,12 @@ def launch_process(
 
         # obtain access token
         token = get_token(creds)
+        if token.token_str is None:
+            module_logger.error(
+                "Worldcat token not obtained. Error: {}.".format(token.server_response)
+            )
+        else:
+            module_logger.debut("Worldcat token obtained.")
 
         # open Metadata API session
         with MetadataSession(credentials=token) as session:
@@ -749,6 +785,7 @@ def set_oclc_holdings(dst_fh):
         batch_rec = retrieve_record(db_session, WCSourceBatch)
         creds = get_credentials(batch_rec.api)
         token = get_token(creds)
+
         with MetadataSession(credentials=token) as session:
             responses = session.holdings_set_batch(oclc_numbers)
             holdings = holdings_responses(responses)
