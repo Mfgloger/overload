@@ -645,7 +645,7 @@ class TestNYPLBranchBibOrderMeta(unittest.TestCase):
         self.assertIsNone(data.code4)
         self.assertEqual(data.locs, "aga0l,baa0l")
         self.assertIsNone(data.vendor)
-        self.assertEqual(data.callType, "und")
+        self.assertEqual(data.callType, "neu")
         self.assertIsNone(data.callLabel)
         self.assertTrue(data.wlPrefix)
         self.assertEqual(data.audnType, "a")
@@ -684,7 +684,7 @@ class TestBPLBranchBibOrderMeta(unittest.TestCase):
         self.assertIsNone(data.callType)
         self.assertIsNone(data.callLabel)
         self.assertFalse(data.wlPrefix)
-        self.assertEqual(data.audnType, "a")  # default audience is adult for BPL
+        self.assertIsNone(data.audnType)
         self.assertIsNone(data.bCallNumber)
         self.assertEqual(data.rCallNumber, [])
 
