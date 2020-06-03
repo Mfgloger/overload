@@ -132,9 +132,11 @@ def create_bpl_callnum(
     args:
         leader_string: str, MARC record leader
         tag_008: str, MARC control field 008
+        tag_082: str, MARC 082 tag subfield $a
         tag_300a, str, MARC data field 300 subfield "a"
         cuttering_fields: dict, cuttering fields options created by
                           bibs.xml_bibs.get_cuttering_fields
+        subject_fields: dict, 600 $a $b
     returns:
         field: pymarc Field object, 091 MARC field with a
                full fiction call number
@@ -182,7 +184,7 @@ def create_bpl_callnum(
                     cutter = determine_cutter(
                         cuttering_fields, cutter_type="first_letter"
                     )
-                if cutter:
+                if cutter is not None:
                     subfields.extend(["a", "FIC", "a", cutter])
 
             # biography call numbers
@@ -235,5 +237,3 @@ def create_bpl_callnum(
     if subfields:
         field = Field(tag="099", indicators=[" ", " "], subfields=subfields)
         return field
-    else:
-        return None
