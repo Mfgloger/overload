@@ -28,7 +28,7 @@ from overload.bibs import (
 )
 from overload.bibs.nypl_callnum import (
     remove_special_characters,
-    create_nypl_fiction_callnum,
+    create_nypl_callnum,
 )
 from overload.bibs.bpl_callnum import (
     create_bpl_callnum,
