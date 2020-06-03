@@ -3,7 +3,12 @@
 import unittest
 
 from context import bibs
-from context import sierra_export_data, find_order_field, parse_order_data
+from context import (
+    sierra_export_data,
+    find_order_field,
+    parse_order_data,
+    parse_NYPL_order_export,
+)
 
 
 class TestSplitingRepeatedSubfields(unittest.TestCase):
@@ -59,8 +64,55 @@ class TestParsingExportsFromSierraForNYPLBL(unittest.TestCase):
         library = "branches"
         self.data = sierra_export_data(fh, system, library)
 
-        # first row has no order
-        # second row has multiple order, only last should be considered
+    def test_parse_nypl_order_export(self):
+        ord_list = [
+            "o24598574",
+            "o26228087",
+            "o27310450",
+            "bio",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "7/23/18/AREC/WC",
+            "08/02/2019/AREC/PR",
+            "SNFL ODC",
+            "c",
+            "c",
+            "c",
+            "-",
+            "j",
+            "n",
+            "whj0f,stj0f,yvj0f,wtj0f,woj0f(2)",
+            "agj0f,alj0f,baj0f(2),bcj0f(3),bej0f,brj0f",
+            "snj0f",
+            "b",
+            "b",
+            "b",
+            "0012 ",
+            "0035 ",
+            "o118 ",
+            "a",
+            "a",
+            "a",
+        ]
+
+        parsed_ord = parse_NYPL_order_export(ord_list)
+        self.assertEqual(
+            parsed_ord[0],
+            {
+                "oid": "o24598574",
+                "note": "",
+                "venNote": "bio",
+                "intNote": "7/23/18/AREC/WC",
+                "code2": "c",
+                "code4": "-",
+                "locs": "whj0f,stj0f,yvj0f,wtj0f,woj0f(2)",
+                "oFormat": "b",
+                "vendor": "0012 ",
+            },
+        )
 
     def test_parsing_record_with_no_orders(self):
         meta, single = next(self.data)
@@ -73,7 +125,10 @@ class TestParsingExportsFromSierraForNYPLBL(unittest.TestCase):
         self.assertFalse(single)
 
         # check if the last record selected
-        self.assertEquals(meta.oid, "o27310450")
+        self.assertEqual(meta.oid, "o27310450")
+        self.assertEqual(meta.callType, "fic")
+        self.assertEqual(meta.audnType, "j")
+        self.assertIsNone(meta.callLabel)
 
 
 class TestParsingExportsFromSierraForBPL(unittest.TestCase):
