@@ -19,7 +19,7 @@ def parse_BPL_order_export(ords_data):
         if not oid or status in ("1", "z"):
             # return empty if order data is empy string or
             # order status indicates its cancelled or on hold
-            break
+            pass
         else:
             ord_dict = dict(
                 oid=oid,
@@ -65,6 +65,48 @@ def parse_NYPL_order_export(ords_data):
     return ords_organized
 
 
+def find_latest_full_order(system, ords_data):
+    for data in reversed(ords_data):
+
+        if system == "NYPL":
+            locs = data["locs"].split(",")
+
+        elif system == "BPL":
+            locs = data["locs"].split("^")
+
+            # BPL locs are combined for all orders
+            # the only reasonable approach is to move full location
+            # to the front of the string, not pretty but...
+            n = 0
+            for loc in locs:
+                if "(" in loc:
+                    if len(loc) >= 8:
+                        locs.pop(n)
+                        locs.insert(0, loc)
+                        break
+                else:
+                    if len(loc) == 5:
+                        locs.pop(n)
+                        locs.insert(0, loc)
+                        break
+                n += 1
+            data["locs"] = ",".join(locs)
+
+        first = locs[0]
+        if "(" in first:  # qty
+            if len(first) >= 8:  # fully code location
+                return data
+            else:
+                continue
+        else:
+            if len(first) == 5:
+                return data
+            else:
+                continue
+
+    return None
+
+
 def parse_order_data(system, ords_segment):
     """returns dictionary"""
 
@@ -85,8 +127,9 @@ def parse_order_data(system, ords_segment):
         single_order = False
 
     # oldest to latest order from Sierra, interested only in newest
+    # unless the newest incomplete
     try:
-        last_order = ords_data[-1]
+        last_order = find_latest_full_order(system, ords_data)
     except IndexError:
         last_order = None
 

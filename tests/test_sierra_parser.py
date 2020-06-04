@@ -2,10 +2,10 @@
 
 import unittest
 
-from context import bibs
 from context import (
     sierra_export_data,
     find_order_field,
+    find_latest_full_order,
     parse_order_data,
     parse_NYPL_order_export,
 )
@@ -37,6 +37,88 @@ class TestSplitingRepeatedSubfields(unittest.TestCase):
     def test_empty_fields(self):
         self.assertEqual(find_order_field(self.fields, 2, 0), "")
         self.assertEqual(find_order_field(self.fields, 2, 1), "")
+
+
+class TestFindLatestFullOrder(unittest.TestCase):
+    """Test finding fully coded location orders"""
+
+    def test_empty_list_nypl(self):
+        self.assertIsNone(find_latest_full_order("NYPL", []))
+
+    def test_empty_list_bpl(self):
+        self.assertIsNone(find_latest_full_order("BPL", []))
+
+    def test_one_order_basic_location_nypl(self):
+        self.assertIsNone(find_latest_full_order("NYPL", [{"locs": "sn"}]))
+
+    def test_one_order_basic_location_with_qty_nypl(self):
+        self.assertIsNone(find_latest_full_order("NYPL", [{"locs": "wf(2)"}]))
+
+    def test_one_order_full_location_nypl(self):
+        self.assertEqual(
+            find_latest_full_order("NYPL", [{"locs": "wfa0f"}]), {"locs": "wfa0f"}
+        )
+
+    def test_one_order_full_location_with_single_digit_qty_nypl(self):
+        self.assertEqual(
+            find_latest_full_order("NYPL", [{"locs": "wfa0f(2)"}]), {"locs": "wfa0f(2)"}
+        )
+
+    def test_one_order_full_location_with_double_digit_qty_nypl(self):
+        self.assertEqual(
+            find_latest_full_order("NYPL", [{"locs": "wfa0f(99)"}]),
+            {"locs": "wfa0f(99)"},
+        )
+
+    def test_multi_order_full_location_with_single_digit_qty_nypl(self):
+        self.assertEqual(
+            find_latest_full_order(
+                "NYPL", [{"locs": "wf,sn"}, {"locs": "wfa0f(2),sna0f"}]
+            ),
+            {"locs": "wfa0f(2),sna0f"},
+        )
+
+    def test_multi_order_latest_brief_nypl(self):
+        self.assertEqual(
+            find_latest_full_order(
+                "NYPL", [{"locs": "wfa0f(2),sna0f"}, {"locs": "wf(2),sn"}]
+            ),
+            {"locs": "wfa0f(2),sna0f"},
+        )
+
+    def test_one_order_basic_location_bpl(self):
+        self.assertIsNone(find_latest_full_order("BPL", [{"locs": "14"}]))
+
+    def test_one_order_basic_location_with_qty_bpl(self):
+        self.assertIsNone(find_latest_full_order("BPL", [{"locs": "13(2)"}]))
+
+    def test_one_order_full_location_bpl(self):
+        self.assertEqual(
+            find_latest_full_order("BPL", [{"locs": "13anf"}]), {"locs": "13anf"}
+        )
+
+    def test_one_order_full_location_with_single_digit_qty_bpl(self):
+        self.assertEqual(
+            find_latest_full_order("BPL", [{"locs": "13anf(2)"}]), {"locs": "13anf(2)"}
+        )
+
+    def test_one_order_full_location_with_double_digit_qty_bpl(self):
+        self.assertEqual(
+            find_latest_full_order("BPL", [{"locs": "14afc(99)"}]),
+            {"locs": "14afc(99)"},
+        )
+
+    def test_multi_order_full_location_with_single_digit_qty_bpl(self):
+        self.assertEqual(
+            find_latest_full_order("BPL", [{"locs": "14^41^50afc(2)^51afc"}]),
+            {"locs": "50afc(2),14,41,51afc"},
+        )
+
+    def test_multi_order_latest_brief_bpl(self):
+        self.assertEqual(
+            find_latest_full_order("BPL", [{"locs": "50afc(2)^51afc^14(2)^41"}]),
+            {"locs": "50afc(2),51afc,14(2),41"},
+        )
 
 
 class TestParsingExportsFromSierraForNYPLRL(unittest.TestCase):
