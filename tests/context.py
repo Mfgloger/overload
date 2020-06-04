@@ -50,6 +50,7 @@ from overload.validators import local_specs, default
 from overload.wc2sierra.source_parsers import (
     sierra_export_data,
     find_order_field,
+    find_latest_full_order,
     parse_order_data,
     parse_BPL_order_export,
     parse_NYPL_order_export,
