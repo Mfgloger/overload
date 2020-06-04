@@ -74,10 +74,12 @@ def update_progbar(progbar):
 def interpret_search_response(response, db_session, wcsmid):
     rec = retrieve_record(db_session, WCHit, wcsmid=wcsmid)
     if is_positive_response(response) and has_records(response):
+        module_logger.debug("Service response is positive and has records.")
         hit = True
         doc = string2xml(response.content)
 
     else:
+        module_logger.debug("Service NOT responded or no hits.")
         hit = False
         doc = None
 
@@ -432,7 +434,7 @@ def launch_process(
                         cat_source=cat_source,
                     )
                     res = session.sru_query(query=query)
-                    module_logger.debug("OCLC # request: {}".format(res.url))
+                    module_logger.debug("OCLC# request: {}".format(res.url))
 
                     hit = interpret_search_response(res, db_session, m.wcsmid)
 
@@ -567,7 +569,7 @@ def launch_process(
                 "Worldcat token not obtained. Error: {}.".format(token.server_response)
             )
         else:
-            module_logger.debut("Worldcat token obtained.")
+            module_logger.debug("Worldcat token obtained.")
 
         # open Metadata API session
         with MetadataSession(credentials=token) as session:
@@ -646,7 +648,8 @@ def launch_process(
 
                     if local_fields:
                         for field in local_fields:
-                            marc_record.add_ordered_field(field)
+                            if field is not None:
+                                marc_record.add_ordered_field(field)
                         if system == "NYPL" and library == "research":
                             recap_no += 1
 
@@ -670,36 +673,27 @@ def launch_process(
     progbar2["value"] = progbar2["maximum"]
 
 
-def get_meta_by_id(session, meta_ids):
-    meta = []
-    for mid in meta_ids:
-        instance = retrieve_one_related(session, WCSourceMeta, "wchits", wcsmid=mid)
-        meta.append(instance)
-    return meta
-
-
-def retrieve_bibs_batch(meta_ids):
+def get_bib(meta_id):
     data = []
     with session_scope() as db_session:
-        recs = get_meta_by_id(db_session, meta_ids)
-        for r in recs:
-            sierra_data = dict(
-                title=r.meta.title,
-                sierraId=r.meta.sierraId,
-                oid=r.meta.oid,
-                locs=r.meta.locs,
-                venNote=r.meta.venNote,
-                note=r.meta.note,
-                intNote=r.meta.intNote,
-                choice=r.selected,
-                barcode=r.barcode,
-            )
-            if r.wchits.prepped_marc:
-                worldcat_data = str(r.wchits.prepped_marc)
-            else:
-                worldcat_data = None
-            data.append((r.wchits.wchid, sierra_data, worldcat_data))
-        db_session.expunge_all()
+        r = retrieve_one_related(db_session, WCSourceMeta, "wchits", wcsmid=meta_id)
+        sierra_data = dict(
+            title=r.meta.title,
+            sierraId=r.meta.sierraId,
+            oid=r.meta.oid,
+            locs=r.meta.locs,
+            venNote=r.meta.venNote,
+            note=r.meta.note,
+            intNote=r.meta.intNote,
+            choice=r.selected,
+            barcode=r.barcode,
+        )
+        if r.wchits.prepped_marc:
+            worldcat_data = str(r.wchits.prepped_marc)
+        else:
+            worldcat_data = None
+        data.append((r.wchits.wchid, sierra_data, worldcat_data))
+    db_session.expunge_all()
 
     return data
 

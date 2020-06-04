@@ -10,7 +10,7 @@ import tkMessageBox
 from gui_utils import BusyManager
 from logging_setup import format_traceback, LogglyAdapter
 from manager import (
-    retrieve_bibs_batch,
+    get_bib,
     count_total,
     persist_choice,
     create_marc_file,
@@ -47,10 +47,8 @@ class W2SReport(tk.Frame):
         self.hold_var = tk.IntVar()
         self.dst_fh = tk.StringVar()
 
-        self.disp_batch = tk.StringVar()
-        self.batch = 20
-        self.disp_start = 0
-        self.disp_end = self.batch
+        self.disp_record = tk.StringVar()
+        self.disp_record_no = 0
         self.total_count = 0
         self.selected_count = 0
 
@@ -96,16 +94,16 @@ class W2SReport(tk.Frame):
         self.dstBtn.grid(row=2, column=7, sticky="ne", padx=5, pady=5)
 
         self.leftBtn = ttk.Button(
-            self.navFrm, text="<<", width=5, command=self.previous_batch
+            self.navFrm, text="<<", width=5, command=self.previous_record
         )
         self.leftBtn.grid(row=3, column=0, sticky="nsw", padx=5, pady=5)
 
         self.rightBtn = ttk.Button(
-            self.navFrm, text=">>", width=5, command=self.next_batch
+            self.navFrm, text=">>", width=5, command=self.next_record
         )
         self.rightBtn.grid(row=3, column=1, sticky="nse", padx=5, pady=5)
 
-        self.batch_dispLbl = ttk.Label(self.navFrm, textvariable=self.disp_batch)
+        self.batch_dispLbl = ttk.Label(self.navFrm, textvariable=self.disp_record)
         self.batch_dispLbl.grid(row=3, column=2, columnspan=2, sticky="snw", padx=5)
 
         self.confirmBtn = ttk.Button(
@@ -141,12 +139,10 @@ class W2SReport(tk.Frame):
         # populate preview_frame with Sierra & Worldcat data
         self.display_criteria()
         self.display_totals()
-        self.populate_preview(self.meta_ids[: self.disp_end])
+        self.populate_preview(self.meta_ids[self.disp_record_no])
         # update count display
-        self.disp_batch.set(
-            "records {}-{} / total {}".format(
-                self.disp_start + 1, self.disp_end, self.count_total
-            )
+        self.disp_record.set(
+            "record {} / total {}".format(self.disp_record_no + 1, self.count_total)
         )
 
     def verify_barcodes(self):
@@ -172,37 +168,29 @@ class W2SReport(tk.Frame):
             msg = "Invalid barcodes have been found.\n" "Unable to save data."
             tkMessageBox.showwarning("Barcode warning", msg, parent=self.top)
 
-    def previous_batch(self):
+    def previous_record(self):
         self.save_choices()
-        if self.disp_start > 0:
+        if self.disp_record_no > 0:
+            self.disp_record_no -= 1
             self.preview_frame.destroy()
             self.preview()
-            self.disp_end = self.disp_start
-            self.disp_start = self.disp_start - self.batch
-            mlogger.debug(
-                "Displaying records: {}:{}".format(self.disp_start, self.disp_end)
-            )
-            self.populate_preview(self.meta_ids[self.disp_start : self.disp_end])
-            self.disp_batch.set(
-                "records {}-{} / total {}".format(
-                    self.disp_start + 1, self.disp_end, self.count_total
-                )
+            mlogger.debug("Displaying record: {}".format(self.disp_record_no))
+            self.populate_preview(self.meta_ids[self.disp_record_no])
+            self.disp_record.set(
+                "record {} / total {}".format(self.disp_record_no + 1, self.count_total)
             )
 
-    def next_batch(self):
+    def next_record(self):
         self.save_choices()
-        if self.disp_end <= len(self.meta_ids):
+        if self.disp_record_no < len(self.meta_ids):
+            self.disp_record_no += 1
             self.preview_frame.destroy()
             self.preview()
-            self.disp_start = self.disp_end
-            self.disp_end = self.disp_end + self.batch
-            mlogger.debug(
-                "Displaying records: {}:{}".format(self.disp_start, self.disp_end)
-            )
-            self.populate_preview(self.meta_ids[self.disp_start : self.disp_end])
-            self.disp_batch.set(
-                "records {}-{} / total {}".format(
-                    self.disp_start + 1, self.disp_end, self.count_total
+            mlogger.debug("Displaying record: {}".format(self.disp_record_no))
+            self.populate_preview(self.meta_ids[self.disp_record_no])
+            self.disp_record.set(
+                "records {} / total {}".format(
+                    self.disp_record_no + 1, self.count_total
                 )
             )
 
@@ -292,7 +280,7 @@ class W2SReport(tk.Frame):
 
     def populate_preview(self, meta_ids):
         self.cur_manager.busy()
-        data = retrieve_bibs_batch(meta_ids)
+        data = get_bib(meta_ids)
         row = 0
         self.tracker = {}
         for d in data:
