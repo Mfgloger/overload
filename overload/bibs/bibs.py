@@ -915,7 +915,7 @@ class BibOrderMeta:
             - pic
             - eas
             - fic
-            - und
+            - neu
             - mys
             - rom
             - sfn
@@ -941,18 +941,19 @@ class BibOrderMeta:
                     self.callType = "fic"
 
                     # specific genres
-                    if self.venNote in ("m", "e,m", "n,m", "t,m"):
-                        self.callType = "mys"  # MYSTERY
-                    elif self.venNote in ("r", "e,r", "n,r", "t,r"):
-                        self.callType = "rom"  # ROMANCE
-                    elif self.venNote in ("s", "e,s", "n,s", "t,s"):
-                        self.callType = "sfn"  # SCI-FI
-                    elif self.venNote in ("w", "e,w", "n,w", "t,w"):
-                        self.callType = "wes"  # WESTERN
-                    elif self.venNote in ("u", "e,u", "n,u", "t,u"):
-                        self.callType = "urb"  # URBAN
-                    elif self.venNote == "g":
-                        self.callType = "gfi"  # Graphic fiction
+                    if self.venNote is not None:
+                        if self.venNote in ("m", "e,m", "n,m", "t,m"):
+                            self.callType = "mys"  # MYSTERY
+                        elif self.venNote in ("r", "e,r", "n,r", "t,r"):
+                            self.callType = "rom"  # ROMANCE
+                        elif self.venNote in ("s", "e,s", "n,s", "t,s", "romance"):
+                            self.callType = "sfn"  # SCI-FI
+                        elif self.venNote in ("w", "e,w", "n,w", "t,w"):
+                            self.callType = "wes"  # WESTERN
+                        elif self.venNote in ("u", "e,u", "n,u", "t,u"):
+                            self.callType = "urb"  # URBAN
+                        elif self.venNote == "g":
+                            self.callType = "gfi"  # Graphic fiction
 
                 elif self.locs[4] in ("n", "1"):
                     # non-fiction
