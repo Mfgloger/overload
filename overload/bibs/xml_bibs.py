@@ -153,7 +153,7 @@ def get_subject_fields(marcxml):
             if len(subject) >= 1:
                 subjects.append(" ".join(subject))
     # return temporarily only first 600
-    if len(subjects) > 1:
+    if len(subjects) >= 1:
         subject_fields["600"] = subjects[0]
 
     return subject_fields
