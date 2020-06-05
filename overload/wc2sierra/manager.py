@@ -689,7 +689,7 @@ def get_bib(meta_id):
             barcode=r.barcode,
         )
         if r.wchits.prepped_marc:
-            worldcat_data = str(r.wchits.prepped_marc)
+            worldcat_data = str(r.wchits.prepped_marc).splitlines()
         else:
             worldcat_data = None
         data.append((r.wchits.wchid, sierra_data, worldcat_data))
@@ -732,7 +732,7 @@ def persist_choice(meta_ids, selected, barcode_var=None):
             )
 
 
-def create_marc_file(dst_fh):
+def create_marc_file(dst_fh, no_holdings_msg=None):
     with session_scope() as db_session:
         recs = retrieve_related(db_session, WCSourceMeta, "wchits", selected=True)
         for r in recs:
@@ -743,6 +743,15 @@ def create_marc_file(dst_fh):
                     for field in marc.get_fields("949"):
                         if field.indicators == [" ", "1"]:
                             field.add_subfield("i", r.barcode)
+                if no_holdings_msg:
+                    msg = "OCLC holdings not updated"
+                    field = marc["901"]
+                    marc.remove_fields("901")
+                    if "h" not in field:
+                        field.add_subfield("h", msg)
+                    else:
+                        field["h"] = msg
+                    marc.add_ordered_field(field)
                 write_marc21(dst_fh, marc)
 
     if ".mrc" in dst_fh:

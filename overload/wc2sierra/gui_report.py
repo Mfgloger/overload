@@ -45,94 +45,122 @@ class W2SReport(tk.Frame):
         self.sel_var = tk.IntVar()
         self.sel_var.trace("w", self.selection_observer)
         self.hold_var = tk.IntVar()
+        self.hold_msg = tk.IntVar()
         self.dst_fh = tk.StringVar()
 
         self.disp_record = tk.StringVar()
         self.disp_record_no = 0
+        self.jump_record = tk.StringVar()
         self.total_count = 0
         self.selected_count = 0
 
         # register barcode validation
         self.vb = (self.register(self.onValidateBarcode), "%d", "%i", "%P")
+        self.vj = (self.register(self.onValidateJump), "%d", "%i", "%P")
+
+        # heading frame
+        self.headFrm = ttk.Frame(self.top)
+        self.headFrm.grid(row=0, column=0, sticky="snew", padx=20, pady=10)
+
+        # options frame
+        self.optFrm = ttk.Frame(self.headFrm)
+        self.optFrm.grid(row=0, column=0, rowspan=3, columnspan=3, sticky="snew")
+
+        self.selCbn = ttk.Checkbutton(
+            self.optFrm, textvariable=self.sel_lbl, variable=self.sel_var
+        )
+        self.selCbn.grid(row=0, column=0, columnspan=3, sticky="snew", padx=10)
+
+        self.holdCbn = ttk.Checkbutton(
+            self.optFrm, text="set holdings", variable=self.hold_var
+        )
+        self.holdCbn.grid(row=1, column=0, columnspan=3, sticky="snw", padx=10)
+
+        self.holdmsgCbn = ttk.Checkbutton(
+            self.optFrm, text="add no holdings note", variable=self.hold_msg
+        )
+        self.holdmsgCbn.grid(row=2, column=0, columnspan=3, sticky="snw", padx=10)
+        ttk.Separator(self.optFrm, orient=tk.HORIZONTAL).grid(
+            row=3, column=0, columnspan=3, sticky="new", padx=10
+        )
+
+        # info box
+        self.settingsTxt = tk.Text(
+            self.headFrm, height=2, width=100, wrap="word", borderwidth=0,
+        )
+        self.settingsTxt.grid(row=0, column=3, rowspan=3, sticky="snew", padx=10)
 
         # navigation frame
         self.navFrm = ttk.Frame(self.top)
-        self.navFrm.grid(row=0, column=0, padx=20, pady=10)
-        self.navFrm.columnconfigure(3, minsize=40)
-        self.navFrm.columnconfigure(5, minsize=500)
+        self.navFrm.grid(row=1, column=0, sticky="snew", padx=20)
 
-        self.settingsTxt = tk.Text(
-            self.navFrm,
-            height=3,
-            # width=118,
-            wrap="word",
-            borderwidth=0,
+        self.position_dispLbl = ttk.Label(self.navFrm, textvariable=self.disp_record)
+        self.position_dispLbl.grid(
+            row=0, column=0, columnspan=2, sticky="snew", padx=10
         )
-        self.settingsTxt.grid(row=0, column=0, columnspan=8, sticky="snew", pady=5)
-
-        self.selCbn = ttk.Checkbutton(
-            self.navFrm, textvariable=self.sel_lbl, variable=self.sel_var
+        self.leftBtn = ttk.Button(
+            self.navFrm, text="<<", width=3, command=self.previous_record
         )
-        self.selCbn.grid(row=2, column=0, columnspan=2, sticky="snew", pady=5)
+        self.leftBtn.grid(row=1, column=0, columnspan=2, sticky="nsw", padx=10, pady=5)
 
-        self.holdCbn = ttk.Checkbutton(
-            self.navFrm, text="set OCLC holdings", variable=self.hold_var
+        self.rightBtn = ttk.Button(
+            self.navFrm, text=">>", width=3, command=self.next_record
         )
-        self.holdCbn.grid(row=2, column=2, sticky="snw", pady=5)
+        self.rightBtn.grid(row=1, column=0, columnspan=2, sticky="nse", padx=10, pady=5)
 
-        # destination
+        ttk.Label(self.navFrm, text="jump to:").grid(
+            row=1, column=2, sticky="snw", padx=10, pady=5
+        )
+        self.jumpEnt = ttk.Entry(
+            self.navFrm, textvariable=self.jump_record, width=5, validatecommand=self.vj
+        )
+        self.jumpEnt.grid(row=1, column=3, sticky="snw", padx=10, pady=5)
+
+        self.jumpBtn = ttk.Button(
+            self.navFrm, text="go", width=3, command=self.jump_to_record
+        )
+        self.jumpBtn.grid(row=1, column=4, sticky="snw", padx=10, pady=5)
+
+        # output
         searchICO = tk.PhotoImage(file="./icons/search.gif")
-        self.dstLbl = ttk.Label(self.navFrm, text="destination:")
-        self.dstLbl.grid(row=2, column=4, sticky="sne", pady=5)
-        self.dstEnt = ttk.Entry(self.navFrm, textvariable=self.dst_fh)
-        self.dstEnt.grid(row=2, column=5, columnspan=2, sticky="snew", padx=20, pady=5)
+        self.dstLbl = ttk.Label(self.navFrm, text="output:")
+        self.dstLbl.grid(row=0, column=5, sticky="sne", padx=10, pady=5)
+        self.dstEnt = ttk.Entry(self.navFrm, width=60, textvariable=self.dst_fh)
+        self.dstEnt.grid(row=0, column=6, sticky="snew", padx=10, pady=5)
         self.dstEnt["state"] = "readonly"
         self.dstBtn = ttk.Button(
             self.navFrm, image=searchICO, cursor="hand2", command=self.find_destination
         )
         self.dstBtn.image = searchICO
-        self.dstBtn.grid(row=2, column=7, sticky="ne", padx=5, pady=5)
-
-        self.leftBtn = ttk.Button(
-            self.navFrm, text="<<", width=5, command=self.previous_record
-        )
-        self.leftBtn.grid(row=3, column=0, sticky="nsw", padx=5, pady=5)
-
-        self.rightBtn = ttk.Button(
-            self.navFrm, text=">>", width=5, command=self.next_record
-        )
-        self.rightBtn.grid(row=3, column=1, sticky="nse", padx=5, pady=5)
-
-        self.batch_dispLbl = ttk.Label(self.navFrm, textvariable=self.disp_record)
-        self.batch_dispLbl.grid(row=3, column=2, columnspan=2, sticky="snw", padx=5)
+        self.dstBtn.grid(row=0, column=7, sticky="ne", padx=10, pady=5)
 
         self.confirmBtn = ttk.Button(
-            self.navFrm, text="confirm", width=10, command=self.confirm
+            self.navFrm, text="confirm", width=8, command=self.confirm
         )
-        self.confirmBtn.grid(row=3, column=5, sticky="nsw", padx=20, pady=5)
+        self.confirmBtn.grid(row=0, column=8, sticky="nsw", padx=10, pady=5)
 
         self.cancelBtn = ttk.Button(
-            self.navFrm, text="cancel", width=10, command=self.top.destroy
+            self.navFrm, text="cancel", width=8, command=self.top.destroy
         )
-        self.cancelBtn.grid(row=3, column=5, sticky="nse", padx=20, pady=5)
+        self.cancelBtn.grid(row=0, column=9, sticky="nse", padx=10, pady=5)
 
         # worlcat records display frame
         self.dispFrm = ttk.LabelFrame(self.top, text="Sierra & Worldcat records")
-        self.dispFrm.grid(row=4, column=0, columnspan=6, sticky="snew", padx=5, pady=10)
+        self.dispFrm.grid(row=2, column=0, sticky="snew", padx=20, pady=5)
 
         self.xscrollbar = ttk.Scrollbar(self.dispFrm, orient=tk.HORIZONTAL)
-        self.xscrollbar.grid(row=0, column=1, columnspan=5, sticky="nwe")
+        self.xscrollbar.grid(row=0, column=1, columnspan=10, sticky="nwe")
         self.yscrollbar = ttk.Scrollbar(self.dispFrm, orient=tk.VERTICAL)
         self.yscrollbar.grid(row=1, column=0, rowspan=20, sticky="nse")
         self.preview_base = tk.Canvas(
             self.dispFrm,
             bg="gray",
             height="18c",
-            width="25c",
+            width="27c",
             xscrollcommand=self.xscrollbar.set,
             yscrollcommand=self.yscrollbar.set,
         )
-        self.preview_base.grid(row=1, column=1, rowspan=20, columnspan=5)
+        self.preview_base.grid(row=1, column=1, rowspan=20, columnspan=10)
         self.preview_base.bind_all("<MouseWheel>", self.on_mousewheel)
         self.preview()
 
@@ -142,7 +170,7 @@ class W2SReport(tk.Frame):
         self.populate_preview(self.meta_ids[self.disp_record_no])
         # update count display
         self.disp_record.set(
-            "record {} / total {}".format(self.disp_record_no + 1, self.count_total)
+            "record {} / {}".format(self.disp_record_no + 1, self.count_total)
         )
 
     def verify_barcodes(self):
@@ -177,21 +205,32 @@ class W2SReport(tk.Frame):
             mlogger.debug("Displaying record: {}".format(self.disp_record_no))
             self.populate_preview(self.meta_ids[self.disp_record_no])
             self.disp_record.set(
-                "record {} / total {}".format(self.disp_record_no + 1, self.count_total)
+                "record {} / {}".format(self.disp_record_no + 1, self.count_total)
             )
 
     def next_record(self):
         self.save_choices()
-        if self.disp_record_no < len(self.meta_ids):
+        if self.disp_record_no < self.count_total - 1:
             self.disp_record_no += 1
             self.preview_frame.destroy()
             self.preview()
             mlogger.debug("Displaying record: {}".format(self.disp_record_no))
             self.populate_preview(self.meta_ids[self.disp_record_no])
             self.disp_record.set(
-                "records {} / total {}".format(
-                    self.disp_record_no + 1, self.count_total
-                )
+                "record {} / {}".format(self.disp_record_no + 1, self.count_total)
+            )
+
+    def jump_to_record(self):
+        self.save_choices()
+        rec_no = int(self.jump_record.get().strip()) - 1
+        if rec_no >= 0 and rec_no <= self.count_total:
+            self.disp_record_no = rec_no
+            self.preview_frame.destroy()
+            self.preview()
+            mlogger.debug("Displaying record: {}".format(self.disp_record_no))
+            self.populate_preview(self.meta_ids[self.disp_record_no])
+            self.disp_record.set(
+                "record {} / {}".format(self.disp_record_no + 1, self.count_total)
             )
 
     def find_destination(self):
@@ -218,7 +257,8 @@ class W2SReport(tk.Frame):
         self.cur_manager.busy()
         # write pymarc obj to a MARC file and create
         # csv file
-        create_marc_file(self.dst_fh.get())
+
+        create_marc_file(self.dst_fh.get(), self.hold_msg.get())
 
         if self.hold_var.get():
             msg = "Records have been saved to a file.\n"
@@ -293,7 +333,7 @@ class W2SReport(tk.Frame):
         unitFrm = tk.Frame(self.preview_frame)
         unitFrm.grid(row=row, column=0, columnspan=10, sticky="snew")
         unitFrm.configure(background="white")
-        unitFrm.columnconfigure(0, minsize=40)
+        # unitFrm.columnconfigure(0, minsize=40)
 
         var = tk.IntVar()
         var.set(data[1]["choice"])
@@ -304,46 +344,42 @@ class W2SReport(tk.Frame):
         selCbn = ttk.Checkbutton(unitFrm, var=var)
         selCbn.grid(row=0, column=0, sticky="snew", padx=5)
 
-        sierraTxt = tk.Text(unitFrm, height=5, width=118, wrap="word", borderwidth=0)
-        sierraTxt.grid(row=0, column=1, columnspan=6, sticky="snew", pady=5)
+        sierraTxt = tk.Text(unitFrm, height=5, width=123, wrap="word", borderwidth=0)
+        sierraTxt.grid(row=0, column=1, sticky="snew", pady=5)
 
-        ttk.Label(unitFrm, text="barcode:").grid(
-            row=1, column=1, columnspan=2, sticky="snw", pady=5
-        )
+        inputFrm = ttk.Frame(unitFrm)
+        inputFrm.grid(row=1, column=1, sticky="snw", padx=5, pady=5)
+        ttk.Label(inputFrm, text="barcode:").grid(row=0, column=0, sticky="snw", pady=5)
         barcodeEnt = ttk.Entry(
-            unitFrm, textvariable=barcode, validate="key", validatecommand=self.vb
+            inputFrm, textvariable=barcode, validate="key", validatecommand=self.vb
         )
-        barcodeEnt.grid(row=1, column=2, sticky="sne", padx=5, pady=5)
+        barcodeEnt.grid(row=0, column=1, sticky="sne", padx=5, pady=5)
 
         self.populate_sierra_data(sierraTxt, data[1])
 
-        scrollbar = ttk.Scrollbar(unitFrm)
-        scrollbar.grid(row=2, column=1, sticky="snw", pady=5, padx=2)
         worldcatTxt = tk.Text(
-            unitFrm, wrap="word", width=115, borderwidth=0, yscrollcommand=scrollbar.set
+            unitFrm, wrap="word", height=100, width=114, borderwidth=0
         )
-        worldcatTxt.grid(row=2, column=2, columnspan=6, sticky="snew", padx=2, pady=5)
-        scrollbar.config(command=worldcatTxt.yview)
+        worldcatTxt.grid(row=2, column=1, sticky="snew", padx=2, pady=5)
 
         self.populate_worldcat_data(worldcatTxt, data[2])
-
-        ttk.Separator(unitFrm, orient=tk.HORIZONTAL).grid(
-            row=3, column=0, columnspan=8, sticky="sew", padx=10, pady=10
-        )
 
         return (selCbn.winfo_name(), dict(check=var, wcsmid=data[0], barcode=barcode))
 
     def populate_sierra_data(self, widget, data):
         l1 = "  {}\n".format(data["title"])
-        l2 = "  bib #: {}, ord #: {}\n".format(data["sierraId"], data["oid"])
-        l3 = "  location: {}\n".format(data["locs"])
-        l4 = "  notes: {} | {} | {}\n".format(
-            data["venNote"], data["note"], data["intNote"]
+        l2 = "  bib #: {}, ord #: {}  notes: {} | {} | {}\n".format(
+            data["sierraId"],
+            data["oid"],
+            data["venNote"],
+            data["note"],
+            data["intNote"],
         )
+        l3 = "  location: {}\n".format(data["locs"])
+
         widget.insert(1.0, l1)
         widget.insert(2.0, l2)
         widget.insert(3.0, l3)
-        widget.insert(4.0, l4)
 
         widget.tag_add("header", "1.0", "1.end")
         widget.tag_config("header", font=("tahoma", "11", "bold"))
@@ -355,10 +391,51 @@ class W2SReport(tk.Frame):
 
     def populate_worldcat_data(self, widget, data):
         if data:
-            widget.insert(1.0, data)
+            # highlight important data
+            c = 0
+            for tag in data:
+                c += 1
+                pos = float("{}.0".format(c))
+                widget.insert(pos, "{}\n".format(tag))
+                if "=008" in tag:
+                    widget.tag_add("audn", "{}.28".format(c))
+                    widget.tag_add("litform", "{}.39".format(c))
+                    widget.tag_add("bio", "{}.40".format(c))
+                    widget.tag_add("lang", "{}.41".format(c), "{}.44".format(c))
+
+                elif tag[1:4] in ("082", "100", "110", "111", "130", "245"):
+                    widget.tag_add("highlight", str(pos), "{}.{}".format(c, len(tag)))
+                elif "=091" in tag:
+                    widget.tag_add("call", str(pos), "{}.{}".format(c, len(tag)))
+                elif "=600" in tag:
+                    if tag[7] == "0":
+                        widget.tag_add(
+                            "highlight", str(pos), "{}.{}".format(c, len(tag))
+                        )
+
+            # widget.insert(1.0, data)
             widget.tag_add("lvl", "1.23")
+
+            widget.tag_config(
+                "audn", font=("tahoma", "10", "bold"), foreground="chocolate2"
+            )
+            widget.tag_config(
+                "litform", font=("tahoma", "10", "bold"), foreground="blue2"
+            )
+            widget.tag_config(
+                "bio", font=("tahoma", "10", "bold"), foreground="firebrick"
+            )
+            widget.tag_config(
+                "lang", font=("tahoma", "10", "bold"), foreground="darkgreen"
+            )
             widget.tag_config(
                 "lvl", font=("tahoma", "13", "bold"), foreground="tomato2"
+            )
+            widget.tag_config(
+                "highlight", font=("tahoma", "10", "bold"), foreground="purple3"
+            )
+            widget.tag_config(
+                "call", font=("tahoma", "10", "bold"), foreground="tomato2"
             )
         else:
             l1 = "NO GOOD MATCHES FOUND IN WORLDCAT"
@@ -413,4 +490,8 @@ class W2SReport(tk.Frame):
                             valid = False
                     if int(i) > 13:
                         valid = False
+        return valid
+
+    def onValidateJump(self, d, i, P):
+        valid = True
         return valid
