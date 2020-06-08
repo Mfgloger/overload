@@ -19,6 +19,11 @@ from bibs.nypl_callnum import (
     create_nypl_recap_callnum,
     create_nypl_recap_item,
 )
+from bibs.patches import (
+    remove_unsupported_subject_headings,
+    remove_unwanted_tags,
+    remove_ebook_isbns,
+)
 from bibs.sierra_dicts import NW2SEXPORT_COLS, BW2SEXPORT_COLS, NBIB_DEFAULT_LOCATIONS
 from bibs.xml_bibs import (
     get_oclcNo,
@@ -601,6 +606,9 @@ def launch_process(
             xml_record = row.wchits.match_marcxml
             if xml_record is not None:
                 marc_record = marcxml2array(xml_record)[0]
+                remove_unsupported_subject_headings(marc_record)
+                remove_unwanted_tags(marc_record)
+                remove_ebook_isbns(marc_record)
                 marc_record.remove_fields("901", "907", "945", "949", "947")
                 initials = create_initials_field(system, library, "W2Sbot")
                 marc_record.add_ordered_field(initials)
@@ -738,6 +746,10 @@ def create_marc_file(dst_fh, no_holdings_msg=None):
         for r in recs:
             marc = r.wchits.prepped_marc
             if marc:
+                # delete unsupported headings
+                # remove_unsupported_subject_headings(marc)
+                # remove_unwanted_tags(marc)
+                # remove_ebook_isbns(marc)
                 # add barcode if added by user
                 if r.barcode is not None:
                     for field in marc.get_fields("949"):
@@ -746,12 +758,10 @@ def create_marc_file(dst_fh, no_holdings_msg=None):
                 if no_holdings_msg:
                     msg = "OCLC holdings not updated"
                     field = marc["901"]
-                    marc.remove_fields("901")
                     if "h" not in field:
                         field.add_subfield("h", msg)
                     else:
                         field["h"] = msg
-                    marc.add_ordered_field(field)
                 write_marc21(dst_fh, marc)
 
     if ".mrc" in dst_fh:

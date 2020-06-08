@@ -368,21 +368,31 @@ class W2SReport(tk.Frame):
 
     def populate_sierra_data(self, widget, data):
         l1 = "  {}\n".format(data["title"])
-        l2 = "  bib #: {}, ord #: {}  notes: {} | {} | {}\n".format(
-            data["sierraId"],
-            data["oid"],
-            data["venNote"],
-            data["note"],
-            data["intNote"],
+        l2 = "  bib #: {}, ord #: {}  Vednor note: {}\n".format(
+            data["sierraId"], data["oid"], data["venNote"],
         )
-        l3 = "  location: {}\n".format(data["locs"])
+        try:
+            if len(data["locs"]) > 100:
+                l3 = "  location: {} ...\n".format(data["locs"][:100])
+            else:
+                l3 = "  location: {}\n".format(data["locs"][:100])
+        except TypeError:
+            l3 = "  location: {}\n".format(data["locs"])
+
+        l4 = "other notes: {} | {}".format(data["note"], data["intNote"])
 
         widget.insert(1.0, l1)
         widget.insert(2.0, l2)
         widget.insert(3.0, l3)
+        widget.insert(4.0, l4)
 
         widget.tag_add("header", "1.0", "1.end")
         widget.tag_config("header", font=("tahoma", "11", "bold"))
+        if data["venNote"]:
+            widget.tag_add("venNote", "2.50", "2.end")
+            widget.tag_config(
+                "venNote", font=("tahoma", "11", "bold"), foreground="tomato2"
+            )
         widget.tag_add("location", "3.11", "3.end")
         widget.tag_config(
             "location", font=("tahoma", "11", "bold"), foreground="tomato2"
@@ -398,44 +408,52 @@ class W2SReport(tk.Frame):
                 pos = float("{}.0".format(c))
                 widget.insert(pos, "{}\n".format(tag))
                 if "=008" in tag:
-                    widget.tag_add("audn", "{}.28".format(c))
-                    widget.tag_add("litform", "{}.39".format(c))
+                    widget.tag_add("highlight_brown", "{}.28".format(c))
+                    widget.tag_add("highlight_blue", "{}.39".format(c))
                     widget.tag_add("bio", "{}.40".format(c))
-                    widget.tag_add("lang", "{}.41".format(c), "{}.44".format(c))
+                    widget.tag_add(
+                        "highlight_green", "{}.41".format(c), "{}.44".format(c)
+                    )
 
-                elif tag[1:4] in ("082", "100", "110", "111", "130", "245"):
-                    widget.tag_add("highlight", str(pos), "{}.{}".format(c, len(tag)))
+                elif tag[1:4] in ("100", "110", "111", "130"):
+                    widget.tag_add("highlight_purple", str(pos), "{}.end".format(c))
+                elif "=082" in tag:
+                    widget.tag_add("highlight_brown", str(pos), "{}.end".format(c))
+                elif "=245" in tag:
+                    widget.tag_add("highlight_green", str(pos), "{}.end".format(c))
+                elif "=300" in tag:
+                    widget.tag_add("highlight_blue", str(pos), "{}.end".format(c))
                 elif "=091" in tag:
-                    widget.tag_add("call", str(pos), "{}.{}".format(c, len(tag)))
+                    widget.tag_add("highlight_red", str(pos), "{}.end".format(c))
                 elif "=600" in tag:
                     if tag[7] == "0":
-                        widget.tag_add(
-                            "highlight", str(pos), "{}.{}".format(c, len(tag))
-                        )
+                        widget.tag_add("highlight_purple", str(pos), "{}.end".format(c))
 
             # widget.insert(1.0, data)
             widget.tag_add("lvl", "1.23")
 
             widget.tag_config(
-                "audn", font=("tahoma", "10", "bold"), foreground="chocolate2"
-            )
-            widget.tag_config(
-                "litform", font=("tahoma", "10", "bold"), foreground="blue2"
+                "highlight_blue", font=("tahoma", "10", "bold"), foreground="blue2"
             )
             widget.tag_config(
                 "bio", font=("tahoma", "10", "bold"), foreground="firebrick"
             )
             widget.tag_config(
-                "lang", font=("tahoma", "10", "bold"), foreground="darkgreen"
+                "highlight_green", font=("tahoma", "10", "bold"), foreground="darkgreen"
             )
             widget.tag_config(
-                "lvl", font=("tahoma", "13", "bold"), foreground="tomato2"
+                "highlight_red", font=("tahoma", "13", "bold"), foreground="tomato2"
             )
             widget.tag_config(
-                "highlight", font=("tahoma", "10", "bold"), foreground="purple3"
+                "highlight_purple", font=("tahoma", "10", "bold"), foreground="purple3"
             )
             widget.tag_config(
-                "call", font=("tahoma", "10", "bold"), foreground="tomato2"
+                "highlight_red", font=("tahoma", "10", "bold"), foreground="tomato2"
+            )
+            widget.tag_config(
+                "highlight_brown",
+                font=("tahoma", "10", "bold"),
+                foreground="chocolate2",
             )
         else:
             l1 = "NO GOOD MATCHES FOUND IN WORLDCAT"
