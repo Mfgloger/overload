@@ -205,7 +205,7 @@ def parse_first_letter(field_string):
         first_chr: str, one character in upper case
     """
     try:
-        field_string = unicode(field_string.strip().decode("utf-8"))
+        field_string = unicode(field_string.strip())
         first_letter = unidecode(field_string)[0].upper()
         if first_letter.isdigit():
             return None
@@ -224,7 +224,7 @@ def parse_first_word(field_string):
     returns first word in a string, removes diacritics and changes to upper case
     """
     try:
-        field_string = unicode(field_string.strip().decode("utf-8"))
+        field_string = unicode(field_string.strip())
         first_word = unidecode(field_string.split()[0]).upper()
         if first_word.isdigit():
             return None
@@ -291,7 +291,7 @@ def parse_last_name(name_string):
             last_name = last_name[:-1]
 
         # remove diacritics & change to upper case
-        last_name = last_name.strip().decode("utf-8")
+        last_name = last_name.strip()
         last_name = unidecode(unicode(last_name)).upper()
         return last_name
     except AttributeError:
