@@ -57,6 +57,16 @@ def meets_rec_lvl(marcxml, rec_lvl_range):
         return False
 
 
+def is_ebook(leader_string, t008):
+    if leader_string[6] == "a":
+        if t008[23] == "o":
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
 def meets_mat_type(marcxml, mat_type="any"):
     """
     args:
@@ -67,11 +77,13 @@ def meets_mat_type(marcxml, mat_type="any"):
     """
 
     meets = True
+    leader_string = get_record_leader(marcxml)
+    t008 = get_tag_008(marcxml)
+
     if mat_type == "any":
-        return meets
+        if is_ebook(leader_string, t008):
+            meets = False
     else:
-        leader_string = get_record_leader(marcxml)
-        t008 = get_tag_008(marcxml)
         if mat_type == "print":
             if leader_string[6] != "a":
                 meets = False
