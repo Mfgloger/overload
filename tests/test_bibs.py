@@ -652,6 +652,72 @@ class TestNYPLBranchBibOrderMeta(unittest.TestCase):
         self.assertIsNone(data.bCallNumber)
         self.assertEqual(data.rCallNumber, [])
 
+    def test_sierra_order_data_scenario_graphic_bio(self):
+        """when data source is a list of ISBN only"""
+        data = bibs.BibOrderMeta(
+            system=self.system,
+            dstLibrary=self.library,
+            sierraId="sierraid_001",
+            oid="oid_001",
+            t001="control_field_001",
+            locs="aga0n,baa0n",
+            t020=["9780810129511"],
+            venNote="n, g, bio",
+        )
+
+        self.assertEqual(data.system, "NYPL")
+        self.assertEqual(data.dstLibrary, "branches")
+        self.assertEqual(data.sierraId, "sierraid_001")
+        self.assertEqual(data.oid, "oid_001")
+        self.assertEqual(data.t001, "control_field_001")
+        self.assertIsNone(data.t005)
+        self.assertIsNone(data.t010)
+        self.assertEqual(data.t024, [])
+        self.assertEqual(data.venNote, "n, g, bio")
+        self.assertIsNone(data.code2)
+        self.assertIsNone(data.code4)
+        self.assertEqual(data.locs, "aga0n,baa0n")
+        self.assertIsNone(data.vendor)
+        self.assertEqual(data.callType, "bio")
+        self.assertEqual(data.callLabel, "gra")
+        self.assertFalse(data.wlPrefix)
+        self.assertEqual(data.audnType, "a")
+        self.assertIsNone(data.bCallNumber)
+        self.assertEqual(data.rCallNumber, [])
+
+    def test_sierra_order_data_scenario_graphic_novel(self):
+        """when data source is a list of ISBN only"""
+        data = bibs.BibOrderMeta(
+            system=self.system,
+            dstLibrary=self.library,
+            sierraId="sierraid_001",
+            oid="oid_001",
+            t001="control_field_001",
+            locs="aga0f,baa0f",
+            t020=["9780810129511"],
+            venNote="n, g",
+        )
+
+        self.assertEqual(data.system, "NYPL")
+        self.assertEqual(data.dstLibrary, "branches")
+        self.assertEqual(data.sierraId, "sierraid_001")
+        self.assertEqual(data.oid, "oid_001")
+        self.assertEqual(data.t001, "control_field_001")
+        self.assertIsNone(data.t005)
+        self.assertIsNone(data.t010)
+        self.assertEqual(data.t024, [])
+        self.assertEqual(data.venNote, "n, g")
+        self.assertIsNone(data.code2)
+        self.assertIsNone(data.code4)
+        self.assertEqual(data.locs, "aga0f,baa0f")
+        self.assertIsNone(data.vendor)
+        self.assertEqual(data.callType, "gfi")
+        self.assertEqual(data.callLabel, "gra")
+        self.assertFalse(data.wlPrefix)
+        self.assertEqual(data.audnType, "a")
+        self.assertIsNone(data.bCallNumber)
+        self.assertEqual(data.rCallNumber, [])
+
 
 class TestBPLBranchBibOrderMeta(unittest.TestCase):
     """
