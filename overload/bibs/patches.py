@@ -141,3 +141,4 @@ def remove_ebook_isbns(marc):
             ]:
                 if term in str(field).lower():
                     marc.remove_field(field)
+                    break
