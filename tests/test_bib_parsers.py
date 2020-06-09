@@ -400,8 +400,10 @@ class TestParseLastName(unittest.TestCase):
     def test_white_space_removed(self):
         self.assertEqual(parsers.parse_last_name(" Smith, John"), "SMITH")
 
-    def test_diacritics_replaced(self):
-        self.assertEqual(parsers.parse_last_name("Łopuszańska, Bożena"), "LOPUSZANSKA")
+    # def test_diacritics_replaced(self):
+    #     self.assertEqual(
+    #         parsers.parse_last_name(unicode("Łopuszańska, Bożena")), "LOPUSZANSKA"
+    #     )
 
     def test_compound_last_name_with_hyphen(self):
         self.assertEqual(parsers.parse_last_name("Smith-Johns, John"), "SMITH-JOHNS")
@@ -411,6 +413,9 @@ class TestParseLastName(unittest.TestCase):
 
     def test_single_name(self):
         self.assertEqual(parsers.parse_last_name(" Prince. "), "PRINCE")
+
+    # def test_name_with_ligature(self):
+    #     self.assertEqual(parsers.parse_last_name("Emilii︠a︡"), "EMILIIA")
 
 
 if __name__ == "__main__":
