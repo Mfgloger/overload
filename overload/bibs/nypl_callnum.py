@@ -76,7 +76,7 @@ def create_nypl_callnum(
             # format element
             if order_data.callLabel:
                 if order_data.callLabel == "lgp":
-                    subfields.extend(["f", "LG-PRINT"])
+                    subfields.extend(["f", "LG PRINT"])
                 elif order_data.callLabel == "hol":
                     subfields.extend(["f", "HOLIDAY"])
                 elif order_data.callLabel == "yrd":
@@ -93,6 +93,7 @@ def create_nypl_callnum(
             if is_picture_book(audn_code, tag_300a) and order_data.callType == "pic":
                 if "100" in cuttering_fields:
                     cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
                         cuttering_fields, cutter_type="first_letter"
@@ -104,6 +105,7 @@ def create_nypl_callnum(
             ):  # world lang picture books
                 if "100" in cuttering_fields:
                     cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
                         cuttering_fields, cutter_type="first_letter"
@@ -113,6 +115,7 @@ def create_nypl_callnum(
             elif is_picture_book(audn_code, tag_300a) and order_data.callType == "eas":
                 if "100" in cuttering_fields:
                     cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
                         cuttering_fields, cutter_type="first_letter"
@@ -136,7 +139,7 @@ def create_nypl_callnum(
                 elif order_data.callType == "rom":
                     subfields.extend(["a", "ROMANCE"])
                 elif order_data.callType == "sfn":
-                    subfields.extend(["a", "SCI-FI"])
+                    subfields.extend(["a", "SCI FI"])
                 elif order_data.callType == "wes":
                     subfields.extend(["a", "WESTERN"])
                 elif order_data.callType == "urb":
@@ -146,6 +149,7 @@ def create_nypl_callnum(
 
                 if "100" in cuttering_fields:
                     cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
                         cuttering_fields, cutter_type="first_letter"
@@ -156,7 +160,9 @@ def create_nypl_callnum(
                 leader_string, tag_008, subject_fields
             ) and order_data.callType in ("neu", "bio"):
                 biographee = determine_biographee_name(subject_fields)
+                biographee = remove_special_characters(biographee)
                 cutter = determine_cutter(cuttering_fields, cutter_type="first_letter")
+                cutter = remove_special_characters(cutter)
                 if biographee is not None and cutter is not None:
                     subfields.extend(["a", "B", "b", biographee, "c", cutter])
             elif is_dewey(leader_string, tag_008) and order_data.callType in (

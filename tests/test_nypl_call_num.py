@@ -34,7 +34,10 @@ class TestCreateNYPLFictionCallNum(unittest.TestCase):
 
     def test_world_lang_adult_fiction_with_order_data(self):
         self.tag_008 = "961120s1988    nyu           000 1 pol d"
-        self.cuttering_fields = {"100": "Łąd, Zdzichu", "245": "Ówczesny twór"}
+        self.cuttering_fields = {
+            "100": "Łąd, Zdzichu",
+            "245": "Ówczesny twór",
+        }
         self.order_data = bibs.BibOrderMeta(
             system="NYPL", dstLibrary="branches", locs="bga0l"
         )
@@ -85,6 +88,7 @@ class TestCreateNYPLFictionCallNum(unittest.TestCase):
     def test_english_young_reader_with_order_data(self):
         self.tag_008 = "961120s1988    nyu    j      000 1 eng d"
         tag_300a = "200 pages"
+        cuttering_fields = {"100": "Smith-Johns, John", "245": "Test title"}
         self.order_data = bibs.BibOrderMeta(
             system="NYPL", dstLibrary="branches", locs="agj0y,baj0y", venNote="YR"
         )
@@ -93,11 +97,11 @@ class TestCreateNYPLFictionCallNum(unittest.TestCase):
             self.tag_008,
             self.tag_082,
             tag_300a,
-            self.cuttering_fields,
+            cuttering_fields,
             self.subject_fields,
             self.order_data,
         )
-        self.assertEqual(str(callnum), "=091  \\\\$pJ$fYR$aFIC$cSMITH")
+        self.assertEqual(str(callnum), "=091  \\\\$pJ$fYR$aFIC$cSMITH JOHNS")
 
     def test_english_juv_graphic_novel_with_order_data(self):
         self.tag_008 = "961120s1988    nyu    j      000 1 eng d"
@@ -148,7 +152,7 @@ class TestCreateNYPLFictionCallNum(unittest.TestCase):
             self.subject_fields,
             self.order_data,
         )
-        self.assertEqual(str(callnum), "=091  \\\\$aSCI-FI$cSMITH")
+        self.assertEqual(str(callnum), "=091  \\\\$aSCI FI$cSMITH")
 
     def test_english_adult_romance_with_order_data(self):
         self.tag_008 = "961120s1988    nyu           000 1 eng d"
