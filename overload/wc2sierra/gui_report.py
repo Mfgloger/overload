@@ -418,11 +418,11 @@ class W2SReport(tk.Frame):
                 elif tag[1:4] in ("100", "110", "111", "130"):
                     widget.tag_add("highlight_purple", str(pos), "{}.end".format(c))
                 elif "=082" in tag:
-                    widget.tag_add("highlight_brown", str(pos), "{}.end".format(c))
+                    widget.tag_add("highlight_purple", str(pos), "{}.end".format(c))
                 elif "=245" in tag:
-                    widget.tag_add("highlight_green", str(pos), "{}.end".format(c))
-                elif "=300" in tag:
                     widget.tag_add("highlight_blue", str(pos), "{}.end".format(c))
+                elif "=300" in tag:
+                    widget.tag_add("highlight_green", str(pos), "{}.end".format(c))
                 elif "=091" in tag:
                     widget.tag_add("highlight_red", str(pos), "{}.end".format(c))
                 elif "=600" in tag:
