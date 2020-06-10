@@ -95,7 +95,7 @@ def bib_patches(system, library, agent, vendor, bib):
     return bib
 
 
-def remove_unsupported_subject_headings(marc):
+def remove_unsupported_subject_headings(system, marc):
     if marc is not None:
         # remove local marc tags
         marc.remove_fields("653", "654", "690", "691", "696", "697", "698", "699")
@@ -105,6 +105,12 @@ def remove_unsupported_subject_headings(marc):
         for field in subjects:
             if field.indicators[1] == "0":
                 continue
+            elif field.indicators[1] == "1":
+                # LC subject headings for children's literature
+                if system == "NYPL":
+                    continue
+                elif system == "BPL":
+                    marc.remove_field(field)
             elif field.indicators[1] == "7":
                 try:
                     if field["2"] in ("fast", "gsafd", "lcgft", "gmgpc"):

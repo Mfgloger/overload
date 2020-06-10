@@ -491,7 +491,7 @@ class TestRemoveUnsupportedSubjectHeadings(unittest.TestCase):
             self.bib.add_ordered_field(tag)
 
     def test_None(self):
-        self.assertIsNone(patches.remove_unsupported_subject_headings(None))
+        self.assertIsNone(patches.remove_unsupported_subject_headings("NYPL", None))
 
     def test_removal_of_local_subject_fields(self):
         tags = []
@@ -506,7 +506,7 @@ class TestRemoveUnsupportedSubjectHeadings(unittest.TestCase):
         for tag in tags:
             self.bib.add_ordered_field(tag)
 
-        patches.remove_unsupported_subject_headings(self.bib)
+        patches.remove_unsupported_subject_headings("NYPL", self.bib)
         self.assertTrue("650" in self.bib)
         self.assertFalse("653" in self.bib)
         self.assertFalse("654" in self.bib)
@@ -530,7 +530,7 @@ class TestRemoveUnsupportedSubjectHeadings(unittest.TestCase):
         for tag in tags:
             self.bib.add_ordered_field(tag)
 
-        patches.remove_unsupported_subject_headings(self.bib)
+        patches.remove_unsupported_subject_headings("BPL", self.bib)
 
         self.assertTrue("600" in self.bib)
         self.assertTrue("610" in self.bib)
@@ -544,6 +544,11 @@ class TestRemoveUnsupportedSubjectHeadings(unittest.TestCase):
         tags.append(
             Field(
                 tag="600", indicators=[" ", "7"], subfields=["a", "Genre", "2", "fast"]
+            )
+        )
+        tags.append(
+            Field(
+                tag="630", indicators=[" ", "1"], subfields=["a", "Children's subject"]
             )
         )
         tags.append(
@@ -564,14 +569,15 @@ class TestRemoveUnsupportedSubjectHeadings(unittest.TestCase):
         for tag in tags:
             self.bib.add_ordered_field(tag)
 
-        patches.remove_unsupported_subject_headings(self.bib)
+        patches.remove_unsupported_subject_headings("NYPL", self.bib)
 
         self.assertTrue("600" in self.bib)
+        self.assertTrue("630" in self.bib)
         self.assertTrue("650" in self.bib)
         self.assertTrue("651" in self.bib)
         self.assertTrue("655" in self.bib)
 
-    def test_removal_of_unsupported_vocabularies(self):
+    def test_removal_of_unsupported_vocabularies_nypl(self):
         tags = []
         tags.append(
             Field(tag="600", indicators=["0", "7"], subfields=["a", "Smith, John"])
@@ -597,12 +603,49 @@ class TestRemoveUnsupportedSubjectHeadings(unittest.TestCase):
         for tag in tags:
             self.bib.add_ordered_field(tag)
 
-        patches.remove_unsupported_subject_headings(self.bib)
+        patches.remove_unsupported_subject_headings("NYPL", self.bib)
 
         self.assertFalse("600" in self.bib)
         self.assertFalse("610" in self.bib)
         self.assertFalse("650" in self.bib)
         self.assertFalse("630" in self.bib)
+        self.assertFalse("655" in self.bib)
+
+    def test_removal_of_unsupported_vocabularies_bpl(self):
+        tags = []
+        tags.append(
+            Field(tag="600", indicators=["0", "7"], subfields=["a", "Smith, John"])
+        )
+        tags.append(
+            Field(
+                tag="610", indicators=["2", "7"], subfields=["a", "Inc.", "2", "biasac"]
+            )
+        )
+        tags.append(Field(tag="650", indicators=[" ", "4"], subfields=["a", "Event"]))
+        tags.append(
+            Field(
+                tag="630",
+                indicators=[" ", "7"],
+                subfields=["a", "Title", "2", "rbgenr"],
+            )
+        )
+        tags.append(
+            Field(tag="650", indicators=[" ", "1"], subfields=["a", "Children's"])
+        )
+        tags.append(
+            Field(
+                tag="655", indicators=[" ", "7"], subfields=["a", "Genre", "2", "att"]
+            )
+        )
+        for tag in tags:
+            self.bib.add_ordered_field(tag)
+
+        patches.remove_unsupported_subject_headings("BPL", self.bib)
+
+        self.assertFalse("600" in self.bib)
+        self.assertFalse("610" in self.bib)
+        self.assertFalse("630" in self.bib)
+        self.assertFalse("650" in self.bib)
         self.assertFalse("655" in self.bib)
 
 

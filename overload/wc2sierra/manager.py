@@ -606,7 +606,7 @@ def launch_process(
             xml_record = row.wchits.match_marcxml
             if xml_record is not None:
                 marc_record = marcxml2array(xml_record)[0]
-                remove_unsupported_subject_headings(marc_record)
+                remove_unsupported_subject_headings(system, marc_record)
                 remove_unwanted_tags(marc_record)
                 remove_ebook_isbns(marc_record)
                 marc_record.remove_fields("901", "907", "945", "949", "947")
