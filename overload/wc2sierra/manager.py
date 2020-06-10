@@ -804,19 +804,20 @@ def set_oclc_holdings(dst_fh):
             holdings = holdings_responses(responses)
             if holdings:
                 for oclcNo, holding in holdings.items():
-                    rec = retrieve_record(db_session, WCHit, match_oclcNo=oclcNo)
-                    if holding[0] in ("set", "exists"):
-                        holding_set = True
-                    else:
-                        holding_set = False
-                    update_hit_record(
-                        db_session,
-                        WCHit,
-                        rec.wchid,
-                        holding_set=holding_set,
-                        holding_status=holding[0],
-                        holding_response=holding[1],
-                    )
+                    recs = retrieve_records(db_session, WCHit, match_oclcNo=oclcNo)
+                    for rec in recs:
+                        if holding[0] in ("set", "exists"):
+                            holding_set = True
+                        else:
+                            holding_set = False
+                        update_hit_record(
+                            db_session,
+                            WCHit,
+                            rec.wchid,
+                            holding_set=holding_set,
+                            holding_status=holding[0],
+                            holding_response=holding[1],
+                        )
 
         db_session.commit()
 
