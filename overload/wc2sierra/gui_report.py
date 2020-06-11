@@ -368,7 +368,7 @@ class W2SReport(tk.Frame):
 
     def populate_sierra_data(self, widget, data):
         l1 = "  {}\n".format(data["title"])
-        l2 = "  bib #: {}, ord #: {}  Vednor note: {}\n".format(
+        l2 = "  bib #: {}, ord #: {}  Vendor note: {}\n".format(
             data["sierraId"], data["oid"], data["venNote"],
         )
         try:
