@@ -28,6 +28,15 @@ def remove_special_characters(data):
     return data
 
 
+def has_local_rules(classmark):
+    if classmark is None:
+        return False
+    if classmark[0] == "8":
+        return True
+    else:
+        return False
+
+
 def create_nypl_callnum(
     leader_string,
     tag_008,
@@ -170,11 +179,18 @@ def create_nypl_callnum(
                 "dew",
             ):
                 classmark = parse_dewey(tag_082)
-                if "J" in subfield_p_values:
-                    classmark = classmark[:6]
-                cutter = determine_cutter(cuttering_fields, cutter_type="first_letter")
-                if cutter is not None and vetted_audn is not False:
-                    subfields.extend(["a", classmark, "c", cutter])
+                if has_local_rules(classmark) is False:
+                    if "J" in subfield_p_values:
+                        classmark = classmark[:6]
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="first_letter"
+                    )
+                    if (
+                        classmark is not None
+                        and cutter is not None
+                        and vetted_audn is not False
+                    ):
+                        subfields.extend(["a", classmark, "c", cutter])
         else:
             # skip bibs with order conflicts
             pass

@@ -185,7 +185,7 @@ def parse_dewey(tag_082):
             else:
                 classmark = classmark
 
-        while classmark[-1] == "0":
+        while len(classmark) > 3 and (classmark[-1] == "0" or classmark[-1] == "."):
             classmark = classmark[0:-1]
 
         return classmark

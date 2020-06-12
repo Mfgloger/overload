@@ -6,7 +6,7 @@ import unittest
 from context import bibs, create_nypl_callnum
 
 
-class TestCreateNYPLFictionCallNum(unittest.TestCase):
+class TestCreateNYPLCallNum(unittest.TestCase):
     """Test creation of NYPL fiction and picture book call numbers"""
 
     def setUp(self):
