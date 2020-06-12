@@ -251,6 +251,7 @@ def launch_process(
     process_label,
     hits,
     nohits,
+    skipped,
     meet_crit_counter,
     fail_user_crit_counter,
     fail_glob_crit_counter,
@@ -320,6 +321,11 @@ def launch_process(
             api,
         )
     )
+
+    processed_counter = 0
+    found_counter = 0
+    not_found_counter = 0
+    skipped_counter = 0
 
     remove_previous_process_data()
 
@@ -402,6 +408,8 @@ def launch_process(
             for meta, single_order in data:
                 if single_order is None:
                     row = ["b{}a".format(meta.sierraId), meta.title]
+                    skipped_counter += 1
+                    skipped.set(skipped_counter)
                     save2csv(W2S_SKIPPED_ORD, row)
                     progbar1["maximum"] = progbar1["maximum"] - 3
                 elif single_order is False:
@@ -415,9 +423,6 @@ def launch_process(
                     update_progbar(progbar1)
                 update_progbar(progbar2)
 
-        processed_counter = 0
-        found_counter = 0
-        not_found_counter = 0
         creds = get_credentials(api)
         wskey = creds["key"]
         db_session.commit()
@@ -762,7 +767,16 @@ def create_marc_file(dst_fh, no_holdings_msg=None):
                         field.add_subfield("h", msg)
                     else:
                         field["h"] = msg
-                write_marc21(dst_fh, marc)
+                try:
+                    write_marc21(dst_fh, marc)
+                except TypeError:
+                    module_logger.error(
+                        "Unable to create marc file for record: "
+                        "wchid: {}, oclcNo: {}".format(
+                            r.wchits.wchid, r.wchits.match_oclcNo
+                        )
+                    )
+                    raise
 
     if ".mrc" in dst_fh:
         dst_fh = dst_fh.replace(".mrc", ".csv")
