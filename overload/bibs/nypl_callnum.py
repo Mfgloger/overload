@@ -9,6 +9,7 @@ from callnum import determine_cutter, determine_biographee_name, valid_audience
 from parsers import (
     parse_dewey,
     parse_language_prefix,
+    remove_trailing_zeros,
     is_picture_book,
     is_juvenile,
     is_dewey,
@@ -181,7 +182,7 @@ def create_nypl_callnum(
                 classmark = parse_dewey(tag_082)
                 if has_local_rules(classmark) is False:
                     if "J" in subfield_p_values and classmark is not None:
-                        classmark = classmark[:6]
+                        classmark = remove_trailing_zeros(classmark[:6])
                     cutter = determine_cutter(
                         cuttering_fields, cutter_type="first_letter"
                     )
