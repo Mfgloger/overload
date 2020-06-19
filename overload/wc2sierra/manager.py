@@ -170,7 +170,8 @@ def create_local_fields(marcxml, system, library, order_data=None, recap_no=None
             subject_fields,
             order_data,
         )
-        local_fields.append(callNum)
+        if callNum is not None:
+            local_fields.append(callNum)
     elif system == "NYPL" and library == "research":
         callNum = create_nypl_recap_callnum(recap_no)
         local_fields.append(callNum)
@@ -187,7 +188,8 @@ def create_local_fields(marcxml, system, library, order_data=None, recap_no=None
             subject_fields,
             order_data,
         )
-        local_fields.append(callNum)
+        if callNum is not None:
+            local_fields.append(callNum)
     else:
         module_logger.warning(
             "Call number creation for {}-{} not implemented yet".format(system, library)
