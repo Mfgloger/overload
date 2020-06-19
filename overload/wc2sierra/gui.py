@@ -49,6 +49,7 @@ class Worldcat2Sierra(tk.Frame):
         self.proc_label = tk.StringVar()
         self.nohits = tk.IntVar()
         self.found = tk.IntVar()
+        self.skipped = tk.IntVar()
         self.meet_crit_counter = tk.IntVar()
         self.fail_user_crit_counter = tk.IntVar()
         self.fail_glob_crit_counter = tk.IntVar()
@@ -209,6 +210,12 @@ class Worldcat2Sierra(tk.Frame):
         self.nohitscounterLbl = ttk.Label(self.actionFrm, textvariable=self.nohits)
         self.nohitscounterLbl.grid(row=8, column=4, sticky="snw")
 
+        self.skippedLbl = ttk.Label(self.actionFrm, text="skipped:")
+        self.skippedLbl.grid(row=9, column=3, sticky="snew")
+
+        self.skippedcounterLbl = ttk.Label(self.actionFrm, textvariable=self.skipped)
+        self.skippedcounterLbl.grid(row=9, column=4, sticky="snew")
+
         self.meetCritLbl = ttk.Label(self.actionFrm, text="meets criteria:")
         self.meetCritLbl.grid(row=7, column=5, sticky="snew")
 
@@ -363,6 +370,7 @@ class Worldcat2Sierra(tk.Frame):
                 self.proc_label,
                 self.found,
                 self.nohits,
+                self.skipped,
                 self.meet_crit_counter,
                 self.fail_user_crit_counter,
                 self.fail_glob_crit_counter,

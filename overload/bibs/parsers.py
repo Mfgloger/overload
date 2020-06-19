@@ -170,6 +170,12 @@ def map_bib_audience_code(leader_string, tag_008):
             return None
 
 
+def remove_trailing_zeros(classmark):
+    while len(classmark) > 3 and (classmark[-1] == "0" or classmark[-1] == "."):
+        classmark = classmark[0:-1]
+    return classmark
+
+
 def parse_dewey(tag_082):
     """
     args:
@@ -185,8 +191,7 @@ def parse_dewey(tag_082):
             else:
                 classmark = classmark
 
-        while classmark[-1] == "0":
-            classmark = classmark[0:-1]
+        classmark = remove_trailing_zeros(classmark)
 
         return classmark
     except AttributeError:

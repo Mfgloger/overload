@@ -9,6 +9,7 @@ from callnum import determine_cutter, determine_biographee_name, valid_audience
 from parsers import (
     parse_dewey,
     parse_language_prefix,
+    remove_trailing_zeros,
     is_picture_book,
     is_juvenile,
     is_dewey,
@@ -26,6 +27,15 @@ def remove_special_characters(data):
     data = data.replace("'", "")
     data = data.replace("`", "")
     return data
+
+
+def has_local_rules(classmark):
+    if classmark is None:
+        return False
+    if classmark[0] == "8":
+        return True
+    else:
+        return False
 
 
 def create_nypl_callnum(
@@ -170,11 +180,18 @@ def create_nypl_callnum(
                 "dew",
             ):
                 classmark = parse_dewey(tag_082)
-                if "J" in subfield_p_values:
-                    classmark = classmark[:6]
-                cutter = determine_cutter(cuttering_fields, cutter_type="first_letter")
-                if cutter is not None and vetted_audn is not False:
-                    subfields.extend(["a", classmark, "c", cutter])
+                if has_local_rules(classmark) is False:
+                    if "J" in subfield_p_values and classmark is not None:
+                        classmark = remove_trailing_zeros(classmark[:6])
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="first_letter"
+                    )
+                    if (
+                        classmark is not None
+                        and cutter is not None
+                        and vetted_audn is not False
+                    ):
+                        subfields.extend(["a", classmark, "c", cutter])
         else:
             # skip bibs with order conflicts
             pass
