@@ -589,12 +589,18 @@ def launch_process(
                 db_session, WCSourceMeta, "wchits", wcsbid=batch_id
             )
             for m in metas:
-                if m.wchits.match_oclcNo:
-                    xml_record = request_record(session, m.wchits.match_oclcNo)
-                    if xml_record is not None:
-                        update_hit_record(
-                            db_session, WCHit, m.wchits.wchid, match_marcxml=xml_record
-                        )
+                try:
+                    if m.wchits.match_oclcNo is not None:
+                        xml_record = request_record(session, m.wchits.match_oclcNo)
+                        if xml_record is not None:
+                            update_hit_record(
+                                db_session,
+                                WCHit,
+                                m.wchits.wchid,
+                                match_marcxml=xml_record,
+                            )
+                except AttributeError:
+                    pass
                 update_progbar(progbar1)
                 update_progbar(progbar2)
 
@@ -610,68 +616,73 @@ def launch_process(
 
         for row in rows:
             # initial workflow shared by updgrade fuctionality
-            xml_record = row.wchits.match_marcxml
-            if xml_record is not None:
-                marc_record = marcxml2array(xml_record)[0]
-                remove_unsupported_subject_headings(system, marc_record)
-                remove_unwanted_tags(marc_record)
-                remove_ebook_isbns(marc_record)
-                marc_record.remove_fields("901", "907", "945", "949", "947")
-                initials = create_initials_field(system, library, "W2Sbot")
-                marc_record.add_ordered_field(initials)
+            try:
+                xml_record = row.wchits.match_marcxml
+                if xml_record is not None:
+                    marc_record = marcxml2array(xml_record)[0]
+                    remove_unsupported_subject_headings(system, marc_record)
+                    remove_unwanted_tags(marc_record)
+                    remove_ebook_isbns(marc_record)
+                    marc_record.remove_fields("901", "907", "945", "949", "947")
+                    initials = create_initials_field(system, library, "W2Sbot")
+                    marc_record.add_ordered_field(initials)
 
-                if data_source == "Sierra export":
-                    order_data = row.meta
-                    if order_data.sierraId:
-                        overlay_tag = create_target_id_field(
-                            system, order_data.sierraId
-                        )
-                        marc_record.add_ordered_field(overlay_tag)
-
-                if system == "NYPL":
-                    marc_record.remove_fields("001")
-                    tag_001 = nypl_oclcNo_field(xml_record)
-                    marc_record.add_ordered_field(tag_001)
-
-                    # add Sierra bib code 3 and default location
-                    if library == "branches":
-                        defloc = NBIB_DEFAULT_LOCATIONS["branches"]
-                    elif library == "research":
-                        defloc = NBIB_DEFAULT_LOCATIONS["research"]
-
-                    tag_949 = create_command_line_field("*b3=h;bn={};".format(defloc))
-                    marc_record.add_ordered_field(tag_949)
-
-                if action == "catalog":
-                    # add call number & persist
                     if data_source == "Sierra export":
                         order_data = row.meta
+                        if order_data.sierraId:
+                            overlay_tag = create_target_id_field(
+                                system, order_data.sierraId
+                            )
+                            marc_record.add_ordered_field(overlay_tag)
 
-                        local_fields = create_local_fields(
-                            xml_record,
-                            system,
-                            library,
-                            order_data=order_data,
-                            recap_no=recap_no,
+                    if system == "NYPL":
+                        marc_record.remove_fields("001")
+                        tag_001 = nypl_oclcNo_field(xml_record)
+                        marc_record.add_ordered_field(tag_001)
+
+                        # add Sierra bib code 3 and default location
+                        if library == "branches":
+                            defloc = NBIB_DEFAULT_LOCATIONS["branches"]
+                        elif library == "research":
+                            defloc = NBIB_DEFAULT_LOCATIONS["research"]
+
+                        tag_949 = create_command_line_field(
+                            "*b3=h;bn={};".format(defloc)
                         )
+                        marc_record.add_ordered_field(tag_949)
 
-                    else:
-                        # data source a list of IDs
-                        local_fields = create_local_fields(
-                            xml_record, system, library, recap_no=recap_no
-                        )
+                    if action == "catalog":
+                        # add call number & persist
+                        if data_source == "Sierra export":
+                            order_data = row.meta
 
-                    if local_fields:
-                        for field in local_fields:
-                            if field is not None:
-                                marc_record.add_ordered_field(field)
-                        if system == "NYPL" and library == "research":
-                            recap_no += 1
+                            local_fields = create_local_fields(
+                                xml_record,
+                                system,
+                                library,
+                                order_data=order_data,
+                                recap_no=recap_no,
+                            )
 
-                update_hit_record(
-                    db_session, WCHit, row.wchits.wchid, prepped_marc=marc_record
-                )
+                        else:
+                            # data source a list of IDs
+                            local_fields = create_local_fields(
+                                xml_record, system, library, recap_no=recap_no
+                            )
 
+                        if local_fields:
+                            for field in local_fields:
+                                if field is not None:
+                                    marc_record.add_ordered_field(field)
+                            if system == "NYPL" and library == "research":
+                                recap_no += 1
+
+                    update_hit_record(
+                        db_session, WCHit, row.wchits.wchid, prepped_marc=marc_record
+                    )
+
+            except AttributeError:
+                pass
             update_progbar(progbar1)
             update_progbar(progbar2)
 
@@ -703,11 +714,16 @@ def get_bib(meta_id):
             choice=r.selected,
             barcode=r.barcode,
         )
-        if r.wchits.prepped_marc:
-            worldcat_data = str(r.wchits.prepped_marc).splitlines()
-        else:
-            worldcat_data = None
-        data.append((r.wchits.wchid, sierra_data, worldcat_data))
+        try:
+            if r.wchits.prepped_marc:
+                worldcat_data = str(r.wchits.prepped_marc).splitlines()
+            else:
+                worldcat_data = None
+
+            data.append((r.wchits.wchid, sierra_data, worldcat_data))
+        except AttributeError:
+            pass
+
     db_session.expunge_all()
 
     return data
@@ -807,8 +823,11 @@ def set_oclc_holdings(dst_fh):
     with session_scope() as db_session:
         recs = retrieve_related(db_session, WCSourceMeta, "wchits", selected=True)
         for r in recs:
-            if r.wchits.match_oclcNo:
-                oclc_numbers.append(str(r.wchits.match_oclcNo))
+            try:
+                if r.wchits.match_oclcNo:
+                    oclc_numbers.append(str(r.wchits.match_oclcNo))
+            except AttributeError:
+                continue
 
         # update holdings
         batch_rec = retrieve_record(db_session, WCSourceBatch)
