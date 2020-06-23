@@ -218,7 +218,7 @@ def create_nypl_callnum(
         #     subfields.extend(["c", cutter])
         #     field = Field(tag="091", indicators=[" ", " "], subfields=subfields)
 
-    if subfields:
+    if subfields and "a" in subfields and "c" in subfields:
         field = Field(tag="091", indicators=[" ", " "], subfields=subfields)
 
     return field
