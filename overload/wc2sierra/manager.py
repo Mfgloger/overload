@@ -505,6 +505,10 @@ def launch_process(
 
                 if not hit:
                     not_found_counter += 1
+                    module_logger.debug(
+                        "Unable to find any matches in Worldcat for {}.".format(m.meta)
+                    )
+                    interpret_search_response(None, db_session, m.wcsmid)
 
                 hits.set(found_counter)
                 nohits.set(not_found_counter)
