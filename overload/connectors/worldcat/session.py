@@ -23,16 +23,22 @@ class WorldcatSession(requests.Session):
 
 
 def is_positive_response(response):
-    if response.status_code == requests.codes.ok:
-        # code 200
-        return True
-    else:
-        # log the error code & message
-        print(response.content)  # temp
+    try:
+        if response.status_code == requests.codes.ok:
+            # code 200
+            return True
+        else:
+            # log the error code & message
+            print(response.content)  # temp
+            return False
+    except AttributeError:
         return False
 
 
 def has_records(response):
+    if response is None:
+        return False
+
     response_body = string2xml(response.content)
 
     numberOfRecords = response_body.find("response:numberOfRecords", ONS).text
