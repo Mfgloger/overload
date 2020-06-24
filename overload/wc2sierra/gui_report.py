@@ -423,7 +423,7 @@ class W2SReport(tk.Frame):
                     widget.tag_add("highlight_blue", str(pos), "{}.end".format(c))
                 elif "=300" in tag:
                     widget.tag_add("highlight_green", str(pos), "{}.end".format(c))
-                elif "=091" in tag:
+                elif "=091" in tag or "=099" in tag:
                     widget.tag_add("highlight_red", str(pos), "{}.end".format(c))
                 elif "=600" in tag:
                     if tag[7] == "0":
