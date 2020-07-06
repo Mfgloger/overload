@@ -182,7 +182,7 @@ def parse_dewey(tag_082):
         tag_082: str, only subfield $a of the tag
     """
     try:
-        classmark = tag_082.strip().replace("/", "")
+        classmark = tag_082.strip().replace("/", "").replace("j", "")
         if "." in classmark:
             classmark = classmark[:8]
         else:
