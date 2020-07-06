@@ -236,4 +236,4 @@ def create_bpl_callnum(
 
     if subfields:
         field = Field(tag="099", indicators=[" ", " "], subfields=subfields)
-        return field
+    return field
