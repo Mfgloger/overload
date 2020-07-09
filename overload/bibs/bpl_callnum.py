@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 # module general call number rules
+
 from pymarc import Field
 
 
