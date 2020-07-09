@@ -345,6 +345,23 @@ class TestCreateBPLFictionCallNum(unittest.TestCase):
         )
         self.assertEqual(str(callnum), "=099  \\\\$aJ-E$aSMITH")
 
+    def test_english_easy_reader_with_order(self):
+        tag_008 = "961120s1988    nyu    b      000 1 eng d"
+        order_data = bibs.BibOrderMeta(
+            system="BPL", dstLibrary="branches", locs="41jer", venNote="easy"
+        )
+        callnum = create_bpl_callnum(
+            self.leader_string,
+            tag_008,
+            self.tag_082,
+            self.tag_300a,
+            self.cuttering_fields,
+            self.subject_fields,
+            order_data,
+        )
+
+        self.assertEqual(str(callnum), "=099  \\\\$aJ-E$aSMITH")
+
     def test_english_juv_fiction_with_order(self):
         self.tag_300a = "70 pages"
         self.tag_008 = "961120s1988    nyu    j      000 1 eng d"

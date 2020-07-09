@@ -257,8 +257,7 @@ class W2SReport(tk.Frame):
         self.cur_manager.busy()
         # write pymarc obj to a MARC file and create
         # csv file
-
-        create_marc_file(self.dst_fh.get(), self.hold_msg.get())
+        create_marc_file(self.system, self.dst_fh.get(), self.hold_msg.get())
 
         if self.hold_var.get():
             msg = "Records have been saved to a file.\n"
@@ -407,7 +406,9 @@ class W2SReport(tk.Frame):
                 c += 1
                 pos = float("{}.0".format(c))
                 widget.insert(pos, "{}\n".format(tag))
-                if "=008" in tag:
+                if "=LDR" in tag:
+                    widget.tag_add("background_red", "{}.23".format(c))
+                elif "=008" in tag:
                     widget.tag_add("highlight_brown", "{}.28".format(c))
                     widget.tag_add("highlight_blue", "{}.39".format(c))
                     widget.tag_add("bio", "{}.40".format(c))
@@ -454,6 +455,9 @@ class W2SReport(tk.Frame):
                 "highlight_brown",
                 font=("tahoma", "10", "bold"),
                 foreground="chocolate2",
+            )
+            widget.tag_config(
+                "background_red", font=("tahoma", "13", "bold"), background="yellow2"
             )
         else:
             l1 = "NO GOOD MATCHES FOUND IN WORLDCAT"

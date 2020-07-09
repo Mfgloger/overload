@@ -751,7 +751,7 @@ def persist_choice(meta_ids, selected, barcode_var=None):
             )
 
 
-def create_marc_file(dst_fh, no_holdings_msg=None):
+def create_marc_file(system, dst_fh, no_holdings_msg=None):
     with session_scope() as db_session:
         recs = retrieve_related(db_session, WCSourceMeta, "wchits", selected=True)
         for r in recs:
@@ -768,7 +768,10 @@ def create_marc_file(dst_fh, no_holdings_msg=None):
                             field.add_subfield("i", r.barcode)
                 if no_holdings_msg:
                     msg = "OCLC holdings not updated"
-                    field = marc["901"]
+                    if system == "NYPL":
+                        field = marc["901"]
+                    elif system == "BPL":
+                        field = marc["947"]
                     if "h" not in field:
                         field.add_subfield("h", msg)
                     else:

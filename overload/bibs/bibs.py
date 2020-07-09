@@ -972,6 +972,9 @@ class BibOrderMeta:
 
             if self.system == "BPL":
 
+                if self.locs[3:5] in ("nb", "lp", "rf", "wl", "as", "  "):
+                    self.callType = "neu"  # neutral, use other elements to determine
+
                 if self.locs[3:5] in ("je", "er"):
                     self.callType = "pic"
                 elif self.locs[3:5] in ("fc", "my", "sf", "sh"):
@@ -980,8 +983,6 @@ class BibOrderMeta:
                     self.callType = "bio"
                 elif self.locs[3:5] in ("nf", "ej"):
                     self.callType = "dew"
-                elif self.locs[3:5] in ("nb", "lp", "rf", "wl", "as", "  "):
-                    self.callType = "neu"  # neutral, use other elements to determine
                 else:
                     pass
 
@@ -1050,6 +1051,18 @@ class BibOrderMeta:
             if self.venNote == "l":
                 self.callLabel = "lgp"  # large print
 
+            elif "b" in self.venNote:
+                self.callLabel = "boa"  # board book
+
+            elif self.venNote == "c":
+                self.callLabel = "con"  # concept book
+
+            elif "easy" in self.venNote:
+                self.callLabel = "eas"  # early reader
+
+            elif self.venNote == "k":
+                self.callLabel = "bri"  # bridge
+
             elif "soa" in self.venNote:
                 self.callLabel = "soa"  # SOA
 
@@ -1109,18 +1122,6 @@ class BibOrderMeta:
             elif "bil" in self.venNote:
                 # bilingual books other than pic books
                 self.callLabel = "bil"  # bilingual
-
-            elif "b" in self.venNote:
-                self.callLabel = "boa"  # board book
-
-            elif self.venNote == "c":
-                self.callLabel = "con"  # concept book
-
-            elif "early" in self.venNote:
-                self.callLabel = "eas"  # early reader
-
-            elif self.venNote == "k":
-                self.callLabel = "bri"  # bridge
 
         elif self.system == "NYPL":
 
