@@ -257,8 +257,7 @@ class W2SReport(tk.Frame):
         self.cur_manager.busy()
         # write pymarc obj to a MARC file and create
         # csv file
-
-        create_marc_file(self.dst_fh.get(), self.hold_msg.get())
+        create_marc_file(self.system, self.dst_fh.get(), self.hold_msg.get())
 
         if self.hold_var.get():
             msg = "Records have been saved to a file.\n"
