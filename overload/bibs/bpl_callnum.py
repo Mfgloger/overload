@@ -15,6 +15,15 @@ from parsers import (
 )
 
 
+def remove_special_characters(data):
+    """
+    this may need to be more sophistacated than below...
+    """
+    data = data.replace("`", "")
+    data = data.replace("ʹ", "")
+    return data
+
+
 def is_adult_division(locations):
     """Checks if any of the locations is Central's adult division"""
 
@@ -164,6 +173,7 @@ def create_bpl_callnum(
                 subfields.extend(["a", "J-E"])
                 if "100" in cuttering_fields:
                     cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = remove_special_characters(cutter)
                     subfields.extend(["a", cutter])
                 else:
                     # title entry has only J-E
@@ -180,10 +190,12 @@ def create_bpl_callnum(
             ):
                 if "100" in cuttering_fields:
                     cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
                         cuttering_fields, cutter_type="first_letter"
                     )
+                    cutter = remove_special_characters(cutter)
                 if cutter is not None:
                     subfields.extend(["a", "FIC", "a", cutter])
 
@@ -192,7 +204,9 @@ def create_bpl_callnum(
                 leader_string, tag_008, subject_fields
             ) and order_data.callType in ("neu", "bio",):
                 biographee = determine_biographee_name(subject_fields)
+                biographee = remove_special_characters(biographee)
                 cutter = determine_cutter(cuttering_fields, cutter_type="first_letter")
+                cutter = remove_special_characters(cutter)
                 if biographee is not None and cutter is not None:
                     subfields.extend(["a", "B", "a", biographee, "a", cutter])
 
@@ -207,6 +221,7 @@ def create_bpl_callnum(
                 )
                 # print(division_conflict)
                 cutter = determine_cutter(cuttering_fields, cutter_type="first_letter")
+                cutter = remove_special_characters(cutter)
                 if (
                     not division_conflict
                     and cutter is not None
