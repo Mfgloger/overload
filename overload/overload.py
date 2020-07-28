@@ -2201,7 +2201,7 @@ if __name__ == "__main__":
 
     about = {}
     with open("version.txt") as f:
-        version = f.readline()[9:]
+        version = f.readline()[9:].strip()
 
     # set up app logger
     logging.config.dictConfig(DEV_LOGGING)
