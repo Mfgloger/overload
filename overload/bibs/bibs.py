@@ -716,6 +716,11 @@ class InhouseBibMeta(BibMeta):
                 elif l[:2] == "sc":
                     rl = True
                 elif l[:2] == "ma":
+                    if l[:3] == "maj":
+                        bl = True
+                    else:
+                        rl = True
+                elif l[:3] in ["lsx", "lsd"]:
                     rl = True
                 elif l[:2] in NYPL_BRANCHES.keys():
                     bl = True
