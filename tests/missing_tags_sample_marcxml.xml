@@ -1,0 +1,49 @@
+<ns0:record xmlns:ns0="http://www.loc.gov/MARC21/slim">
+    <ns0:leader>00000cam a2200000Ii 4500</ns0:leader>
+    <ns0:controlfield tag="001">37862518</ns0:controlfield>
+    <ns0:controlfield tag="008">971029r19971996nyua          000 0 eng d</ns0:controlfield>
+    <ns0:datafield ind1=" " ind2=" " tag="020">
+      <ns0:subfield code="a">0385319428</ns0:subfield>
+      <ns0:subfield code="q">(pbk.)</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1=" " ind2=" " tag="020">
+      <ns0:subfield code="a">9780385319423</ns0:subfield>
+      <ns0:subfield code="q">(pbk.)</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1=" " ind2=" " tag="043">
+      <ns0:subfield code="a">n-us-ny</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1="1" ind2=" " tag="100">
+      <ns0:subfield code="a">Lessard, Suzannah.</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1="1" ind2="4" tag="245">
+      <ns0:subfield code="a">The architect of desire :</ns0:subfield>
+      <ns0:subfield code="b">beauty and danger in the Stanford White family /</ns0:subfield>
+      <ns0:subfield code="c">Suzannah Lessard.</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1=" " ind2=" " tag="260">
+      <ns0:subfield code="a">New York, N.Y. :</ns0:subfield>
+      <ns0:subfield code="b">Delta Trade Paperbacks,</ns0:subfield>
+      <ns0:subfield code="c">1997, ©1996.</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1=" " ind2=" " tag="336">
+      <ns0:subfield code="a">text</ns0:subfield>
+      <ns0:subfield code="b">txt</ns0:subfield>
+      <ns0:subfield code="2">rdacontent</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1=" " ind2=" " tag="337">
+      <ns0:subfield code="a">unmediated</ns0:subfield>
+      <ns0:subfield code="b">n</ns0:subfield>
+      <ns0:subfield code="2">rdamedia</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1=" " ind2=" " tag="338">
+      <ns0:subfield code="a">volume</ns0:subfield>
+      <ns0:subfield code="b">nc</ns0:subfield>
+      <ns0:subfield code="2">rdacarrier</ns0:subfield>
+    </ns0:datafield>
+    <ns0:datafield ind1=" " ind2="0" tag="650">
+      <ns0:subfield code="a">Murder</ns0:subfield>
+      <ns0:subfield code="z">New York (State)</ns0:subfield>
+      <ns0:subfield code="z">New York.</ns0:subfield>
+    </ns0:datafield>
+  </ns0:record>

@@ -1456,7 +1456,7 @@ class WorldcatAPIs(tk.Frame):
             apis = user_data["WorldcatAPIs"]
             r = 0
             for name in apis["NYPL"]:
-                self.create_individual_api_info(self.napiFrm, name, r)
+                self.create_individual_api_info(self.napisFrm, name, r)
                 r += 2
             r = 0
             for name in apis["BPL"]:
@@ -2200,9 +2200,8 @@ if __name__ == "__main__":
     user_data.close()
 
     about = {}
-    with open("__version__.py") as f:
-        exec(f.read(), about)
-    version = about["__version__"]
+    with open("version.txt") as f:
+        version = f.readline()[9:].strip()
 
     # set up app logger
     logging.config.dictConfig(DEV_LOGGING)
