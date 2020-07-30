@@ -94,7 +94,6 @@ def interpret_search_response(response, db_session, wcsmid):
     else:
         update_hit_record(
             db_session, WCHit, rec.wchid, hit=hit, query_results=doc)
-
     return hit
 
 
@@ -495,8 +494,7 @@ def launch_process(
                         res = session.sru_query(query=query)
                         module_logger.debug("ISBN request: {}".format(res.url))
 
-                        hit = interpret_search_response(
-                            res, db_session, m.wcsmid)
+                        hit = interpret_search_response(res, db_session, m.wcsmid)
 
                         if hit:
                             found_counter += 1
@@ -513,8 +511,7 @@ def launch_process(
                         res = session.sru_query(query=query)
                         module_logger.debug("UPC request: {}".format(res.url))
 
-                        hit = interpret_search_response(
-                            res, db_session, m.wcsmid)
+                        hit = interpret_search_response(res, db_session, m.wcsmid)
 
                         if hit:
                             found_counter += 1
@@ -565,6 +562,7 @@ def launch_process(
                                 WCHit,
                                 row.wchid,
                                 match_oclcNo=oclcNo
+
                             )
 
                             update_progbar(progbar1)
@@ -574,8 +572,7 @@ def launch_process(
                         elif action == "catalog":
                             if meets_catalog_criteria(xml_record, library):
                                 fulfills = True
-                                meet_crit_counter.set(
-                                    meet_crit_counter.get() + 1)
+                                meet_crit_counter.set(meet_crit_counter.get() + 1)
                                 oclcNo = get_oclcNo(xml_record)
                                 update_hit_record(
                                     db_session,
@@ -599,8 +596,7 @@ def launch_process(
                     fail_user_crit_counter.set(
                         fail_user_crit_counter.get() + 1)
                 else:
-                    fail_glob_crit_counter.set(
-                        fail_glob_crit_counter.get() + 1)
+                    fail_glob_crit_counter.set(fail_glob_crit_counter.get() + 1)
 
         db_session.commit()
 
@@ -802,6 +798,10 @@ def create_marc_file(system, dst_fh, no_holdings_msg=None):
         for r in recs:
             marc = r.wchits.prepped_marc
             if marc:
+                # delete unsupported headings
+                # remove_unsupported_subject_headings(marc)
+                # remove_unwanted_tags(marc)
+                # remove_ebook_isbns(marc)
                 # add barcode if added by user
                 if r.barcode is not None:
                     for field in marc.get_fields("949"):
@@ -874,6 +874,7 @@ def set_oclc_holdings(dst_fh):
                 for oclcNo, holding in holdings.items():
                     recs = retrieve_records(
                         db_session, WCHit, match_oclcNo=oclcNo)
+
                     for rec in recs:
                         if holding[0] in ("set", "exists"):
                             holding_set = True
@@ -893,6 +894,7 @@ def set_oclc_holdings(dst_fh):
         # verify all selected had holdings set
         recs = retrieve_related(
             db_session, WCSourceMeta, "wchits", selected=True)
+
         for r in recs:
             if not r.wchits.holding_set:
                 hold_not_set.append(r.wchits.match_oclcNo)
