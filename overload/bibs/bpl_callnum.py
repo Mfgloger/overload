@@ -161,6 +161,7 @@ def create_bpl_callnum(
     # construct call number field
     subfields = []
     field = None
+    call_constructed = False
     if order_data:
         if not order_data.ord_conflicts:
 
@@ -168,16 +169,19 @@ def create_bpl_callnum(
                 subfields.extend(["a", lang_prefix])
 
             # picture book & easy readers call numbers
-            if is_picture_book(audn_code, tag_300a) and order_data.callType in (
+            if is_picture_book(audn_code, tag_300a) \
+                and order_data.callType in (
                 "pic",
                 "eas",
                 "neu",
             ):
                 subfields.extend(["a", "J-E"])
                 if "100" in cuttering_fields:
-                    cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="last_name")
                     cutter = remove_special_characters(cutter)
                     subfields.extend(["a", cutter])
+                    call_constructed = True
                 else:
                     # title entry has only J-E
                     pass
@@ -186,51 +190,54 @@ def create_bpl_callnum(
                 subfields.extend(["a", "J"])
 
             # fiction call numbers
-            if (
-                is_fiction(leader_string, tag_008)
-                and order_data.callType in ("neu", "fic")
-                and not is_picture_book(audn_code, tag_300a)
-            ):
-                if "100" in cuttering_fields:
-                    cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
-                    cutter = remove_special_characters(cutter)
-                else:
-                    cutter = determine_cutter(
-                        cuttering_fields, cutter_type="first_letter"
-                    )
-                    cutter = remove_special_characters(cutter)
-                if cutter is not None:
-                    subfields.extend(["a", "FIC", "a", cutter])
-
-            # biography call numbers
-            elif is_biography(
-                leader_string, tag_008, subject_fields
-            ) and order_data.callType in ("neu", "bio",):
-                biographee = determine_biographee_name(subject_fields)
-                biographee = remove_special_characters(biographee)
-                cutter = determine_cutter(cuttering_fields, cutter_type="first_letter")
-                cutter = remove_special_characters(cutter)
-                if biographee is not None and cutter is not None:
-                    subfields.extend(["a", "B", "a", biographee, "a", cutter])
-
-            # non-fic call numbers
-            elif is_dewey(leader_string, tag_008) and order_data.callType in (
-                "neu",
-                "dew",
-            ):
-                classmark = parse_dewey(tag_082)
-                division_conflict = has_division_conflict(
-                    classmark, vetted_audn, order_data.locs
-                )
-                # print(division_conflict)
-                cutter = determine_cutter(cuttering_fields, cutter_type="first_letter")
-                cutter = remove_special_characters(cutter)
+            if not call_constructed:
                 if (
-                    not division_conflict
-                    and cutter is not None
-                    and vetted_audn is not False
+                    is_fiction(leader_string, tag_008)
+                    and order_data.callType in ("neu", "fic")
+                    and not is_picture_book(audn_code, tag_300a)
                 ):
-                    subfields.extend(["a", classmark, "a", cutter])
+                    if "100" in cuttering_fields:
+                        cutter = determine_cutter(
+                            cuttering_fields, cutter_type="last_name")
+                        cutter = remove_special_characters(cutter)
+                    else:
+                        cutter = determine_cutter(
+                            cuttering_fields, cutter_type="first_letter"
+                        )
+                        cutter = remove_special_characters(cutter)
+                    if cutter is not None:
+                        subfields.extend(["a", "FIC", "a", cutter])
+
+                # biography call numbers
+                elif is_biography(
+                    leader_string, tag_008, subject_fields
+                ) and order_data.callType in ("neu", "bio",):
+                    biographee = determine_biographee_name(subject_fields)
+                    biographee = remove_special_characters(biographee)
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="first_letter")
+                    cutter = remove_special_characters(cutter)
+                    if biographee is not None and cutter is not None:
+                        subfields.extend(["a", "B", "a", biographee, "a", cutter])
+
+                # non-fic call numbers
+                elif is_dewey(leader_string, tag_008) and order_data.callType in (
+                    "neu",
+                    "dew",
+                ):
+                    classmark = parse_dewey(tag_082)
+                    division_conflict = has_division_conflict(
+                        classmark, vetted_audn, order_data.locs
+                    )
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="first_letter")
+                    cutter = remove_special_characters(cutter)
+                    if (
+                        not division_conflict
+                        and cutter is not None
+                        and vetted_audn is not False
+                    ):
+                        subfields.extend(["a", classmark, "a", cutter])
 
         else:
             # skip bibs with order conflicts
