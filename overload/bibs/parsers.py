@@ -244,13 +244,16 @@ def parse_first_word(field_string):
 
 
 def parse_isbn(field):
-    field = field.replace("-", "")
-    p = re.compile(r"^(97[8|9])?\d{9}[\dxX]")
+    try:
+        field = field.replace("-", "")
+        p = re.compile(r"^(97[8|9])?\d{9}[\dxX]")
 
-    m = re.search(p, field)
-    if m:
-        return str(m.group(0))
-    else:
+        m = re.search(p, field)
+        if m:
+            return str(m.group(0))
+        else:
+            return None
+    except AttributeError:
         return None
 
 
