@@ -100,9 +100,11 @@ def create_nypl_callnum(
 
                 # classification
                 # picture books
-            if is_picture_book(audn_code, tag_300a) and order_data.callType == "pic":
+            if is_picture_book(audn_code, tag_300a) and \
+                    order_data.callType == "pic":
                 if "100" in cuttering_fields:
-                    cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="last_name")
                     cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
@@ -111,10 +113,12 @@ def create_nypl_callnum(
                 if cutter is not None:
                     subfields.extend(["a", "PIC", "c", cutter])
             elif (
-                is_picture_book(audn_code, tag_300a) and order_data.callType == "neu"
+                is_picture_book(audn_code, tag_300a)
+                and order_data.callType == "neu"
             ):  # world lang picture books
                 if "100" in cuttering_fields:
-                    cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="last_name")
                     cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
@@ -122,9 +126,11 @@ def create_nypl_callnum(
                     )
                 if cutter is not None:
                     subfields.extend(["a", "PIC", "c", cutter])
-            elif is_picture_book(audn_code, tag_300a) and order_data.callType == "eas":
+            elif is_picture_book(audn_code, tag_300a) and \
+                    order_data.callType == "eas":
                 if "100" in cuttering_fields:
-                    cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="last_name")
                     cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
@@ -158,7 +164,8 @@ def create_nypl_callnum(
                     subfields.extend(["a", "FIC"])
 
                 if "100" in cuttering_fields:
-                    cutter = determine_cutter(cuttering_fields, cutter_type="last_name")
+                    cutter = determine_cutter(
+                        cuttering_fields, cutter_type="last_name")
                     cutter = remove_special_characters(cutter)
                 else:
                     cutter = determine_cutter(
@@ -171,7 +178,8 @@ def create_nypl_callnum(
             ) and order_data.callType in ("neu", "bio"):
                 biographee = determine_biographee_name(subject_fields)
                 biographee = remove_special_characters(biographee)
-                cutter = determine_cutter(cuttering_fields, cutter_type="first_letter")
+                cutter = determine_cutter(
+                    cuttering_fields, cutter_type="first_letter")
                 cutter = remove_special_characters(cutter)
                 if biographee is not None and cutter is not None:
                     subfields.extend(["a", "B", "b", biographee, "c", cutter])

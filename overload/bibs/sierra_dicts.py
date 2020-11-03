@@ -640,6 +640,7 @@ NYPL_BRANCHES = {
     "se": "Seward Park",
     "sg": "St. George Library Center",
     "sl": "Science, Industry & Business",
+    "sn": "Stavros Niarcos Library",
     "ss": "67th Street",
     "st": "Stapleton",
     "sv": "Soundview",

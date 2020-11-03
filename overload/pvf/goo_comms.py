@@ -11,6 +11,31 @@ from logging_setup import LogglyAdapter
 module_logger = LogglyAdapter(logging.getLogger('overload'), None)
 
 
+def determine_quarter(date_obj):
+    curr_month = date_obj.month
+    if curr_month in (7, 8, 9):
+        curr_quarter = '1Q'
+    elif curr_month in (10, 11, 12):
+        curr_quarter = '2Q'
+    elif curr_month in (1, 2, 3):
+        curr_quarter = '3Q'
+    elif curr_month in (4, 5, 6):
+        curr_quarter = '4Q'
+
+    return curr_quarter
+
+
+def determine_fiscal_year(date_obj, quarter):
+    curr_year = date_obj.year
+    if quarter in ["1Q", "2Q"]:
+        curr_fiscal_year = "{}/{}".format(curr_year, str(curr_year + 1)[2:])
+    elif quarter in ["3Q", "4Q"]:
+        curr_fiscal_year = "{}/{}".format(curr_year -1, str(curr_year)[2:])
+
+    return curr_fiscal_year
+
+
+
 def name_pvf_sheet(report_type):
     """
     determines sheet name of the current report
@@ -26,29 +51,22 @@ def name_pvf_sheet(report_type):
 
     """
 
-    curr_year = date.today().year
-    curr_month = date.today().month
-    if curr_month in (7, 8, 9):
-        curr_quarter = '1Q'
-    elif curr_month in (10, 11, 12):
-        curr_quarter = '2Q'
-    elif curr_month in (1, 2, 3):
-        curr_quarter = '3Q'
-    elif curr_month in (4, 5, 6):
-        curr_quarter = '4Q'
+    date_today = date.today()
+    curr_quarter = determine_quarter(date_today)
+    curr_year = determine_fiscal_year(date_today, curr_quarter)
 
     # determine current sheet name for each type
     if report_type == 'dups':
         # determine current spreadsheet name
-        sheet_name = 'overload_dups-{}-{}'.format(
+        sheet_name = 'Overload Dups {}-{}'.format(
             curr_year, curr_quarter)
     elif report_type == 'callnos':
         # determine current spreadsheet name
-        sheet_name = 'overload_callnos-{}-{}'.format(
+        sheet_name = 'Overload CallNumbers {}-{}'.format(
             curr_year, curr_quarter)
     elif report_type == 'details':
         # determine current spreadsheet name
-        sheet_name = 'overload_detailed-{}-{:02d}'.format(
+        sheet_name = 'Overload Detailed {}-{:02d}'.format(
             curr_year, curr_month)
     else:
         raise ValueError(
@@ -75,11 +93,11 @@ def create_sheet_for_system(system, auth, sheet_name, tabs, parent_id=None):
         auth, sheet_name, tabs)
 
     # customize it
-    if 'callnos' in sheet_name:
+    if 'CallNumbers' in sheet_name:
         goo.customize_pvf_callNos_report(auth, sheet_id)
-    elif 'dups' in sheet_name and system == 'NYPL':
+    elif 'Dups' in sheet_name and system == 'NYPL':
         goo.customize_nypl_pvf_dup_report(auth, sheet_id)
-    elif 'dups' in sheet_name and system == 'BPL':
+    elif 'Dups' in sheet_name and system == 'BPL':
         goo.customize_bpl_pvf_dup_report(auth, sheet_id)
 
     # move sheet to appropriate folder

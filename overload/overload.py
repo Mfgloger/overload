@@ -2200,9 +2200,8 @@ if __name__ == "__main__":
     user_data.close()
 
     about = {}
-    with open("__version__.py") as f:
-        exec(f.read(), about)
-    version = about["__version__"]
+    with open("version.txt") as f:
+        version = f.readline()[9:].strip()
 
     # set up app logger
     logging.config.dictConfig(DEV_LOGGING)
